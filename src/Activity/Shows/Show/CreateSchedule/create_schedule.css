@@ -1,0 +1,114 @@
+
+  .center {
+    min-width: 320px;
+    min-height: 60vh;
+    margin: 0;
+    display: flex;
+    place-items: center;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+  
+  }
+  
+  .title {
+   
+    /* display: block; */
+    /* padding: 10px; */
+    /* font-size: 20px; */
+    color: white;
+    text-align: center;
+    
+    
+  }
+  
+  
+  .starter {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    padding: 1em;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+
+    text-align: center;
+
+
+    margin: 1em;
+  }
+
+  .layout-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    height: 100%;
+
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    padding: 1em;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    margin: 1em;
+  }
+
+  .songs-dances {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 1em;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    margin: 1em;
+  }
+
+  .calendar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 1em;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    margin: 1em;
+  }
+
+  
+  
+
+  .ActionBtn.disabled{
+    background-color: rgb(245, 245, 245);
+    color: #b3b3b3;
+    cursor: not-allowed;
+
+}
+
+.date-div {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+ 
+}

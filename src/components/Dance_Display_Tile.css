@@ -1,0 +1,51 @@
+.DanceDisplayTile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 20vw;
+    height: 5vh;
+
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    padding: 1em;
+    font-weight: 600;
+    color: white;
+    margin: 1.5em;
+    cursor: pointer;
+
+    text-align: center;
+
+
+}
+
+ 
+.TrashIcon {
+    color: white;
+    cursor: pointer;
+    margin: 0.5em;
+    width: 1em;
+}
+
+.DanceDisplayTile .header{
+    display: flex; 
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+.DanceNameDiv{
+    width: 100%;
+}
+
+.characters {
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+
+.DanceDisplayTile .header label{
+    cursor: pointer;
+}

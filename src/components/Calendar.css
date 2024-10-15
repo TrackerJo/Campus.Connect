@@ -1,0 +1,27 @@
+.fc .fc-toolbar-title {
+    font-size: 1.75em
+}
+
+.calendar {
+    width: 800px;
+
+   
+}
+
+.fc-event {
+    cursor: pointer;
+}
+
+.fc-daygrid-day-events {
+    cursor: pointer;
+}
+
+
+
+.fc-daygrid-day-frame {
+    cursor: pointer;
+}
+
+.fc-timegrid-slot {
+    cursor: pointer;
+}
