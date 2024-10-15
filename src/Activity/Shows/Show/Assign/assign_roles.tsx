@@ -46,6 +46,7 @@ function App() {
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [actors, setActors] = useState<Actor[]>([])
     const [ensemble, setEnsemble] = useState<Actor[]>([])
+    const [settingUp, setSettingUp] = useState<boolean>(false)
     const dialogRef = useRef<HTMLDialogElement>(null)
 
 
@@ -204,6 +205,7 @@ function App() {
 
 
     useEffect(() => {
+        setSettingUp(true)
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
@@ -211,6 +213,8 @@ function App() {
             setActivityId(activityId)
             getActivityActors(activityId!).then((actors) => {
                 setActors(actors)
+                console.log(actors)
+                setSettingUp(false)
 
             })
         }
@@ -221,6 +225,7 @@ function App() {
         //Get Show from local storage
         const show = localStorage.getItem('show-' + showId)
         if (show) {
+            console.log(JSON.parse(show))
             setShow(Show.fromMap(JSON.parse(show)))
             console.log(Show.fromMap(JSON.parse(show)))
 
@@ -305,7 +310,7 @@ function App() {
 }
         </div>
 
-       {show?.hasEnsemble && <AssignActorDialog dialogRef={dialogRef as LegacyRef<HTMLDialogElement>} keepPastResult={false} actor={new Actor()} addedActors={ensemble} actors={actors} setActor={(actor) => {
+       {show?.hasEnsemble && !settingUp && <AssignActorDialog dialogRef={dialogRef as LegacyRef<HTMLDialogElement>} keepPastResult={false} actor={new Actor()} addedActors={ensemble} actors={actors} setActor={(actor) => {
             const newActors = [...ensemble];
             newActors.push(actor)
             console.log("Setting actors")

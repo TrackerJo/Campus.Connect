@@ -46,6 +46,7 @@ function App() {
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
     const [formResponses, setFormResponses] = useState<ConflictResponse[]>([])
+    const [excludeWeekends, setExcludeWeekends] = useState<boolean>(true)
     
     
 
@@ -141,6 +142,11 @@ function App() {
                     console.log({date})
                 }}/>
                 <br />
+                <label>Exclude Weekends</label>
+                <input type='checkbox' checked={excludeWeekends} onChange={(e) => {
+                    setExcludeWeekends(e.target.checked)
+                }}/>
+                <br />
                 <button className='ActionBtn' onClick={() => {
                     if (startDate && endDate && defaultStartDate && defaultEndDate) {
                        //Create x number of conflict dates where x is the number of days between start and end date, including start and end date
@@ -152,6 +158,11 @@ function App() {
                             console.log(currentDate)
                             dates.push(ConflictDate.fromBlank(EventDate.fromBlank(new Date(currentDate), defaultStartDate, defaultEndDate), ""))
                             currentDate.setDate(currentDate.getDate() + 1)
+                            if(excludeWeekends) {
+                                while (currentDate.getDay() == 0 || currentDate.getDay() == 6) {
+                                    currentDate.setDate(currentDate.getDate() + 1)
+                                }
+                            }
 
                         }
                         setConflictDates(dates)
@@ -275,7 +286,7 @@ function App() {
                         return (date.canAttend && date.from) || !date.canAttend
                     })
                     const currentActor = await getCurrentUserAsActor()
-                    const response: ConflictResponse = ConflictResponse.fromBlank(newDates, "", currentActor!, Date.now())
+                    const response: ConflictResponse = ConflictResponse.fromBlank(newDates, "", currentActor!,activityId, showId, Date.now())
                     console.log(response)
                     await submitActivityShowConflictForm(activityId, showId, response)
                     const newFormResponses = [...formResponses]

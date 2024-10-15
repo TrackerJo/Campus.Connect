@@ -10,7 +10,7 @@ import { useState } from 'react'
 
 
 
-function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts}:CalendarProps) {
+function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, editEvent, canOpenContextMenu}:CalendarProps) {
   const [event, setEvent] = useState<EventClickArg>()
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [top, setTop] = useState(0)
@@ -27,6 +27,9 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts}:Ca
     return (
         <div className='calendar' onContextMenu={
           (event) => {
+            if(!canOpenContextMenu){
+              return
+            }
             console.log(event)
             if(event.target instanceof HTMLElement && !showContextMenu) {
               if(!event.target.classList.contains('fc-event')){
@@ -39,6 +42,62 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts}:Ca
             console.log(event.target)
             if(!(event.target instanceof HTMLElement)){
               return
+            }
+            if(event.target.classList.contains('fc-daygrid-day-number')){
+              event.preventDefault()
+              const day = event.target.getAttribute('aria-label')
+              console.log(day)
+              console.log(new Date(day!))
+              setSelectedDay(day!)
+              setContextMenuItems([
+                
+                {name: 'View Conflicts', onClick: () => {
+                  viewConflicts(new Date(day!))
+                  setEvent(undefined)
+                  setShowContextMenu(false)
+                }}
+              ])
+              setTop(event.clientY)
+              setLeft(event.clientX)
+              setShowContextMenu(true)
+            }
+            if(event.target.classList.contains('fc-daygrid-day-top')){
+              event.preventDefault()
+              const day = event.target.parentElement?.parentElement?.getAttribute('data-date')
+              console.log(day)
+              console.log(new Date(day!))
+              const date = new Date(day!)
+              date.setDate(date.getDate() + 1)
+              setSelectedDay(day!)
+              setContextMenuItems([
+                {name: 'View Conflicts', onClick: () => {
+                  viewConflicts(date)
+                  setEvent(undefined)
+                  setShowContextMenu(false)
+                }}
+              ])
+              setTop(event.clientY)
+              setLeft(event.clientX)
+              setShowContextMenu(true)
+            }
+            if(event.target.classList.contains('fc-daygrid-day-frame')){
+              event.preventDefault()
+              const day = event.target.parentElement.getAttribute('data-date')
+              console.log(day)
+              console.log(new Date(day!))
+              const date = new Date(day!)
+              date.setDate(date.getDate() + 1)
+              setSelectedDay(day!)
+              setContextMenuItems([
+                {name: 'View Conflicts', onClick: () => {
+                  viewConflicts(date)
+                  setEvent(undefined)
+                  setShowContextMenu(false)
+                }}
+              ])
+              setTop(event.clientY)
+              setLeft(event.clientX)
+              setShowContextMenu(true)
             }
             if(event.target.classList.contains('fc-timegrid-slot')){
               event.preventDefault()
@@ -103,11 +162,17 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts}:Ca
         allDaySlot={false}
           
           eventMouseEnter={(arg) => {
+            if(!canOpenContextMenu){
+              return
+            }
             window.oncontextmenu = (e) => {
               e.preventDefault()
               setEvent(arg)
               setContextMenuItems([
-                {name: 'Edit Event', onClick: () => {}} ,
+                {name: 'Edit Event', onClick: () => {
+                  editEvent(arg.event)
+                  setEvent(undefined)
+                }} ,
                 {name: 'Delete Event', onClick: () => {
 
                  

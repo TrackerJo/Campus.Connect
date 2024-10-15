@@ -12,6 +12,8 @@ export type CalendarProps = {
     eventClick: (event: EventClickArg) => void;
     deleteEvent: (event: EventImpl) => void;
     viewConflicts: (date: Date) => void;
+    editEvent: (event: EventImpl) => void;
+    canOpenContextMenu: boolean;
     
 };
 
@@ -230,6 +232,11 @@ export type AddConflictDialogProps = {
     dialogRef: LegacyRef<HTMLDialogElement>;
     close: () => void;
 };
+
+export type JoinActivityDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+}
 
 
 export class Activity {
@@ -691,7 +698,7 @@ export class EventDate {
     }
   }
 
-class Event {
+export class Event {
     name: string;
     info: string;
     location: Location;
@@ -753,7 +760,7 @@ class Event {
     }
 }
   
-class ActivityEvent {
+export class ActivityEvent {
     activityId: string;
     groupNames: string[];
     targets: ActivityMember[];
@@ -976,6 +983,7 @@ export class TheaterEvent {
     showId: string;
     characters: (Character | ShowGroup | EnsembleSection)[];
     targets: ActivityMember[];
+    theaterEventType: string;
 
     constructor() {
         this.name = '';
@@ -990,6 +998,7 @@ export class TheaterEvent {
         this.showId = '';
         this.characters = [];
         this.targets = [];
+        this.theaterEventType = '';
     }
 
     public static fromBlank(
@@ -1002,7 +1011,8 @@ export class TheaterEvent {
         activityId: string,
         showId: string,
         characters: (Character | ShowGroup | EnsembleSection)[],
-        targets: ActivityMember[]
+        targets: ActivityMember[],
+        theaterEventType: string
     ): TheaterEvent {
         const theaterEvent = new TheaterEvent();
         theaterEvent.name = name;
@@ -1017,6 +1027,7 @@ export class TheaterEvent {
         theaterEvent.showId = showId;
         theaterEvent.characters = characters;
         theaterEvent.targets = targets;
+        theaterEvent.theaterEventType = theaterEventType;
         return theaterEvent;
     }
 
@@ -1035,6 +1046,7 @@ export class TheaterEvent {
         "targets": this.targets.map((e) => e.toMap()),
         "targetUids": this.targets.map((e) => e.memberUid),
         "id": this.id,
+        "theaterEventType": this.theaterEventType,
         };
     }
 
@@ -1049,6 +1061,7 @@ export class TheaterEvent {
         theaterEvent.dateFilter = map.dateFilter;
         theaterEvent.activityId = map.activityId;
         theaterEvent.showId = map.showId;
+        theaterEvent.theaterEventType = map.theaterEventType;
         const characters = map.characters;
         const formattedCharacters: (Character | ShowGroup | EnsembleSection)[] =  [];
         for (const character of characters) {
@@ -1152,7 +1165,7 @@ export class Show {
             formattedCharacters.push(Character.fromMap(character));
         }
         show.characters = formattedCharacters;
-        show.ensemble = map.ensemble != "null" ? Ensemble.fromMap(map.ensemble) : null;
+        show.ensemble = map.ensemble != "null" &&  map.ensemble ? Ensemble.fromMap(map.ensemble) : null;
         const showGroups = map.showGroups;
         const formattedShowGroups: ShowGroup[] =  [];
         for (const showGroup of showGroups) {
@@ -1173,7 +1186,7 @@ export class Show {
         show.dances = formattedDances
         show.canCreateSchedule = map.canCreateSchedule;
         show.lastUpdated = map.lastUpdated;
-        show.conflictForm = map.conflictForm != "null" ? ConflictForm.fromMap(map.conflictForm) : null;
+        show.conflictForm = map.conflictForm != "null" &&  map.conflictForm ? ConflictForm.fromMap(map.conflictForm) : null;
         show.hasEnsemble = map.hasEnsemble;
         return show;
     }
@@ -1796,20 +1809,26 @@ export class ConflictResponse {
     id: string;
     actor: Actor;
     lastUpdated: number;
+    activityId: string;
+    showId: string;
 
     constructor() {
         this.dates = [];
         this.id = "";
         this.actor = new Actor();
         this.lastUpdated = 0;
+        this.activityId = "";
+        this.showId = "";
     }
 
-    public static fromBlank(dates: ConflictResponseDate[], id: string, actor: Actor, lastUpdated: number): ConflictResponse {
+    public static fromBlank(dates: ConflictResponseDate[], id: string, actor: Actor, activityId: string, showId: string, lastUpdated: number): ConflictResponse {
         const conflictResponse = new ConflictResponse();
         conflictResponse.dates = dates;
         conflictResponse.id = id;
         conflictResponse.actor = actor;
         conflictResponse.lastUpdated = lastUpdated;
+        conflictResponse.activityId = activityId;
+        conflictResponse.showId = showId;
         return conflictResponse;
     }
 
@@ -1820,6 +1839,8 @@ export class ConflictResponse {
         "actor": this.actor.toMap(),
         "lastUpdated": this.lastUpdated,
         "submitterId": this.actor.userId,
+        "activityId": this.activityId,
+        "showId": this.showId,
         };
     }
 
@@ -1833,6 +1854,8 @@ export class ConflictResponse {
         conflictResponse.dates = formattedDates;
         conflictResponse.id = map.id;
         conflictResponse.actor = Actor.fromMap(map.actor);
+        conflictResponse.showId = map.showId;
+        conflictResponse.activityId = map.activityId;
         conflictResponse.lastUpdated = map.lastUpdated;
         return conflictResponse;
     }

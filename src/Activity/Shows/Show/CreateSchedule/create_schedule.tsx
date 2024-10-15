@@ -1,5 +1,5 @@
 
-import { StrictMode, useEffect, useState } from 'react'
+import { act, StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import '../../../../index.css'
@@ -7,7 +7,7 @@ import '../../../../index.css'
 import 'react-calendar/dist/Calendar.css';
 import './create_schedule.css'
 import { Activity, Character, EnsembleSection, Show, ShowGroup, TheaterEvent, Location, EventDate, ActivityMember, CalendarEvent, TheaterActivity, ConflictResponse, DateConflict } from '../../../../constants';
-import { addActivityTheaterEvent, deleteActivityTheaterEvent, getActivity, getActivityShow, getActivityTheaterEvents, getActvityShowConflictFormResponses } from '../../../../firebase/db';
+import { addActivityTheaterEvent, deleteActivityTheaterEvent, editActivityTheaterEvent, getActivity, getActivityShow, getActivityTheaterEvents, getActvityShowConflictFormResponses } from '../../../../firebase/db';
 import ActDisplayTile from '../../../../components/Act_Display_Tile';
 import SongDisplayTile from '../../../../components/Song_Display_Tile';
 import DanceDisplayTile from '../../../../components/Dance_Display_Tile';
@@ -52,6 +52,9 @@ function App() {
     const [currentConflicts, setCurrentConflicts] = useState<DateConflict[]>([])
     const [addFullCast, setAddFullCast] = useState<boolean>(false)
     const [viewingDateForConflicts, setViewingDateForConflicts] = useState<Date | null>(null)
+    const [isEditing, setIsEditing] = useState<boolean>(false)
+    const [editEvent, setEditEvent] = useState<TheaterEvent | null>(null)
+
 
     useEffect(() => {
         //Get from url params
@@ -150,6 +153,10 @@ function App() {
         return this;
       }
 
+
+    function getTheaterEvents(): TheaterEvent[]{
+        return theaterEvents
+    }
     return (
         <div  className='center'>
             <h1 className='title'>Create Schedule</h1>
@@ -166,7 +173,28 @@ function App() {
                         }
                     </div>
                 </div>
-                <Calendar events={calendarEvents} 
+                <Calendar canOpenContextMenu={true} events={calendarEvents} 
+                editEvent={(event) => {
+                    const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
+
+                    if(theaterEvent){
+                        console.log(theaterEvent)
+                        setCreationState("info")
+                        setName(theaterEvent.name)
+                        setDescription(theaterEvent.info)
+                        setSelectedDate(theaterEvent.date.date)
+                        setStartTime(theaterEvent.date.from)
+                        setStartTimeString(theaterEvent.date.from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
+                        setEndTime(theaterEvent.date.to)
+                        setEndTimeString(theaterEvent.date.to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
+                        setSelectedLocation(theaterEvent.location)
+                        setCharacters(theaterEvent.characters)
+                        setIsEditing(true)
+                        setType(theaterEvent.theaterEventType as "song" | "dance" | "scene" | "custom")
+                        setEditEvent(theaterEvent)
+                    }
+                }
+                }
                 viewConflicts={ (date) => {
                     const checkDate = new Date(date)
                     checkDate.setHours(0, 0, 0, 0)
@@ -195,6 +223,18 @@ function App() {
 
                     console.log(args.date)
                     setSelectedDate(args.date)
+                    const checkDate = new Date(args.date)
+                    checkDate.setHours(0, 0, 0, 0)
+                    setViewingDateForConflicts(checkDate)
+
+                    const newConflicts: DateConflict[] = []
+                    for(const conflict of conflicts){
+
+                        if(conflict.conflictResponseDate.date.getTime() == checkDate.getTime()){
+                            newConflicts.push(conflict)
+                        }
+                    }
+                    setCurrentConflicts(newConflicts)
                     setStartTime(new Date(args.date))
                     setStartTimeString(args.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
                     //copy the date and add an hour
@@ -227,59 +267,277 @@ function App() {
             </button>
             </> : creationState == "type" ? <>
             <h2 className='title'>Select a Rehersal Type</h2>
-            <button onClick={() =>{
-                setCreationState("info")
-                setType("custom")
-                setCharacters([])
+                <div className='conflicts-div'>
+                    <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
+                    <div className='conflicts'>
+                        {
+                            currentConflicts.map((conflict, index) => {
+                                return <ConflictDisplayTile key={index} conflictResponseDate={conflict.conflictResponseDate} actor={conflict.actor}/>
+                            })
+                        }
+                    </div>
+                </div>
 
-            }} className='ActionBtn'>Custom</button>
 
-            <h2 className='title'>Show Layout</h2>
-            <div className='layout'>
-                {
-                    show?.layout.map((row, index) => {
-                        return <ActDisplayTile key={index} act={row} onClick={(scene) => {
+                <button onClick={() =>{
+                    setCreationState("info")
+                    setType("custom")
+                    setCharacters([])
 
-                            setType("scene")
-                            setName(scene.name + " - " + row.name)
-                            setCreationState("info")
-                            setCharacters(scene.characters)
-                        }}/>
-                    })
-                }
-            </div>
-            <h2 className='title'>Songs</h2>
-            <div className='songs'>
-                {
-                    show?.songs.map((song, index) => {
-                        return <SongDisplayTile key={index} song={song} onClick={() => {
+                }} className='ActionBtn'>Custom</button>
 
-                            setType("song")
-                            setName(song.name)
-                            setCharacters(song.characters)
-                            setCreationState("info")
-                        }}/>
-                    })
-                }
-            </div>
-            <h2 className='title'>Dances</h2>
-            <div className='dances'>
-                {
-                    show?.dances.map((dance, index) => {
-                        return <DanceDisplayTile key={index} dance={dance} onClick={() => {
+                <h2 className='title'>Show Layout</h2>
+                <div className='layout'>
+                    {
+                        show?.layout.map((row, index) => {
+                            return <ActDisplayTile key={index} act={row} onClick={(scene) => {
 
-                            setType("dance")
-                            setName(dance.name)
-                            setCreationState("info")
-                            setCharacters(dance.characters)
-                        }} />
-                    })
-                }
-            </div>
+                                setType("scene")
+                                setName(scene.name + " - " + row.name)
+                                setCreationState("info")
+                                setCharacters(scene.characters)
+                                const actorsUIDs: string[] = []
+                                for(const character of scene.characters){
+                                    if(character instanceof Character){
+                                        actorsUIDs.push(character.actor!.userId)
+                                    } else if(character instanceof ShowGroup){
+                                        for(const showCharacter of character.characters){
+                                            if(showCharacter instanceof Character){
+                                                actorsUIDs.push(showCharacter.actor!.userId)
+                                            } else if(showCharacter instanceof EnsembleSection){
+                                                if(showCharacter.includeAll){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
+                                                } else if(showCharacter.includeMale){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        if(actor.gender == "male"){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
+                                                    }
+                                                } else if(showCharacter.includeFemale){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        if(actor.gender == "female"){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
+                                                    }
+                                                } else if(showCharacter.includeCustom){
+                                                    for(const actor of showCharacter.customActors){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else if(character instanceof EnsembleSection){
+                                        if(character.includeAll){
+                                            for(const actor of show!.ensemble!.actors){
+                                                actorsUIDs.push(actor.userId)
+                                            }
+                                        } else if(character.includeMale){
+                                            for(const actor of show!.ensemble!.actors){
+                                                if(actor.gender == "male"){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
+                                            }
+                                        } else if(character.includeFemale){
+                                            for(const actor of show!.ensemble!.actors){
+                                                if(actor.gender == "female"){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
+                                            }
+                                        } else if(character.includeCustom){
+                                            for(const actor of character.customActors){
+                                                actorsUIDs.push(actor.userId)
+                                            }
+                                        }
+                                }
+                            }
+                                const newConflicts: DateConflict[] = []
+                                for(const conflict of conflicts){
+                                    if(actorsUIDs.includes(conflict.actor.userId) && conflict.conflictResponseDate.date.getTime() == viewingDateForConflicts!.getTime()){
+                                        newConflicts.push(conflict)
+                                    }
+                                }
+                                setCurrentConflicts(newConflicts)
+                            
+                            }}/>
+                        })
+                    }
+                </div>
+                <h2 className='title'>Songs</h2>
+                <div className='songs'>
+                    {
+                        show?.songs.map((song, index) => {
+                            return <SongDisplayTile key={index} song={song} onClick={() => {
 
-            <button onClick={() => setCreationState("date")} className='ActionBtn'>Back</button>
+                                setType("song")
+                                setName(song.name)
+                                setCharacters(song.characters)
+                                setCreationState("info")
+                                const actorsUIDs: string[] = []
+                                for(const character of song.characters){
+                                    if(character instanceof Character){
+                                        actorsUIDs.push(character.actor!.userId)
+                                    } else if(character instanceof ShowGroup){
+                                        for(const showCharacter of character.characters){
+                                            if(showCharacter instanceof Character){
+                                                actorsUIDs.push(showCharacter.actor!.userId)
+                                            } else if(showCharacter instanceof EnsembleSection){
+                                                if(showCharacter.includeAll){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
+                                                } else if(showCharacter.includeMale){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        if(actor.gender == "male"){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
+                                                    }
+                                                } else if(showCharacter.includeFemale){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        if(actor.gender == "female"){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
+                                                    }
+                                                } else if(showCharacter.includeCustom){
+                                                    for(const actor of showCharacter.customActors){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else if(character instanceof EnsembleSection){
+                                        if(character.includeAll){
+                                            for(const actor of show!.ensemble!.actors){
+                                                actorsUIDs.push(actor.userId)
+                                            }
+                                        } else if(character.includeMale){
+                                            for(const actor of show!.ensemble!.actors){
+                                                if(actor.gender == "male"){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
+                                            }
+                                        } else if(character.includeFemale){
+                                            for(const actor of show!.ensemble!.actors){
+                                                if(actor.gender == "female"){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
+                                            }
+                                        } else if(character.includeCustom){
+                                            for(const actor of character.customActors){
+                                                actorsUIDs.push(actor.userId)
+                                            }
+                                        }
+                                }
+                            }
+                                const newConflicts: DateConflict[] = []
+                                for(const conflict of conflicts){
+                                    if(actorsUIDs.includes(conflict.actor.userId) && conflict.conflictResponseDate.date.getTime() == viewingDateForConflicts!.getTime()){
+                                        newConflicts.push(conflict)
+                                    }
+                                }
+                                setCurrentConflicts(newConflicts)
+                            
+                            }}/>
+                        })
+                    }
+                </div>
+                <h2 className='title'>Dances</h2>
+                <div className='dances'>
+                    {
+                        show?.dances.map((dance, index) => {
+                            return <DanceDisplayTile key={index} dance={dance} onClick={() => {
 
+                                setType("dance")
+                                setName(dance.name)
+                                setCreationState("info")
+                                setCharacters(dance.characters)
+                                const actorsUIDs: string[] = []
+                                for(const character of dance.characters){
+                                    if(character instanceof Character){
+                                        actorsUIDs.push(character.actor!.userId)
+                                    } else if(character instanceof ShowGroup){
+                                        for(const showCharacter of character.characters){
+                                            if(showCharacter instanceof Character){
+                                                actorsUIDs.push(showCharacter.actor!.userId)
+                                            } else if(showCharacter instanceof EnsembleSection){
+                                                if(showCharacter.includeAll){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
+                                                } else if(showCharacter.includeMale){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        if(actor.gender == "male"){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
+                                                    }
+                                                } else if(showCharacter.includeFemale){
+                                                    for(const actor of show!.ensemble!.actors){
+                                                        if(actor.gender == "female"){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
+                                                    }
+                                                } else if(showCharacter.includeCustom){
+                                                    for(const actor of showCharacter.customActors){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else if(character instanceof EnsembleSection){
+                                        if(character.includeAll){
+                                            for(const actor of show!.ensemble!.actors){
+                                                actorsUIDs.push(actor.userId)
+                                            }
+                                        } else if(character.includeMale){
+                                            for(const actor of show!.ensemble!.actors){
+                                                if(actor.gender == "male"){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
+                                            }
+                                        } else if(character.includeFemale){
+                                            for(const actor of show!.ensemble!.actors){
+                                                if(actor.gender == "female"){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
+                                            }
+                                        } else if(character.includeCustom){
+                                            for(const actor of character.customActors){
+                                                actorsUIDs.push(actor.userId)
+                                            }
+                                        }
+                                }
+                            }
+                                const newConflicts: DateConflict[] = []
+                                for(const conflict of conflicts){
+                                    if(actorsUIDs.includes(conflict.actor.userId) && conflict.conflictResponseDate.date.getTime() == viewingDateForConflicts!.getTime()){
+                                        newConflicts.push(conflict)
+                                    }
+                                }
+                                setCurrentConflicts(newConflicts)
+                            
+                            }} />
+                        })
+                    }
+                </div>
+                <button onClick={() => {
+                    setCreationState("date")
+                    setViewingDateForConflicts(null)
+                    setCurrentConflicts([...conflicts])
+                }} className='ActionBtn'>Back</button>
+
+            
             </> : <>
+                <div className='conflicts-div'>
+                    <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
+                    <div className='conflicts'>
+                        {
+                            currentConflicts.map((conflict, index) => {
+                                return <ConflictDisplayTile key={index} conflictResponseDate={conflict.conflictResponseDate} actor={conflict.actor}/>
+                            })
+                        }
+                    </div>
+                </div>
                 <h2 className='title'>Enter Rehersal Information</h2>
                 <label htmlFor="Name">Name: </label>
                 <input type="text" value={name} onChange={(val) => {
@@ -513,25 +771,36 @@ function App() {
                             }
                         }
                     }
-                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, showId, characters, targets)
+                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, showId, characters, targets, type)
 
                     console.log(newEvent)
-                    await addActivityTheaterEvent(newEvent)
-                    setIsLoading(false)
-                    //Reset all fields
-                    setCreationState("date")
-                    setSelectedDate(null)
-                    setStartTime(null)
-                    setEndTime(null)
-                    setType("custom")
-                    setName("")
-                    setDescription("")
-                    setStartTimeString("")
-                    setEndTimeString("")
-                    setSelectedLocation(undefined)
-                    setAddedEnsemble(false)
-                    setTheaterEvents([...theaterEvents, newEvent])
-                    //Add to calendar
+                    if(isEditing){
+                        newEvent.id = editEvent!.id
+                        await editActivityTheaterEvent(newEvent)
+                        setIsEditing(false)
+                        //Edit calendar event
+                        const startDate: Date = newEvent.date.from
+                        const endDate: Date = newEvent.date.to
+                        const calendarEvent: CalendarEvent = {
+                            title: newEvent.name,
+                            start: startDate.toISOString(),
+                            end: endDate.toISOString(),
+                            isAllDay: false,
+                            interactive: true,
+                            color: "blue",
+                            id: newEvent.id,
+                        }
+                        const newCalendarEvents = calendarEvents.filter((e) => e.id != newEvent.id)
+                        newCalendarEvents.push(calendarEvent)
+                        setCalendarEvents(newCalendarEvents)
+                        //Edit theater event
+                        const newTheaterEvents = theaterEvents.filter((e) => e.id != newEvent.id)
+                        newTheaterEvents.push(newEvent)
+                        console.log(newTheaterEvents)
+                        setTheaterEvents([...newTheaterEvents])
+                    } else{
+                        await addActivityTheaterEvent(newEvent)
+                        //Add to calendar
                     const startDate: Date = newEvent.date.from
                     const endDate: Date = newEvent.date.to
                     const calendarEvent: CalendarEvent = {
@@ -546,15 +815,59 @@ function App() {
 
                     }
                     setCalendarEvents([...calendarEvents, calendarEvent])
+                    setTheaterEvents([...theaterEvents, newEvent])
+
+                    }
+                    setIsLoading(false)
+                    //Reset all fields
+                    setCreationState("date")
+                    setSelectedDate(null)
+                    setStartTime(null)
+                    setEndTime(null)
+                    setType("custom")
+                    setName("")
+                    setDescription("")
+                    setStartTimeString("")
+                    setEndTimeString("")
+                    setSelectedLocation(undefined)
+                    setAddedEnsemble(false)
+                    setViewingDateForConflicts(null)
+                    setCurrentConflicts(conflicts)
+                    
 
 
 
-                }} className='ActionBtn'>Submit</button>}
+                }} className='ActionBtn'>{isEditing ? "Save" : "Submit"}</button>}
 
                 <button onClick={() => {
+                    if(isEditing){
+                        setCreationState("date")
+                        setSelectedDate(null)
+                        setStartTime(null)
+                        setEndTime(null)
+                        setType("custom")
+                        setName("")
+                        setDescription("")
+                        setStartTimeString("")
+                        setEndTimeString("")
+                        setSelectedLocation(undefined)
+                        setAddedEnsemble(false)
+                        setViewingDateForConflicts(null)
+                        setCurrentConflicts(conflicts)
+                        setIsEditing(false)
+                        return
+                    }
                     setCreationState("type")
                     setDescription("")
                     setAddedEnsemble(false)
+                    const newConflicts: DateConflict[] = []
+                    for(const conflict of conflicts){
+
+                        if(conflict.conflictResponseDate.date.getTime() == viewingDateForConflicts!.getTime()){
+                            newConflicts.push(conflict)
+                        }
+                    }
+                    setCurrentConflicts(newConflicts)
                 }} className='ActionBtn'>Back</button>
                 </>
 

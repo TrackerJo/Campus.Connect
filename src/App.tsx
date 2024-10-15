@@ -31,7 +31,9 @@ function App() {
     </div>
       <div className='center'>
         <div className='tiles'>
-          <Dashboard_Tile title='Calendar' description='View your calendar' onClick={() => console.log('Calendar clicked')}/>
+          <Dashboard_Tile title='Calendar' description='View your calendar' onClick={() => {
+            window.location.href = '/Calendar/'
+          }}/>
           <Dashboard_Tile title='Activities' description='View your activities' onClick={() => {
             window.location.href = '/Activities/'
           }}/>

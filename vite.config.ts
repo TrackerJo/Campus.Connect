@@ -32,6 +32,7 @@ export default defineConfig({
         assignRoles: resolve(root, 'Activity/Shows/Show/Assign/index.html'),
         createSchedule: resolve(root, 'Activity/Shows/Show/CreateSchedule/index.html'),
         conflictForm: resolve(root, 'Activity/Shows/Show/ConflictForm/index.html'),
+        calendar: resolve(root, 'Calendar/index.html'),
       }
     }
   }

@@ -12,6 +12,7 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
             setSearchResults(actors.filter((actor) => {
                 return actor.name.toLowerCase().includes(actor.name.toLowerCase())
             }))
+            if(actor.name == undefined) return
             setSearchString(actor.name.toLowerCase())
         }
     }, [])
@@ -22,6 +23,7 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
         // console.log(searchString)
         setSearchResults(actors.filter((actor) => {
             console.log(actor.name)
+            if(actor.name == undefined) return false
 
             return actor.name.toLowerCase().includes(searchString.toLowerCase()) && !addedActors.includes(actor)
         }))

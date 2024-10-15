@@ -21,6 +21,7 @@ import './activities.css'
 import { Activity, Location } from '../constants'
 import { getActivities } from '../firebase/db'
 import { GeoPoint } from 'firebase/firestore'
+import JoinActivityDialog from '../components/Join_Activity_Dialog'
 
 
 
@@ -28,13 +29,12 @@ import { GeoPoint } from 'firebase/firestore'
 function App() {
     const [activities, setActivities] = useState<Activity[]>([])
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
+    const joinActivityDialogRef = useRef<HTMLDialogElement>(null)
 
     useEffect(() => {
         async function fetchActivities() {
-            // const fetchedActivities = await getActivities()
-            const fetchedActivities = [
-                Activity.fromBlank("Activity 1", "Ww94ZmJfzyy2SBIPjVKs", "123", [], [], [], [], [], [], Location.fromEmpty("", "", new GeoPoint(0,0)), "", 0, "activity"),
-            ]
+            const fetchedActivities = await getActivities()
+            
             setActivities(fetchedActivities)
             console.log(fetchedActivities)
             // alert("fetchedActivities")
@@ -73,7 +73,9 @@ function App() {
             <button className='ActionBtn' onClick={() => {}}>
                 Create Activity
             </button>
-            : <button className='ActionBtn' onClick={() => {}}>Join Activity</button>}
+            : <button className='ActionBtn' onClick={() => {
+                joinActivityDialogRef.current!.showModal()
+            }}>Join Activity</button>}
             <br />
             <button className='ActionBtn' onClick={() => {
                 window.location.href = '/Dashboard/'
@@ -81,6 +83,12 @@ function App() {
                 Back
             </button>
         </div>
+        {
+            accountType == "student" &&
+            <JoinActivityDialog dialogRef={joinActivityDialogRef} close={() => {
+                joinActivityDialogRef.current!.close()
+            }} />
+        }
         
         
         </>

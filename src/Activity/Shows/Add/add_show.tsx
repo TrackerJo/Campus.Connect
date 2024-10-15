@@ -23,6 +23,7 @@ import './add_show.css'
 
 
 import { Show } from '../../../constants'
+import { createShow, getShowTemplates } from '../../../firebase/db'
 
 
 
@@ -30,6 +31,8 @@ import { Show } from '../../../constants'
 function App() {
     const [activityId, setActivityId] = useState<string>("")
     const [shows, setShows] = useState<Show[]>([])
+    const [selectedShow, setSelectedShow] = useState<Show>()
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
 
     useEffect(() => {
@@ -38,7 +41,13 @@ function App() {
         const activityId = urlParams.get('activityId')
         if (activityId) {
             setActivityId(activityId)
+
         }
+        getShowTemplates().then((shows) => {
+            setShows(shows)
+            setSelectedShow(shows[0])
+            console.log(shows)
+        });
        
 
     }, [])
@@ -56,15 +65,29 @@ function App() {
         <div className='center'>
             <h2>Choose from previous shows</h2>
             <div>
-                <input type="text" />
-                <span> </span>
-                <button>Search</button>
+               <select value={selectedShow?.id} onChange={(e) => {
+                     const show = shows.find((show) => show.id === e.target.value)
+                     if(show){
+                          setSelectedShow(show)
+                     }
+               }}>
+                   {shows.map((show) => {
+                       return <option key={show.id} value={show.id}>{show.name}</option>
+                   })}
+                </select>
+                {isLoading ? <div className='loader'></div>: <button className='ActionBtn' onClick={async () => {
+                    setIsLoading(true)
+                    const id = await createShow(selectedShow!, activityId)
+                    window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`
+                    setIsLoading(false)
+
+                }}>Select Show</button>}
             </div>
             <br />
             <h1>Or</h1>
             <br />
-            <div className='add-show'>
-                <button onClick={() => {
+            <div className=''>
+                <button className='ActionBtn' onClick={() => {
                     window.location.href = `/Activity/Shows/CreateTemplate/?activityId=${activityId}`
                 }}>Create new Show Template</button>
                 </div>
