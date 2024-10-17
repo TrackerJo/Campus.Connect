@@ -1,0 +1,1 @@
+import{j as s}from"./index-CKNi8vpN.js";function t({title:r,description:e,onClick:i}){return s.jsxs("div",{className:"tile",onClick:i,children:[s.jsx("h1",{children:r}),s.jsx("p",{children:e})]})}export{t as D};
