@@ -1,0 +1,60 @@
+
+
+.AddResourceCloseBtn{
+    width: 10vw;
+    height: 100%;
+
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    padding: 0.5em;
+    font-weight: 600;
+    color: black;
+    text-align: center;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    margin: 1em;
+}
+
+.AddResourceDiv {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 35vw;
+    height: 100%;
+
+    border-radius: 3px;
+
+    transition: all 0.3s ease;
+
+    font-weight: 600;
+    color: white;
+
+}
+
+.ResourceTypeSelect {
+ display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 35vw;
+    height: 100%;
+    
+}
+
+.ResourceTypeSelectBtn {
+    width: 10vw;
+    height: 100%;
+
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    padding: 0.5em;
+    font-weight: 600;
+    color: black;
+    text-align: center;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    margin: 1em;
+}

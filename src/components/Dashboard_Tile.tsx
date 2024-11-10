@@ -3,7 +3,7 @@
 import { DashboardTileProps } from '../constants'
 import './Dashboard_Tile.css'
 
-function Dashboard_Tile({title, description, onClick}:DashboardTileProps) {
+function DashboardTile({title, description, onClick}:DashboardTileProps) {
     return (
         <div className='tile' onClick={onClick}>
             <h1>{title}</h1>
@@ -12,4 +12,4 @@ function Dashboard_Tile({title, description, onClick}:DashboardTileProps) {
     )
 }
 
-export default Dashboard_Tile
+export default DashboardTile

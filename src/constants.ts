@@ -25,6 +25,7 @@ export type CalendarEvent = {
     end?: string;
     interactive: boolean;
     color: string;
+    description: string;
 
 
 }
@@ -136,6 +137,8 @@ export type EnsembleSectionProps = {
     isAssign: boolean;
     isCustom: boolean;
     actors: Actor[];
+    isGroupChatCreate: boolean;
+    onAddEnsemble: () => void;
 
     
 };
@@ -171,6 +174,9 @@ export type ShowGroupTileProps = {
 export type ShowGroupDisplayTileProps = {
     showGroup: ShowGroup;
     canDelete: boolean;
+    canClick: boolean;
+    showCharacters: boolean;
+    onClick: () => void;
     onDelete: () => void;  
     
 };
@@ -187,6 +193,11 @@ export type SongTileProps = {
 
     
 };
+
+export type FullCastTileProps = {
+    canDelete: boolean;
+    onDelete: () => void;
+}
 
 export type DanceTileProps = {
     dance: Dance;
@@ -238,6 +249,93 @@ export type JoinActivityDialogProps = {
     close: () => void;
 }
 
+export type CalendarHoverEventTileProps = {
+    event: EventImpl;
+    top: number;
+    left: number;
+}
+
+export type AddRecurringConflictDialogProps = {
+    addConflicts: (conflicts: ConflictResponseDate[]) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+}
+
+export type SimpleConflictResponseDateDisplayTileProps = {
+    conflictResponseDate: ConflictResponseDate;
+}
+
+export type AddRehearsalLocationDialogProps = {
+    addRehearsalLocation: (rehearsalLocation: TheaterLocation) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;    
+
+}
+
+export type GroupChatDisplayTileProps = {
+    groupChat: ActivityGC;
+    onClick: () => void;
+}
+
+export type MessageTileProps = {
+    message: Message;
+    isSender: boolean;
+}
+
+export type MessageSendBarProps = {
+    sendMessage: (message: string) => void;
+}
+
+export type CreateGroupChatDialogProps = {
+    activityId: string;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    refresh: () => void;    
+}
+
+export type AddUserDialogProps = {
+    members: (ActivityMember | Actor)[];
+    addedMembers: (ActivityMember)[];
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    addUser: (users: (ActivityMember | Actor)) => void;
+}
+
+export type AddFromPlayDialogProps = {
+    activityId: string;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    addMembers: (members: Actor[]) => void;
+    setName: (name: string) => void;
+}
+
+export type AddFromGroupDialogProps = {
+    activityGroups: ActivityGroup[];
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    addMembers: (members: ActivityMember[]) => void;
+}
+
+export type BroadcastMessageDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    activityId: string;
+    userData: DocumentData;
+    refresh: () => void;
+}
+
+export type AddResourceDialogProps = { 
+    addResource: (resource: Resource) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    activityId: string;
+}
+
+export type ResourceTileProps = {
+    resource: Resource;
+    canRemove: boolean;
+    removeResource: () => void;
+}
 
 export class Activity {
     name: string;
@@ -373,12 +471,14 @@ export class TheaterActivity {
     locations: Location[];
     eventTypes: EventType[];
     defaultLocation: Location;
+    rehearsalLocations: TheaterLocation[];
     showBy: string;
     lastUpdated: number;
 
     constructor() {
         this.name = "";
         this.id = "";
+        this.rehearsalLocations = [];
 
         this.joinCode = "";
         this.students = [];
@@ -392,11 +492,11 @@ export class TheaterActivity {
         this.lastUpdated = 0;
     }
 
-    public static fromBlank(name: string, id: string, joinCode: string, students: Actor[], parents: ActivityMember[], groups: ActivityGroup[], teachers: ActivityMember[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, showBy: string, lastUpdated: number): TheaterActivity {
+    public static fromBlank(name: string, id: string, joinCode: string, students: Actor[], parents: ActivityMember[], groups: ActivityGroup[], teachers: ActivityMember[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, rehearsalLocations: TheaterLocation[],showBy: string, lastUpdated: number): TheaterActivity {
         const activityTheater = new TheaterActivity();
         activityTheater.name = name;
         activityTheater.id = id;
-
+        activityTheater.rehearsalLocations = rehearsalLocations;
         activityTheater.joinCode = joinCode;
         activityTheater.students = students;
         activityTheater.parents = parents;
@@ -430,11 +530,12 @@ export class TheaterActivity {
         "defaultLocation": this.defaultLocation.toMap(),
         "showBy": this.showBy,
         "eventTypes": this.eventTypes.map((e) => e.toMap()),
+        "rehearsalLocations": this.rehearsalLocations.map((e) => e.toMap()),
         "lastUpdated": this.lastUpdated,
         };
     }
 
-    public static fromMap(map: DocumentData): Activity {
+    public static fromMap(map: DocumentData): TheaterActivity {
         const activity = new TheaterActivity();
         activity.name = map.name;
         activity.id = map.id;
@@ -464,6 +565,12 @@ export class TheaterActivity {
             formattedLocations.push(Location.fromMap(location));
         }
         activity.locations = formattedLocations;
+        const rehersalLocations = map.rehearsalLocations;
+        const formattedRehersalLocations: TheaterLocation[] =  [];
+        for (const rehersalLocation of rehersalLocations) {
+            formattedRehersalLocations.push(TheaterLocation.fromMap(rehersalLocation));
+        }
+        activity.rehearsalLocations = formattedRehersalLocations
         const teachers = map.teachers;
         const formattedTeachers: ActivityMember[] =  [];
         for (const teacher of teachers) {
@@ -480,6 +587,37 @@ export class TheaterActivity {
         activity.eventTypes = formattedEventTypes;
         activity.defaultLocation = Location.fromMap(map.defaultLocation);
         return activity;
+    }
+}
+
+export class TheaterLocation {
+    name: string;
+    color: number;
+
+    constructor() {
+        this.name = "";
+        this.color = 0;
+    }
+
+    public static fromBlank(name: string, color: number): TheaterLocation {
+        const theaterLocation = new TheaterLocation();
+        theaterLocation.name = name;
+        theaterLocation.color = color;
+        return theaterLocation;
+    }
+
+    toMap(): object {
+        return {
+        "name": this.name,
+        "color": this.color,
+        };
+    }
+
+    public static fromMap(map: DocumentData): TheaterLocation {
+        const theaterLocation = new TheaterLocation();
+        theaterLocation.name = map.name;
+        theaterLocation.color = map.color;
+        return theaterLocation;
     }
 }
 
@@ -970,6 +1108,127 @@ class ActivityConflict {
     }
 }
 
+export class ActivityGC {
+    name: string;
+    id: string;
+    members: ActivityMember[];
+    generalTarget: string;
+    activityId: string;
+    lastMessage?: Message;
+
+
+    constructor() {
+        this.name = '';
+        this.id = '';
+        this.members = [];
+        this.generalTarget = '';
+        this.activityId = '';
+    }
+
+
+    public static fromBlank(name: string, id: string, members: ActivityMember[], generalTarget: string, activityId: string): ActivityGC {
+        const activityGC = new ActivityGC();
+        activityGC.name = name;
+        activityGC.id = id;
+        activityGC.members = members;
+        activityGC.generalTarget = generalTarget;
+        activityGC.activityId = activityId;
+        return activityGC;
+    }
+
+    toMap():object {
+        return {
+        "name": this.name,
+        "id": this.id,
+        "members": this.members.map((e) => e.toMap()),
+        "generalTarget": this.generalTarget,
+        "activityId": this.activityId,
+        };
+    }
+
+    public static fromMap(map: DocumentData): ActivityGC {
+        const activityGC = new ActivityGC();
+        activityGC.name = map.name;
+        activityGC.id = map.id;
+        const members = map.members;
+        const formattedMembers: ActivityMember[] =  [];
+        for (const member of members) {
+            formattedMembers.push(ActivityMember.fromMap(member));
+        }
+        activityGC.members = formattedMembers;
+        activityGC.generalTarget = map.generalTarget;
+        activityGC.activityId = map.activityId;
+        return activityGC;
+    }
+
+}
+
+export class Message {
+    message: string;
+    senderUid: string;
+    senderName: string;
+    senderFCMToken: string;
+    gcId: string;
+    activityId: string;
+    messageId: string;
+    timeSent: Date;
+    readBy: string[];
+    
+    constructor() {
+        this.message = '';
+        this.senderUid = '';
+        this.senderName = '';
+        this.senderFCMToken = '';
+        this.gcId = '';
+        this.activityId = '';
+        this.messageId = '';
+        this.timeSent = new Date();
+        this.readBy = [];
+    }
+
+    public static fromBlank(message: string, senderUid: string, senderName: string, senderFCMToken: string, gcId: string, activityId: string, messageId: string, timeSent: Date, readBy: string[]): Message {
+        const messageObj = new Message();
+        messageObj.message = message;
+        messageObj.senderUid = senderUid;
+        messageObj.senderName = senderName;
+        messageObj.senderFCMToken = senderFCMToken;
+        messageObj.gcId = gcId;
+        messageObj.activityId = activityId;
+        messageObj.messageId = messageId;
+        messageObj.timeSent = timeSent;
+        messageObj.readBy = readBy;
+        return messageObj;
+    }
+
+    toMap(): object {
+        return {
+        "message": this.message,
+        "senderUid": this.senderUid,
+        "senderName": this.senderName,
+        "senderFCMToken": this.senderFCMToken,
+        "gcId": this.gcId,
+        "activityId": this.activityId,
+        "messageId": this.messageId,
+        "timeSent": this.timeSent,
+        "readBy": this.readBy,
+        };
+    }
+
+    public static fromMap(map: DocumentData): Message {
+        const message = new Message();
+        message.message = map.message;
+        message.senderUid = map.senderUid;
+        message.senderName = map.senderName;
+        message.senderFCMToken = map.senderFCMToken;
+        message.gcId = map.gcId;
+        message.activityId = map.activityId;
+        message.messageId = map.messageId;
+        message.timeSent = map.timeSent.toDate();
+        message.readBy = map.readBy;
+        return message;
+    }
+  }
+
 export class TheaterEvent {
     name: string;
     info: string;
@@ -981,9 +1240,10 @@ export class TheaterEvent {
     id: string;
     activityId: string;
     showId: string;
-    characters: (Character | ShowGroup | EnsembleSection)[];
+    characters: (Character | ShowGroup | EnsembleSection | FullCast)[];
     targets: ActivityMember[];
     theaterEventType: string;
+    rehearsalLocation: TheaterLocation;
 
     constructor() {
         this.name = '';
@@ -999,6 +1259,7 @@ export class TheaterEvent {
         this.characters = [];
         this.targets = [];
         this.theaterEventType = '';
+        this.rehearsalLocation = new TheaterLocation();
     }
 
     public static fromBlank(
@@ -1010,9 +1271,10 @@ export class TheaterEvent {
         lastUpdated: number,
         activityId: string,
         showId: string,
-        characters: (Character | ShowGroup | EnsembleSection)[],
+        characters: (Character | ShowGroup | EnsembleSection | FullCast)[],
         targets: ActivityMember[],
-        theaterEventType: string
+        theaterEventType: string,
+        rehearsalLocation: TheaterLocation
     ): TheaterEvent {
         const theaterEvent = new TheaterEvent();
         theaterEvent.name = name;
@@ -1028,6 +1290,7 @@ export class TheaterEvent {
         theaterEvent.characters = characters;
         theaterEvent.targets = targets;
         theaterEvent.theaterEventType = theaterEventType;
+        theaterEvent.rehearsalLocation = rehearsalLocation;
         return theaterEvent;
     }
 
@@ -1047,6 +1310,7 @@ export class TheaterEvent {
         "targetUids": this.targets.map((e) => e.memberUid),
         "id": this.id,
         "theaterEventType": this.theaterEventType,
+        "rehearsalLocation": this.rehearsalLocation.toMap(),
         };
     }
 
@@ -1063,14 +1327,16 @@ export class TheaterEvent {
         theaterEvent.showId = map.showId;
         theaterEvent.theaterEventType = map.theaterEventType;
         const characters = map.characters;
-        const formattedCharacters: (Character | ShowGroup | EnsembleSection)[] =  [];
+        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] =  [];
         for (const character of characters) {
-            if (Object.prototype.hasOwnProperty.call(character, 'characterId')) {
+            if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
-            } else if (Object.prototype.hasOwnProperty.call(character, 'includeAll')) {
-                formattedCharacters.push(EnsembleSection.fromMap(character));
-            } else {
+            }  else if (character.type === "ShowGroup") {
                 formattedCharacters.push(ShowGroup.fromMap(character));
+            } else if (character.type === "EnsembleSection") {
+                formattedCharacters.push(EnsembleSection.fromMap(character));
+            } if (character.type === "FullCast") {
+                formattedCharacters.push(new FullCast());
             }
         }
         theaterEvent.characters = formattedCharacters;
@@ -1081,6 +1347,7 @@ export class TheaterEvent {
         }
         theaterEvent.targets = formattedTargets;
         theaterEvent.id = map.id;
+        theaterEvent.rehearsalLocation = TheaterLocation.fromMap(map.rehearsalLocation);
         return theaterEvent;
     }
 
@@ -1099,6 +1366,8 @@ export class Show {
     canCreateSchedule: boolean;
     hasEnsemble: boolean;
     conflictForm: ConflictForm | null;
+    formStatus: "open" | "closed";
+    resources: Resource[];
 
     constructor() {
         this.name = "";
@@ -1113,9 +1382,11 @@ export class Show {
         this.canCreateSchedule = false;
         this.hasEnsemble = false;
         this.conflictForm = new ConflictForm();
+        this.formStatus = "open";
+        this.resources = [];
     }
 
-    public static fromBlank(name: string, id: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,lastUpdated: number): Show {
+    public static fromBlank(name: string, id: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,resources: Resource[],formStatus: "open" | "closed", lastUpdated: number): Show {
         const show = new Show();
         show.name = name;
         show.id = id;
@@ -1129,6 +1400,8 @@ export class Show {
         show.canCreateSchedule = canCreateSchedule;
         show.hasEnsemble = hasEnsemble;
         show.conflictForm = conflictForm;
+        show.resources = resources;
+        show.formStatus = formStatus;
         return show;
     }
 
@@ -1145,6 +1418,8 @@ export class Show {
         "canCreateSchedule": this.canCreateSchedule,
         "hasEnsemble": this.hasEnsemble,
         "conflictForm": this.conflictForm ? this.conflictForm.toMap() : "null",
+        "resources": this.resources.map((e) => e.toMap()),
+        "formStatus": this.formStatus,
         "lastUpdated": this.lastUpdated,
         };
     }
@@ -1188,6 +1463,13 @@ export class Show {
         show.lastUpdated = map.lastUpdated;
         show.conflictForm = map.conflictForm != "null" &&  map.conflictForm ? ConflictForm.fromMap(map.conflictForm) : null;
         show.hasEnsemble = map.hasEnsemble;
+        const resources = map.resources;
+        const formattedResources: Resource[] =  [];
+        for (const resource of resources) {
+            formattedResources.push(Resource.fromMap(resource));
+        }
+        show.resources = formattedResources;
+        show.formStatus = map.formStatus;
         return show;
     }
 
@@ -1243,7 +1525,7 @@ export class Act {
 
 export class Scene {
     name: string;
-    characters: (Character | ShowGroup | EnsembleSection)[];
+    characters: (Character | ShowGroup | EnsembleSection | FullCast)[];
     sceneId: number;
     lastUpdated: number;
 
@@ -1254,7 +1536,7 @@ export class Scene {
         this.sceneId = 0;
     }
 
-    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection)[], sceneId: number,lastUpdated: number): Scene {
+    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection| FullCast)[], sceneId: number,lastUpdated: number): Scene {
         const scene = new Scene();
         scene.name = name;
         scene.characters = characters;
@@ -1276,14 +1558,16 @@ export class Scene {
         const scene = new Scene();
         scene.name = map.name;
         const characters = map.characters;
-        const formattedCharacters: (Character | ShowGroup | EnsembleSection)[] =  [];
+        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] =  [];
         for (const character of characters) {
-            if (Object.prototype.hasOwnProperty.call(character, "actor")) {
+            if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
-            }  else if (Object.prototype.hasOwnProperty.call(character, "characters")) {
+            }  else if (character.type === "ShowGroup") {
                 formattedCharacters.push(ShowGroup.fromMap(character));
-            } else {
+            } else if (character.type === "EnsembleSection") {
                 formattedCharacters.push(EnsembleSection.fromMap(character));
+            } if (character.type === "FullCast") {
+                formattedCharacters.push(new FullCast());
             }
         }
         scene.characters = formattedCharacters;
@@ -1298,7 +1582,7 @@ export class Scene {
 
 export class Dance {
     name: string;
-    characters: (Character | ShowGroup | EnsembleSection)[];
+    characters: (Character | ShowGroup | EnsembleSection | FullCast)[];
     danceId: number;
     lastUpdated: number;
 
@@ -1309,7 +1593,7 @@ export class Dance {
         this.danceId = 0;
     }
 
-    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection)[], danceId: number,lastUpdated: number): Dance {
+    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[], danceId: number,lastUpdated: number): Dance {
         const dance = new Dance();
         dance.name = name;
         dance.characters = characters;
@@ -1331,14 +1615,16 @@ export class Dance {
         const dance = new Dance();
         dance.name = map.name;
         const characters = map.characters;
-        const formattedCharacters: (Character | ShowGroup | EnsembleSection)[] =  [];
+        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] =  [];
         for (const character of characters) {
-            if (Object.prototype.hasOwnProperty.call(character, "actor")) {
+            if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
-            }  else if (Object.prototype.hasOwnProperty.call(character, "characters")) {
+            }  else if (character.type === "ShowGroup") {
                 formattedCharacters.push(ShowGroup.fromMap(character));
-            } else {
+            } else if (character.type === "EnsembleSection") {
                 formattedCharacters.push(EnsembleSection.fromMap(character));
+            } if (character.type === "FullCast") {
+                formattedCharacters.push(new FullCast());
             }
         }
         dance.characters = formattedCharacters;
@@ -1350,7 +1636,7 @@ export class Dance {
 
 export class Song {
     name: string;
-    characters: (Character | ShowGroup | EnsembleSection)[];
+    characters: (Character | ShowGroup | EnsembleSection | FullCast)[];
     songId: number;
     lastUpdated: number;
 
@@ -1361,7 +1647,7 @@ export class Song {
         this.songId = 0;
     }
 
-    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection)[],songId: number, lastUpdated: number): Song {
+    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[],songId: number, lastUpdated: number): Song {
         const song = new Song();
         song.name = name;
         song.characters = characters;
@@ -1388,14 +1674,16 @@ export class Song {
         const song = new Song();
         song.name = map.name;
         const characters = map.characters;
-        const formattedCharacters: (Character | ShowGroup | EnsembleSection)[] =  [];
+        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] =  [];
         for (const character of characters) {
-            if (Object.prototype.hasOwnProperty.call(character, "actor")) {
+            if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
-            }  else if (Object.prototype.hasOwnProperty.call(character, "characters")) {
+            }  else if (character.type === "ShowGroup") {
                 formattedCharacters.push(ShowGroup.fromMap(character));
-            } else {
+            } else if (character.type === "EnsembleSection") {
                 formattedCharacters.push(EnsembleSection.fromMap(character));
+            } if (character.type === "FullCast") {
+                formattedCharacters.push(new FullCast());
             }
         }
         song.characters = formattedCharacters;
@@ -1471,6 +1759,7 @@ export class Character {
     actor: Actor | null;
     characterId: number;
     lastUpdated: number;
+    type: string;
     
 
     constructor() {
@@ -1478,6 +1767,7 @@ export class Character {
         this.actor = new Actor();
         this.lastUpdated = 0;
         this.characterId = 0;
+        this.type = "Character";
     }
 
     public static fromBlank(name: string, actor: Actor | null, characterId: number, lastUpdated: number): Character {
@@ -1495,6 +1785,7 @@ export class Character {
         "actor": this.actor ? this.actor.toMap() : "null",
         "characterId": this.characterId,
         "lastUpdated": this.lastUpdated,
+        "type": this.type,
         };
     }
 
@@ -1557,6 +1848,24 @@ export class Ensemble{
 
 }
 
+export class FullCast {
+    type: string;
+    constructor() {
+        this.type = "FullCast";
+    }
+
+    toMap(): object {
+        return {
+        "type": this.type,
+        };
+    }
+
+    public static fromMap(map: DocumentData): FullCast {
+        const fullCast = new FullCast();
+        return fullCast;
+    }
+}
+
 export class EnsembleSection {
     includeAll: boolean;
     includeMale: boolean;
@@ -1564,6 +1873,7 @@ export class EnsembleSection {
     includeCustom: boolean;
     customActors: Actor[];
     lastUpdated: number;
+    type: string;
 
     constructor() {
         this.includeAll = false;
@@ -1572,6 +1882,7 @@ export class EnsembleSection {
         this.includeCustom = false;
         this.customActors = [];
         this.lastUpdated = 0;
+        this.type = "EnsembleSection";
     }
 
     public static fromBlank(includeAll: boolean, includeMale: boolean, includeFemale: boolean, includeCustom: boolean, customActors: Actor[],lastUpdated: number): EnsembleSection {
@@ -1592,7 +1903,7 @@ export class EnsembleSection {
         "includeFemale": this.includeFemale,
         "includeCustom": this.includeCustom,
         "customActors": this.customActors.map((e) => e.toMap()) ?? [],
-
+        "type": this.type,
         "lastUpdated": this.lastUpdated,
         };
     
@@ -1624,12 +1935,14 @@ export class ShowGroup {
     characters: (Character | EnsembleSection)[];
     showGroupId: number;
     lastUpdated: number;
+    type: string;
 
     constructor() {
         this.name = "";
         this.characters = [];
         this.showGroupId = 0;
         this.lastUpdated = 0;
+        this.type = "ShowGroup";
     }
 
     public static fromBlank(name: string, characters: (Character  | EnsembleSection)[],showGroupId: number ,lastUpdated: number): ShowGroup {
@@ -1647,6 +1960,7 @@ export class ShowGroup {
         "characters": this.characters.map((e) => e.toMap()),
         "showGroupId": this.showGroupId,
         "lastUpdated": this.lastUpdated,
+        "type": this.type,
         };
     }
 
@@ -1656,7 +1970,7 @@ export class ShowGroup {
         const characters = map.characters;
         const formattedCharacters: (Character  | EnsembleSection)[] =  [];
         for (const character of characters) {
-            if (Object.prototype.hasOwnProperty.call(character, "actor")) {
+            if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
             } else {
                 formattedCharacters.push(EnsembleSection.fromMap(character));
@@ -1704,16 +2018,22 @@ export class ConflictDate {
 
 export class ConflictForm {
     dates: ConflictDate[];
+    deadline: Date;
+
     lastUpdated: number;
 
     constructor() {
         this.dates = [];
         this.lastUpdated = 0;
+        this.deadline = new Date();
+
     }
 
-    public static fromBlank(dates: ConflictDate[], lastUpdated: number): ConflictForm {
+    public static fromBlank(dates: ConflictDate[], deadline: Date,lastUpdated: number): ConflictForm {
         const conflictForm = new ConflictForm();
         conflictForm.dates = dates;
+        conflictForm.deadline = deadline;
+
         conflictForm.lastUpdated = lastUpdated;
         return conflictForm;
     }
@@ -1721,6 +2041,8 @@ export class ConflictForm {
     toMap(): object {
         return {
         "dates": this.dates.map((e) => e.toMap()),
+        "deadline": this.deadline,
+
         "lastUpdated": this.lastUpdated,
         };
     }
@@ -1732,7 +2054,14 @@ export class ConflictForm {
         for (const date of dates) {
             formattedDates.push(ConflictDate.fromMap(date));
         }
+        if (typeof map.deadline === 'string' || map.deadline instanceof Date) {
+            conflictForm.deadline = new Date(map.deadline);
+        } else {
+            conflictForm.deadline = map.deadline.toDate();
+        }
+
         conflictForm.dates = formattedDates;
+
         conflictForm.lastUpdated = map.lastUpdated;
         return conflictForm;
     }
@@ -1746,20 +2075,23 @@ export class ConflictResponseDate {
     from: Date | null;
     to: Date | null;
     canAttend: boolean;
+    note: string;
 
     constructor() {
         this.date = new Date();
         this.from = null;
         this.to = null;
         this.canAttend = false;
+        this.note = "";
     }
 
-    public static fromBlank(date: Date, from: Date | null, to: Date | null, canAttend: boolean): ConflictResponseDate {
+    public static fromBlank(date: Date, from: Date | null, to: Date | null, canAttend: boolean, note: string): ConflictResponseDate {
         const conflictResponseDate = new ConflictResponseDate();
         conflictResponseDate.date = date;
         conflictResponseDate.from = from;
         conflictResponseDate.to = to;
         conflictResponseDate.canAttend = canAttend;
+        conflictResponseDate.note = note;
         return conflictResponseDate;
     }
 
@@ -1769,6 +2101,7 @@ export class ConflictResponseDate {
         "from": this.from != null ? this.from.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
         "to": this.to != null ? this.to.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
         "canAttend": this.canAttend,
+        "note": this.note,
         };
     }
 
@@ -1800,6 +2133,7 @@ export class ConflictResponseDate {
         conflictResponseDate.from = map.from != "" ? this._parseTime(map.from) : null;
         conflictResponseDate.to = map.to != "" ? this._parseTime(map.to) : null;
         conflictResponseDate.canAttend = map.canAttend;
+        conflictResponseDate.note = map.note;
         return conflictResponseDate;
     }
 }
@@ -1862,4 +2196,305 @@ export class ConflictResponse {
 
 
 
+}
+
+export class FBFile {
+    name: string;
+    url: string;
+
+    constructor() {
+        this.name = "";
+        this.url = "";
+    }
+
+    public static fromBlank(name: string, url: string): FBFile {
+        const file = new FBFile();
+        file.name = name;
+        file.url = url;
+        return file;
+    }
+
+    toMap(): object {
+        return {
+        "name": this.name,
+        "url": this.url,
+        };
+    }
+
+    public static fromMap(map: DocumentData): FBFile {
+        const file = new FBFile();
+        file.name = map.name;
+        file.url = map.url;
+        return file;
+    }
+}
+
+export class Resource {
+    name: string;
+    description: string;
+    type: "link" | "image" | "video";
+    link?: string;
+    file?: FBFile;
+
+    constructor() {
+        this.name = "";
+        this.description = "";
+        this.type = "link";
+        this.link = "";
+        this.file = new FBFile();
+    }
+
+    public static fromBlank(name: string, description: string, type: "link" | "image" | "video", link: string, file?: FBFile): Resource {
+        const resource = new Resource();
+        resource.name = name;
+        resource.description = description;
+        resource.type = type;
+        resource.link = link;
+        resource.file = file;
+        return resource;
+    }
+
+    toMap(): object {
+        return {
+        "name": this.name,
+        "description": this.description,
+        "type": this.type,
+        "link": this.link,
+        "file":  this.file != undefined ? this.file.toMap(): "null",
+        };
+    }
+
+    public static fromMap(map: DocumentData): Resource {
+        const resource = new Resource();
+        resource.name = map.name;
+        resource.description = map.description;
+        resource.type = map.type;
+        resource.link = map.link;
+        resource.file = map.file != "null" && map.file ? FBFile.fromMap(map.file) : undefined;
+        return resource;
+    }
+
+
+
+
+}
+
+export class StudentData {
+    uid: string;
+    schoolId: string;
+    rideShareStatus: string;
+    distanceToSchool: number;
+    FCMToken: string;
+    phoneNumber: string;
+    driverStatus: string;
+  
+    searchKey: string;
+    fullname: string;
+    email: string;
+    distanceToSchoolMembers: {[key: string]: number};
+    homeLocation: Location;
+
+    accountType: string;
+  
+    constructor() {
+        this.uid = "";
+        this.schoolId = "";
+        this.rideShareStatus = "";
+        this.distanceToSchool = 0;
+        this.FCMToken = "";
+        this.accountType = "";
+        this.phoneNumber = "";
+        this.driverStatus = "";
+        this.searchKey = "";
+        this.fullname = "";
+        this.email = "";
+        this.distanceToSchoolMembers = {};
+        this.homeLocation = new Location();
+    }
+
+    public static fromBlank(uid: string, schoolId: string, rideShareStatus: string, distanceToSchool: number, FCMToken: string, accountType: string, phoneNumber: string, driverStatus: string, searchKey: string, fullname: string, email: string, distanceToSchoolMembers: {[key: string]: number}, homeLocation: Location): StudentData {
+        const studentData = new StudentData();
+        studentData.uid = uid;
+        studentData.schoolId = schoolId;
+        studentData.rideShareStatus = rideShareStatus;
+        studentData.distanceToSchool = distanceToSchool;
+        studentData.FCMToken = FCMToken;
+        studentData.accountType = accountType;
+        studentData.phoneNumber = phoneNumber;
+        studentData.driverStatus = driverStatus;
+        studentData.searchKey = searchKey;
+        studentData.fullname = fullname;
+        studentData.email = email;
+        studentData.distanceToSchoolMembers = distanceToSchoolMembers;
+        studentData.homeLocation = homeLocation;
+        return studentData;
+    }
+
+    toMap(): object {
+        return {
+        "uid": this.uid,
+        "schoolId": this.schoolId,
+        "rideShareStatus": this.rideShareStatus,
+        "distanceToSchool": this.distanceToSchool,
+        "FCMToken": this.FCMToken,
+        "accountType": this.accountType,
+        "phoneNumber": this.phoneNumber,
+        "driverStatus": this.driverStatus,
+        "searchKey": this.searchKey,
+        "fullname": this.fullname,
+        "email": this.email,
+        "distanceToSchoolMembers": this.distanceToSchoolMembers,
+        "homeLocation": this.homeLocation.toMap(),
+        };
+    }
+
+    public static fromMap(map: DocumentData): StudentData {
+        const studentData = new StudentData();
+        studentData.uid = map.uid;
+        studentData.schoolId = map.schoolId;
+        studentData.rideShareStatus = map.rideShareStatus;
+        studentData.distanceToSchool = map.distanceToSchool;
+        studentData.FCMToken = map.FCMToken;
+        studentData.accountType = map.accountType;
+        studentData.phoneNumber = map.phoneNumber;
+        studentData.driverStatus = map.driverStatus;
+        studentData.searchKey = map.searchKey;
+        studentData.fullname = map.fullname;
+        studentData.email = map.email;
+        studentData.distanceToSchoolMembers = map.distanceToSchoolMembers;
+        studentData.homeLocation = Location.fromMap(map.homeLocation);
+        return studentData;
+    }
+  }
+  
+export class TeacherData {
+    uid: string;
+    schoolId: string;
+  
+    FCMToken: string;
+  
+    searchKey: string;
+    fullname: string;
+    email: string;
+  
+    accountType: string;
+    
+    constructor() {
+        this.uid = "";
+        this.schoolId = "";
+        this.FCMToken = "";
+        this.accountType = "";
+        this.searchKey = "";
+        this.fullname = "";
+        this.email = "";
+    }
+
+    public static fromBlank(uid: string, schoolId: string, FCMToken: string, accountType: string, searchKey: string, fullname: string, email: string): TeacherData {
+        const teacherData = new TeacherData();
+        teacherData.uid = uid;
+        teacherData.schoolId = schoolId;
+        teacherData.FCMToken = FCMToken;
+        teacherData.accountType = accountType;
+        teacherData.searchKey = searchKey;
+        teacherData.fullname = fullname;
+        teacherData.email = email;
+        return teacherData;
+    }
+
+    toMap(): object {
+        return {
+        "uid": this.uid,
+        "schoolId": this.schoolId,
+        "FCMToken": this.FCMToken,
+        "accountType": this.accountType,
+        "searchKey": this.searchKey,
+        "fullname": this.fullname,
+        "email": this.email,
+        };
+    }
+
+    public static fromMap(map: DocumentData): TeacherData {
+        const teacherData = new TeacherData();
+        teacherData.uid = map.uid;
+        teacherData.schoolId = map.schoolId;
+        teacherData.FCMToken = map.FCMToken;
+        teacherData.accountType = map.accountType;
+        teacherData.searchKey = map.searchKey;
+        teacherData.fullname = map.fullname;
+        teacherData.email = map.email;
+        return teacherData;
+    }
+  }
+
+  export class MiniUser {
+    name: string;
+    fcmToken: string;
+    uid: string;
+
+    constructor() {
+        this.name = "";
+        this.fcmToken = "";
+        this.uid = "";
+    }
+
+    public static fromBlank(name: string, fcmToken: string, uid: string): MiniUser {
+        const miniUser = new MiniUser();
+        miniUser.name = name;
+        miniUser.fcmToken = fcmToken;
+        miniUser.uid = uid;
+        return miniUser;
+    }
+
+    toMap(): object {
+        return {
+        "name": this.name,
+        "fcmToken": this.fcmToken,
+        "uid": this.uid,
+        };
+    }
+
+    public static fromMap(map: DocumentData): MiniUser {
+        const miniUser = new MiniUser();
+        miniUser.name = map.name;
+        miniUser.fcmToken = map.fcmToken;
+        miniUser.uid = map.uid;
+        return miniUser;
+    }
+  }
+
+export function intToHexColor(value: number) {
+    let hexString;
+    
+    if (value > 0xFFFFFF) {
+        // Handle ARGB (32-bit with alpha)
+        let alpha = ((value >> 24) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+        let red = ((value >> 16) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+        let green = ((value >> 8) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+        let blue = (value & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+        hexString = `#${alpha}${red}${green}${blue}`;
+    } else {
+        // Handle RGB (24-bit without alpha)
+        hexString = value.toString(16).toUpperCase().padStart(6, '0');
+        hexString = `#${hexString}`;
+    }
+
+    return hexString;
+}
+
+export function addAlpha(color, opacity) {
+    // coerce values so it is between 0 and 1.
+    const _opacity = Math.round(Math.min(Math.max(opacity ?? 1, 0), 1) * 255);
+    return color + _opacity.toString(16).toUpperCase();
+}
+
+export function hexToInt(hex: string) {
+    // Remove the '#' if present
+    if (hex.startsWith('#')) {
+        hex = hex.slice(1);
+    }
+
+    // Parse the hex string into an integer
+    const intValue = parseInt(hex, 16);
+
+    return intValue;
 }

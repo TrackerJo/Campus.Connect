@@ -35,7 +35,7 @@ function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
                         return
                     }
                    
-                    window.location.href = `/Activity/?activityId=${activity.id}`
+                    window.location.href = `/Campus.Connect/Activity/?activityId=${activity.id}`
 
                     
                 }}>
@@ -73,7 +73,7 @@ function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
                         alert("Invalid activity code")
                         return
                     }
-                    window.location.href = `/Activity/?activityId=${activity.id}`
+                    window.location.href = `/Campus.Connect/Activity/?activityId=${activity.id}`
                 }}>Join</button>
                 </>}
 

@@ -18,7 +18,7 @@ import { useRef, useState } from 'react'
 
 
 import './calendar.css'
-import { ActivityEvent, CalendarEvent, ConflictResponse, Event, TheaterEvent } from '../constants'
+import { ActivityEvent, addAlpha, CalendarEvent, ConflictResponse, Event, intToHexColor, TheaterEvent } from '../constants'
 import { getAllUserEvents, getUserConflictFormResponse } from '../firebase/db'
 import Calendar from '../components/Calendar'
 
@@ -41,6 +41,7 @@ function App() {
             setEvents(fetchedEvents)
             const calendarEventsList: CalendarEvent[] = []
             for(const event of fetchedEvents){
+                const isTheaterEvent = event instanceof TheaterEvent
                 let currentConflictResponse: ConflictResponse | null = null
                 if(event instanceof TheaterEvent){
                    //Check if the conflict response is already in the conflictResponses array
@@ -98,12 +99,14 @@ function App() {
                 }
 
                 calendarEventsList.push({
-                    title: event.name + (partialConflict ? ` (Excused from ${partialConflictStartDate!.toLocaleTimeString()} to ${partialConflictEndDate!.toLocaleTimeString()}` : ''),
+                    title: event.name,
                     start: startDate.toISOString(),
                     end: endDate.toISOString(),
+                    
                     isAllDay: false,
                     interactive: true,
-                    color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' :  'blue',
+                    description: event.info + (partialConflict ? ` \n(Excused from ${partialConflictStartDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to ${partialConflictEndDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : hasConflict && !partialConflict ? " \n(Fully Excused)" : ''),
+                    color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' : isTheaterEvent ? addAlpha(intToHexColor(event.rehearsalLocation.color), 0.8) : 'blue',
                     id: event.id!,
                     
                 })
@@ -133,7 +136,7 @@ function App() {
         <div className='center'>
             <Calendar events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventClick={() => {}}/>
             <button className='ActionBtn' onClick={() => {
-                window.location.href = '/Dashboard/'
+                window.location.href = '/Campus.Connect/'
             }}>
                 Back
             </button>

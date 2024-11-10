@@ -170,7 +170,11 @@
 
 .conflicts {
   max-height: 65vh;
+  width: 80vw;
   overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .conflict-response{
@@ -212,4 +216,16 @@
 .conflict-response-dates{
   max-height: 50vh;
   overflow-y: auto;
+}
+
+.quick-actions{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  margin: 1em;
+}
+
+.ActionBtn {
+  display: inline;
 }

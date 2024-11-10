@@ -1,0 +1,172 @@
+import "./Broadcast_Message_Dialog.css";
+
+import { Activity, ActivityGroup, ActivityMember, Actor, BroadcastMessageDialogProps, Message, TheaterActivity } from "../constants";
+import { useEffect, useRef, useState } from "react";
+import { getActivity, sendActivityGCMessage } from "../firebase/db";
+import AddUserDialog from "./Add_User_Dialog";
+import AddFromPlayDialog from "./Add_From_Play_Dialog";
+import AddFromGroupDialog from "./Add_From_Group_Dialog";
+
+
+function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refresh }: BroadcastMessageDialogProps) {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const addMemberDialogRef = useRef<HTMLDialogElement>(null)
+    const addFromPlayRef = useRef<HTMLDialogElement>(null)
+    const addFromGroupRef = useRef<HTMLDialogElement>(null)
+
+    const [activity, setActivity] = useState<Activity | TheaterActivity | null>(null)
+    const [members, setMembers] = useState<(ActivityMember)[]>([])
+    const [addedMembers, setAddedMembers] = useState<(ActivityMember)[]>([])
+    const [activityGroups, setActivityGroups] = useState<(ActivityGroup)[]>([])
+
+
+
+
+    useEffect(() => {
+        //Get activity
+        if (!activityId) {
+            return
+        }
+        getActivity(activityId).then((activity: Activity | TheaterActivity| null) => {
+            setActivity(activity)
+            if (activity != null) {
+                if(activity instanceof TheaterActivity){
+                    const students = activity.students.map((student) => {
+                        return ActivityMember.fromBlank(student.name, student.userId, student.FCMToken)
+                    })
+
+                    setMembers([...activity.parents, ...students])
+                    setActivityGroups(activity.groups)
+
+                } else {
+                    setMembers([...activity.parents, ...activity.students])
+                    setActivityGroups(activity.groups)
+                }
+            }
+        })
+    }, [activityId])
+
+    return (
+        <>
+            <dialog className="broadcast-message-dialog" ref={dialogRef}>
+                <div className="broadcast-message-dialog-inner">
+                    <h1 className="broadcast-message-dialog-title">Broadcast message</h1>
+                    <input type="text" placeholder="Message" className="broadcast-message-dialog-input" ref={inputRef}/>
+                    {addedMembers.length > 0 && <> <h2 className="broadcast-message-dialog-members-title">Recipient: </h2>
+                    <div className="broadcast-message-dialog-members">
+                        {addedMembers.map((member, index) => {
+                            return <div key={index} className="broadcast-message-dialog-member">
+                                <label htmlFor="">{ member.memberName}</label>
+                                <button className="broadcast-message-dialog-remove-member-btn" onClick={() => {
+                                    setAddedMembers(addedMembers.filter((addedMember) => addedMember != member))
+                                }}>Remove</button>
+                            </div>
+                        })}
+
+                    </div> </>}
+                    <button className="broadcast-message-dialog-add-member-btn" onClick={() => {
+                        addMemberDialogRef.current!.showModal()
+                    }}>Add Recipient</button>
+                    {activityGroups.length > 0 && <button className="broadcast-message-dialog-add-group-btn" onClick={() => {
+                        addFromGroupRef.current!.showModal()
+                    }}>
+                        Add from Group
+                    </button>}
+                    {
+                        activity instanceof TheaterActivity ? (
+                            <button className="broadcast-message-dialog-add-play-btn" onClick={() => {
+                                addFromPlayRef.current!.showModal()
+                            }}>
+                                Add from Play
+                            </button>
+                        ) : null
+                    }
+                    <button className="broadcast-message-dialog-create-btn" onClick={async () => {
+                        if(inputRef.current!.value == ""){
+                            alert("Please enter a message to broadcast")
+                            return
+                        }
+                        if(addedMembers.length == 0){
+                            alert("Please add at least one recipient")
+                            return
+                        }
+                        const messageObj = Message.fromBlank(inputRef.current!.value, userData!.uid, userData!.fullname,userData!.FCMToken,"", activityId,'', new Date(), [userData!.uid] )
+                        for (let i = 0; i < addedMembers.length; i++) {
+                            const currentMember = addedMembers[i];
+                            messageObj.gcId = currentMember.memberUid
+                            await sendActivityGCMessage(activityId, currentMember.memberUid, messageObj, currentMember)
+                            
+                        }
+                        refresh()
+                        close()
+                    }}>Send</button>
+                    <button onClick={close} className="ActionBtn">
+                        Close
+                    </button>
+                </div>
+            </dialog>
+            <AddUserDialog members={members} dialogRef={addMemberDialogRef} addedMembers={addedMembers} close={() => { 
+                addMemberDialogRef.current!.close()
+            }} addUser={(newMember: ActivityMember | Actor) => {
+                if(newMember instanceof Actor){
+                    newMember = ActivityMember.fromBlank(newMember.name, newMember.userId, newMember.FCMToken)
+                }
+                const newMembers = [...addedMembers, newMember]
+                const addedMemberIds: string[] = [];
+                const newMembersNoDuplicates = newMembers.filter((member) => {
+                    if(addedMemberIds.includes(member.memberUid)){
+                        return false
+                    }
+                    addedMemberIds.push(member.memberUid)
+                    return true
+                })
+                setAddedMembers(newMembersNoDuplicates)
+            }} />
+
+            <AddFromGroupDialog dialogRef={addFromGroupRef} close={() => {
+                addFromGroupRef.current!.close()
+            } } addMembers={(members: ActivityMember[]) => {
+                const newMembers = [...addedMembers, ...members]
+                const addedMemberIds: string[] = [];
+                const newMembersNoDuplicates = newMembers.filter((member) => {
+                    if(addedMemberIds.includes(member.memberUid)){
+                        return false
+                    }
+                    addedMemberIds.push(member.memberUid)
+                    return true
+                })
+                setAddedMembers(newMembersNoDuplicates)
+                addFromGroupRef.current!.close()
+            } } activityGroups={activityGroups} />
+
+            <AddFromPlayDialog dialogRef={addFromPlayRef} close={() => {
+                addFromPlayRef.current!.close()
+            }} addMembers={(actors: Actor[]) => {
+                //Convert actors to members
+                const members = actors.map((actor) => {
+                    return ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken)
+                })
+                const newMembers = [...addedMembers, ...members]
+                const addedMemberIds: string[] = [];
+                const newMembersNoDuplicates = newMembers.filter((member) => {
+                    if(addedMemberIds.includes(member.memberUid)){
+                        return false
+                    }
+                    addedMemberIds.push(member.memberUid)
+                    return true
+                })
+                setAddedMembers(newMembersNoDuplicates)
+
+                //Remove duplicates 
+
+                addFromPlayRef.current!.close()
+
+            }} setName={(name: string) => {
+                // inputRef.current!.value = name
+            }} activityId={activityId}/>
+
+        </>
+    );
+}
+
+export default BroadcastMessageDialog;

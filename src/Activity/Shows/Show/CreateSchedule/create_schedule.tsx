@@ -1,12 +1,12 @@
 
-import { act, StrictMode, useEffect, useState } from 'react'
+import {  StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import '../../../../index.css'
 
 import 'react-calendar/dist/Calendar.css';
 import './create_schedule.css'
-import { Activity, Character, EnsembleSection, Show, ShowGroup, TheaterEvent, Location, EventDate, ActivityMember, CalendarEvent, TheaterActivity, ConflictResponse, DateConflict } from '../../../../constants';
+import { Activity, Character, EnsembleSection, Show, ShowGroup, TheaterEvent, Location, EventDate, ActivityMember, CalendarEvent, TheaterActivity, DateConflict, TheaterLocation, intToHexColor, addAlpha, FullCast } from '../../../../constants';
 import { addActivityTheaterEvent, deleteActivityTheaterEvent, editActivityTheaterEvent, getActivity, getActivityShow, getActivityTheaterEvents, getActvityShowConflictFormResponses } from '../../../../firebase/db';
 import ActDisplayTile from '../../../../components/Act_Display_Tile';
 import SongDisplayTile from '../../../../components/Song_Display_Tile';
@@ -21,6 +21,7 @@ import CharacterTile from '../../../../components/Character_Tile';
 import EnsembleSectionTile from '../../../../components/Ensemble_Section_Tile';
 import ShowGroupTile from '../../../../components/Show_Group_Tile';
 import ConflictDisplayTile from '../../../../components/Conflict_Display_Tile';
+import FullCastTile from '../../../../components/Full_Cast_Tile';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -46,7 +47,7 @@ function App() {
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [theaterEvents, setTheaterEvents] = useState<TheaterEvent[]>([])
     const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
-    const [characters, setCharacters] = useState<(Character | ShowGroup | EnsembleSection)[]>([])
+    const [characters, setCharacters] = useState<(Character | ShowGroup | EnsembleSection | FullCast)[]>([])
     const [addedEnsemble, setAddedEnsemble] = useState<boolean>(false)
     const [conflicts, setConflicts] = useState<DateConflict[]>([])
     const [currentConflicts, setCurrentConflicts] = useState<DateConflict[]>([])
@@ -54,6 +55,7 @@ function App() {
     const [viewingDateForConflicts, setViewingDateForConflicts] = useState<Date | null>(null)
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const [editEvent, setEditEvent] = useState<TheaterEvent | null>(null)
+    const [rehearsalLocation, setRehearsalLocation] = useState<TheaterLocation | undefined>()
 
 
     useEffect(() => {
@@ -66,6 +68,7 @@ function App() {
                 if(activity instanceof Activity)
                     return
                 setActivity(activity)
+                setRehearsalLocation(activity?.rehearsalLocations[0])
 
             });
         }
@@ -112,14 +115,17 @@ function App() {
                 endDate.setFullYear(event.date.date.getFullYear())
                 console.log(startDate)
                 console.log(endDate)
-
+                console.log(event.rehearsalLocation.color)
+                console.log(addAlpha(intToHexColor(event.rehearsalLocation.color), 0))
+                console.log(addAlpha(intToHexColor(event.rehearsalLocation.color), 1))
                 calendarEvents.push({
                     title: event.name,
                     start: startDate.toISOString(),
                     end: endDate.toISOString(),
                     isAllDay: false,
                     interactive: true,
-                    color: "blue",
+                    color: addAlpha(intToHexColor(event.rehearsalLocation.color), 0.8),
+                    description: "Location: " + event.rehearsalLocation.name + "\n" + event.info,
                     id: event.id,
                     
                 })
@@ -188,6 +194,7 @@ function App() {
                         setEndTime(theaterEvent.date.to)
                         setEndTimeString(theaterEvent.date.to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
                         setSelectedLocation(theaterEvent.location)
+                        setRehearsalLocation(theaterEvent.rehearsalLocation)
                         setCharacters(theaterEvent.characters)
                         setIsEditing(true)
                         setType(theaterEvent.theaterEventType as "song" | "dance" | "scene" | "custom")
@@ -261,7 +268,7 @@ function App() {
             </div>
             
             <button className='ActionBtn' onClick={() => {
-                window.location.href = "/activity/shows/show/?activityId=" + activityId + "&showId=" + showId
+                window.location.href = "/Campus.Connect/Activity/Shows/Show/?activityId=" + activityId + "&showId=" + showId
             }}>
                 Back
             </button>
@@ -299,31 +306,43 @@ function App() {
                                 const actorsUIDs: string[] = []
                                 for(const character of scene.characters){
                                     if(character instanceof Character){
-                                        actorsUIDs.push(character.actor!.userId)
+                                        if(actorsUIDs.includes(character.actor!.userId)){
+                                            actorsUIDs.push(character.actor!.userId)
+                                        }
                                     } else if(character instanceof ShowGroup){
                                         for(const showCharacter of character.characters){
                                             if(showCharacter instanceof Character){
-                                                actorsUIDs.push(showCharacter.actor!.userId)
+                                                if(actorsUIDs.includes(showCharacter.actor!.userId)){
+                                                    actorsUIDs.push(showCharacter.actor!.userId)
+                                                }
                                             } else if(showCharacter instanceof EnsembleSection){
                                                 if(showCharacter.includeAll){
                                                     for(const actor of show!.ensemble!.actors){
-                                                        actorsUIDs.push(actor.userId)
+                                                        if(actorsUIDs.includes(actor.userId)){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
                                                     }
                                                 } else if(showCharacter.includeMale){
                                                     for(const actor of show!.ensemble!.actors){
                                                         if(actor.gender == "male"){
-                                                            actorsUIDs.push(actor.userId)
+                                                            if(actorsUIDs.includes(actor.userId)){
+                                                                actorsUIDs.push(actor.userId)
+                                                            }
                                                         }
                                                     }
                                                 } else if(showCharacter.includeFemale){
                                                     for(const actor of show!.ensemble!.actors){
                                                         if(actor.gender == "female"){
-                                                            actorsUIDs.push(actor.userId)
+                                                            if(actorsUIDs.includes(actor.userId)){
+                                                                actorsUIDs.push(actor.userId)
+                                                            }
                                                         }
                                                     }
                                                 } else if(showCharacter.includeCustom){
                                                     for(const actor of showCharacter.customActors){
-                                                        actorsUIDs.push(actor.userId)
+                                                        if(actorsUIDs.includes(actor.userId)){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
                                                     }
                                                 }
                                             }
@@ -331,25 +350,45 @@ function App() {
                                     } else if(character instanceof EnsembleSection){
                                         if(character.includeAll){
                                             for(const actor of show!.ensemble!.actors){
-                                                actorsUIDs.push(actor.userId)
+                                                if(actorsUIDs.includes(actor.userId)){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
                                             }
                                         } else if(character.includeMale){
                                             for(const actor of show!.ensemble!.actors){
                                                 if(actor.gender == "male"){
-                                                    actorsUIDs.push(actor.userId)
+                                                    if(actorsUIDs.includes(actor.userId)){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
                                                 }
                                             }
                                         } else if(character.includeFemale){
                                             for(const actor of show!.ensemble!.actors){
                                                 if(actor.gender == "female"){
-                                                    actorsUIDs.push(actor.userId)
+                                                    if(actorsUIDs.includes(actor.userId)){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
                                                 }
                                             }
                                         } else if(character.includeCustom){
                                             for(const actor of character.customActors){
-                                                actorsUIDs.push(actor.userId)
+                                                if(actorsUIDs.includes(actor.userId)){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
                                             }
                                         }
+                                } else if(character instanceof FullCast){
+                                    for(const actor of show!.ensemble!.actors){
+                                        if(actorsUIDs.includes(actor.userId)){
+                                            actorsUIDs.push(actor.userId)
+                                        }
+                                    }
+                                    for(const character of show!.characters){
+                                        if(actorsUIDs.includes(character.actor!.userId)){
+                                            continue
+                                        }
+                                        actorsUIDs.push(character.actor!.userId)
+                                    }
                                 }
                             }
                                 const newConflicts: DateConflict[] = []
@@ -377,31 +416,43 @@ function App() {
                                 const actorsUIDs: string[] = []
                                 for(const character of song.characters){
                                     if(character instanceof Character){
-                                        actorsUIDs.push(character.actor!.userId)
+                                        if(actorsUIDs.includes(character.actor!.userId)){
+                                            actorsUIDs.push(character.actor!.userId)
+                                        }
                                     } else if(character instanceof ShowGroup){
                                         for(const showCharacter of character.characters){
                                             if(showCharacter instanceof Character){
-                                                actorsUIDs.push(showCharacter.actor!.userId)
+                                                if(actorsUIDs.includes(showCharacter.actor!.userId)){
+                                                    actorsUIDs.push(showCharacter.actor!.userId)
+                                                }
                                             } else if(showCharacter instanceof EnsembleSection){
                                                 if(showCharacter.includeAll){
                                                     for(const actor of show!.ensemble!.actors){
-                                                        actorsUIDs.push(actor.userId)
+                                                        if(actorsUIDs.includes(actor.userId)){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
                                                     }
                                                 } else if(showCharacter.includeMale){
                                                     for(const actor of show!.ensemble!.actors){
                                                         if(actor.gender == "male"){
-                                                            actorsUIDs.push(actor.userId)
+                                                            if(actorsUIDs.includes(actor.userId)){
+                                                                actorsUIDs.push(actor.userId)
+                                                            }
                                                         }
                                                     }
                                                 } else if(showCharacter.includeFemale){
                                                     for(const actor of show!.ensemble!.actors){
                                                         if(actor.gender == "female"){
-                                                            actorsUIDs.push(actor.userId)
+                                                            if(actorsUIDs.includes(actor.userId)){
+                                                                actorsUIDs.push(actor.userId)
+                                                            }
                                                         }
                                                     }
                                                 } else if(showCharacter.includeCustom){
                                                     for(const actor of showCharacter.customActors){
-                                                        actorsUIDs.push(actor.userId)
+                                                        if(actorsUIDs.includes(actor.userId)){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
                                                     }
                                                 }
                                             }
@@ -409,25 +460,45 @@ function App() {
                                     } else if(character instanceof EnsembleSection){
                                         if(character.includeAll){
                                             for(const actor of show!.ensemble!.actors){
-                                                actorsUIDs.push(actor.userId)
+                                                if(actorsUIDs.includes(actor.userId)){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
                                             }
                                         } else if(character.includeMale){
                                             for(const actor of show!.ensemble!.actors){
                                                 if(actor.gender == "male"){
-                                                    actorsUIDs.push(actor.userId)
+                                                    if(actorsUIDs.includes(actor.userId)){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
                                                 }
                                             }
                                         } else if(character.includeFemale){
                                             for(const actor of show!.ensemble!.actors){
                                                 if(actor.gender == "female"){
-                                                    actorsUIDs.push(actor.userId)
+                                                    if(actorsUIDs.includes(actor.userId)){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
                                                 }
                                             }
                                         } else if(character.includeCustom){
                                             for(const actor of character.customActors){
-                                                actorsUIDs.push(actor.userId)
+                                                if(actorsUIDs.includes(actor.userId)){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
                                             }
                                         }
+                                } else if(character instanceof FullCast){
+                                    for(const actor of show!.ensemble!.actors){
+                                        if(actorsUIDs.includes(actor.userId)){
+                                            actorsUIDs.push(actor.userId)
+                                        }
+                                    }
+                                    for(const character of show!.characters){
+                                        if(actorsUIDs.includes(character.actor!.userId)){
+                                            continue
+                                        }
+                                        actorsUIDs.push(character.actor!.userId)
+                                    }
                                 }
                             }
                                 const newConflicts: DateConflict[] = []
@@ -455,31 +526,43 @@ function App() {
                                 const actorsUIDs: string[] = []
                                 for(const character of dance.characters){
                                     if(character instanceof Character){
-                                        actorsUIDs.push(character.actor!.userId)
+                                        if(actorsUIDs.includes(character.actor!.userId)){
+                                            actorsUIDs.push(character.actor!.userId)
+                                        }
                                     } else if(character instanceof ShowGroup){
                                         for(const showCharacter of character.characters){
                                             if(showCharacter instanceof Character){
-                                                actorsUIDs.push(showCharacter.actor!.userId)
+                                                if(actorsUIDs.includes(showCharacter.actor!.userId)){
+                                                    actorsUIDs.push(showCharacter.actor!.userId)
+                                                }
                                             } else if(showCharacter instanceof EnsembleSection){
                                                 if(showCharacter.includeAll){
                                                     for(const actor of show!.ensemble!.actors){
-                                                        actorsUIDs.push(actor.userId)
+                                                        if(actorsUIDs.includes(actor.userId)){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
                                                     }
                                                 } else if(showCharacter.includeMale){
                                                     for(const actor of show!.ensemble!.actors){
                                                         if(actor.gender == "male"){
-                                                            actorsUIDs.push(actor.userId)
+                                                            if(actorsUIDs.includes(actor.userId)){
+                                                                actorsUIDs.push(actor.userId)
+                                                            }
                                                         }
                                                     }
                                                 } else if(showCharacter.includeFemale){
                                                     for(const actor of show!.ensemble!.actors){
                                                         if(actor.gender == "female"){
-                                                            actorsUIDs.push(actor.userId)
+                                                            if(actorsUIDs.includes(actor.userId)){
+                                                                actorsUIDs.push(actor.userId)
+                                                            }
                                                         }
                                                     }
                                                 } else if(showCharacter.includeCustom){
                                                     for(const actor of showCharacter.customActors){
-                                                        actorsUIDs.push(actor.userId)
+                                                        if(actorsUIDs.includes(actor.userId)){
+                                                            actorsUIDs.push(actor.userId)
+                                                        }
                                                     }
                                                 }
                                             }
@@ -487,25 +570,43 @@ function App() {
                                     } else if(character instanceof EnsembleSection){
                                         if(character.includeAll){
                                             for(const actor of show!.ensemble!.actors){
-                                                actorsUIDs.push(actor.userId)
+                                                if(actorsUIDs.includes(actor.userId)){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
                                             }
                                         } else if(character.includeMale){
                                             for(const actor of show!.ensemble!.actors){
                                                 if(actor.gender == "male"){
-                                                    actorsUIDs.push(actor.userId)
+                                                    if(actorsUIDs.includes(actor.userId)){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
                                                 }
                                             }
                                         } else if(character.includeFemale){
                                             for(const actor of show!.ensemble!.actors){
                                                 if(actor.gender == "female"){
-                                                    actorsUIDs.push(actor.userId)
+                                                    if(actorsUIDs.includes(actor.userId)){
+                                                        actorsUIDs.push(actor.userId)
+                                                    }
                                                 }
                                             }
                                         } else if(character.includeCustom){
                                             for(const actor of character.customActors){
-                                                actorsUIDs.push(actor.userId)
+                                                if(actorsUIDs.includes(actor.userId)){
+                                                    actorsUIDs.push(actor.userId)
+                                                }
                                             }
+                                         }
+                                } else if(character instanceof FullCast){
+                                    for(const actor of show!.ensemble!.actors){
+                                        actorsUIDs.push(actor.userId)
+                                    }
+                                    for(const character of show!.characters){
+                                        if(actorsUIDs.includes(character.actor!.userId)){
+                                            continue
                                         }
+                                        actorsUIDs.push(character.actor!.userId)
+                                    }
                                 }
                             }
                                 const newConflicts: DateConflict[] = []
@@ -565,6 +666,16 @@ function App() {
                     }
                 </select>
                 <br />
+                <label htmlFor="location">Rehersal Location: </label>
+                <select name="location" id="location" onChange={(e) => {
+                    setRehearsalLocation(activity?.rehearsalLocations.find((location) => location.name == e.target.value))
+                }}>
+                    {activity?.rehearsalLocations.map((location, index) => {
+                        return <option value={location.name} key={index}>{location.name}</option>
+                    })
+                    }
+                </select>
+                <br />
                 {
                     type == "custom" ? <>
                     <label htmlFor="fullCast">Full Cast: </label>
@@ -597,7 +708,7 @@ function App() {
                                 }
                                 if(character instanceof EnsembleSection){
                                     if(type == "custom"){
-                                        return <EnsembleSectionTile key={index} ensembleSection={character} isCustom={true} setEnsembleSection={(newEnsembleSection) => {
+                                        return <EnsembleSectionTile isGroupChatCreate={false} onAddEnsemble={() => {}} key={index} ensembleSection={character} isCustom={true} setEnsembleSection={(newEnsembleSection) => {
                                             setCharacters(characters.map((c, i) => {
                                                 if (i === index) {
                                                     return newEnsembleSection
@@ -626,7 +737,12 @@ function App() {
                                         }} isCreate={false} isAssign={false} actors={activity!.students} hasEnsemble={show!.hasEnsemble} showGroups={show!.showGroups}/>
                                         
                                     }
-                                    return <ShowGroupDisplayTile key={index} showGroup={character} canDelete={true} onDelete={() => {
+                                    return <ShowGroupDisplayTile key={index} showGroup={character} showCharacters={true} canClick={false} onClick={() => {}} canDelete={true} onDelete={() => {
+                                        setCharacters(characters.filter((_c, i) => i !== index))
+                                    }}/>
+                                }
+                                if(character instanceof FullCast) {
+                                    return <FullCastTile key={index} canDelete={true} onDelete={() => {
                                         setCharacters(characters.filter((_c, i) => i !== index))
                                     }}/>
                                 }
@@ -680,6 +796,18 @@ function App() {
                         }
                     } else {
                         for(const character of characters){
+                            if(character instanceof FullCast){
+                                for(const actor of show!.ensemble!.actors){
+                                    targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                }
+                                for(const character of show!.characters){
+                                    if(targets.find((e) => e.memberUid == character.actor!.userId) != undefined){
+                                        continue
+                                    }
+                                    targets.push(ActivityMember.fromBlank(character.actor!.name, character.actor!.userId, character.actor!.FCMToken))
+                                }
+                                break
+                            } 
                             if(character instanceof Character){
                                 if(targets.find((e) => e.memberUid == character.actor!.userId) != undefined){
                                     continue
@@ -771,7 +899,7 @@ function App() {
                             }
                         }
                     }
-                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, showId, characters, targets, type)
+                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, showId, characters, targets, type, rehearsalLocation!)
 
                     console.log(newEvent)
                     if(isEditing){
@@ -787,6 +915,7 @@ function App() {
                             end: endDate.toISOString(),
                             isAllDay: false,
                             interactive: true,
+                            description: "Location: " + newEvent.rehearsalLocation.name + "\n" + newEvent.info,
                             color: "blue",
                             id: newEvent.id,
                         }
@@ -811,6 +940,7 @@ function App() {
                         interactive: true,
                         color: "blue",
                         id: newEvent.id,
+                        description: "Location: " + newEvent.rehearsalLocation.name + "\n" + newEvent.info,
                       
 
                     }

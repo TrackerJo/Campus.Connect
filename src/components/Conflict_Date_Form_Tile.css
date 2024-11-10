@@ -36,3 +36,24 @@
     height: 100%;
 }
 
+.can-attend-cbox {
+    /* Design good looking checkbox */
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 50%;
+    border: 2px solid #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 10px;
+
+}
+
+.can-attend-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin: 1em;
+}

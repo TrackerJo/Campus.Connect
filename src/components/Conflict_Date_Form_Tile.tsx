@@ -14,10 +14,10 @@ function ConflictDateFormTile({conflict, conflictResponseDate, setConflict} :Con
                     <label htmlFor="Character">Date: {conflict.date.date.toDateString()}</label>
                     
                     <br />
-                    <label htmlFor="Actor">From: {conflict.date.from.toLocaleTimeString()} </label>
+                    <label htmlFor="Actor">From: {conflict.date.from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} </label>
                     
                     <br />
-                    <label htmlFor="Actor">To: {conflict.date.to.toLocaleTimeString()}</label>
+                    <label htmlFor="Actor">To: {conflict.date.to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</label>
                    
                     <br />
                    {conflict.moreInfo != "" && <label htmlFor="Character">More Info: {conflict.moreInfo}</label>}
@@ -29,32 +29,38 @@ function ConflictDateFormTile({conflict, conflictResponseDate, setConflict} :Con
                
                 
             </div>
-            <div>
-                <label htmlFor="">Can attend rehersal: </label>
-                <input type="checkbox" checked={conflictResponseDate?.canAttend} onChange={(e) => {
-                    setConflict(ConflictResponseDate.fromBlank(conflict.date.date,null,null, e.target.checked))
+            <div className="can-attend-div">
+                <label htmlFor="can-attend-cbox">Can attend rehersal: </label>
+                <input type="checkbox" className="can-attend-cbox" name="can-attend-cbox" checked={conflictResponseDate?.canAttend} onChange={(e) => {
+                    setConflict(ConflictResponseDate.fromBlank(conflict.date.date,null,null, e.target.checked, ""))
                 
                 }}/>
             </div>
 
            {conflictResponseDate?.from && <> 
-           <br /><div>
+           <div>
 
                 <label htmlFor="">Conflict:</label>
                 <br />
-                <label htmlFor="">From: {conflictResponseDate.from.toLocaleTimeString()}</label>
+                <label htmlFor="">From: {conflictResponseDate.from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</label>
                 <br />
-                <label htmlFor="">To: {conflictResponseDate.to!.toLocaleTimeString()}</label>
+                <label htmlFor="">To: {conflictResponseDate.to!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</label>
+                {conflictResponseDate.note != "" && <br/>}
+                {conflictResponseDate.note != "" && <label htmlFor="">Note: {conflictResponseDate.note}</label>}
 
             </div>
-            <br /></>}
+</>}
             {conflictResponseDate?.canAttend && <button className="ActionBtn" onClick={() => {
+                if(conflictResponseDate?.from){
+                    setConflict(ConflictResponseDate.fromBlank(conflict.date.date, null, null, true, ""))
+                    return
+                }
                 dialogRef.current?.showModal()
-            }}>{conflictResponseDate?.from ? "Edit Conflict" : "Add Conflict"}</button>}
+            }}>{conflictResponseDate?.from ? "Remove Conflict" : "Add Conflict"}</button>}
             
            
             <AddConflictDialog minTime={conflict.date.from} maxTime={conflict.date.to} setConflict={(conflictRes) => {
-                setConflict(ConflictResponseDate.fromBlank(conflict.date.date,conflictRes.from, conflictRes.to, true))
+                setConflict(ConflictResponseDate.fromBlank(conflict.date.date,conflictRes.from, conflictRes.to, true, conflictRes.note))
                 dialogRef.current?.close()
             }} date={conflict.date.date} dialogRef={dialogRef} close={() => {
                 dialogRef.current?.close()

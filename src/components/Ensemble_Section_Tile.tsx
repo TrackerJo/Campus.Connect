@@ -4,7 +4,7 @@ import TrashIcon from "../assets/trash.png"
 import { LegacyRef, useRef } from "react"
 import AssignActorDialog from "./Assign_Actor_Dialog"
 
-function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembleSection, isCreate, isAssign, actors, isCustom} :EnsembleSectionProps){
+function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembleSection, isCreate, isAssign, actors, isCustom, isGroupChatCreate, onAddEnsemble} :EnsembleSectionProps){
     const dialogRef = useRef<HTMLDialogElement>(null)
     return (
         <div className="EnsembleSectionTile">
@@ -13,11 +13,11 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
                     <label htmlFor="Ensemble">Ensemble</label>
                 </div>
                 
-                <div>
+                {!isGroupChatCreate && <div>
                     <img src={TrashIcon} alt="" className="TrashIcon" onClick={() => {
                         removeEnsembleSection()
                     }}/>
-                </div>
+                </div>}
                 
             </div>
             <br />
@@ -42,7 +42,14 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
                   
                 }}/>
                 <br />
-                {(isCreate || isCustom) && <><label htmlFor="">Include Custom Actors: </label>
+                {isGroupChatCreate && 
+                <div className="AddEnsembleBtnDiv">
+                    <button className="ActionBtn" onClick={onAddEnsemble}>
+                    Add Ensemble
+                    </button>
+                </div>
+                }
+                {(isCreate || isCustom) && !isGroupChatCreate && <><label htmlFor="">Include Custom Actors: </label>
                 <input type="radio" name="" id="" checked={ensembleSection.includeCustom} onChange={(val) => {
                     setEnsembleSection(EnsembleSection.fromBlank(false, false, false,val.target.checked,ensembleSection.customActors, ensembleSection.lastUpdated))
                   

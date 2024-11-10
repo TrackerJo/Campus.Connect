@@ -21,7 +21,7 @@ import './shows.css'
 
 
 
-import Dashboard_Tile from '../../components/Dashboard_Tile'
+import DashboardTile from '../../components/Dashboard_Tile'
 import { Show } from '../../constants'
 import { getActivityShows } from '../../firebase/db'
 
@@ -67,8 +67,8 @@ function App() {
             <div className='tiles'>
                 {shows.map((show) => {
                     return (
-                       <Dashboard_Tile title={show.name} description={"View show"} onClick={() => {
-                            window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${show.id}`
+                       <DashboardTile key={show.name} title={show.name} description={"View show"} onClick={() => {
+                            window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${show.id}`
                        } }/>
                     )
                 })}
@@ -77,10 +77,10 @@ function App() {
             <br />
             <div className=''>
                {accountType == "teacher" && <button className='ActionBtn' onClick={() => {
-                    window.location.href = `/Activity/Shows/Add/?activityId=${activityId}`
+                    window.location.href = `/Campus.Connect/Activity/Shows/Add/?activityId=${activityId}`
                 }}>Add Show</button>}
                 <button className='ActionBtn' onClick={() => {
-                    window.location.href = `/Activity/?activityId=${activityId}`
+                    window.location.href = `/Campus.Connect/Activity/?activityId=${activityId}`
                 }}>Back</button>
                 </div>
 

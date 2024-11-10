@@ -7,7 +7,7 @@ import { useEffect, useState } from "react"
 import EnsembleSectionDisplayTile from "./Ensemble_Section_Display_Tile"
 import CharacterDisplayTile from "./Character_Display_Tile"
 
-function ShowGroupDisplayTile({showGroup, onDelete, canDelete } :ShowGroupDisplayTileProps){
+function ShowGroupDisplayTile({showGroup, onDelete, canDelete ,showCharacters, onClick, canClick} :ShowGroupDisplayTileProps){
 
     const [id, setId] = useState(0)
 
@@ -16,10 +16,10 @@ function ShowGroupDisplayTile({showGroup, onDelete, canDelete } :ShowGroupDispla
         setId(Math.floor(Math.random() * 100000))
     }, [])
     return (
-        <div className={"ShowGroupDisplayTile"} id={"show-group-tile-" + showGroup.showGroupId}>
+        <div className={"ShowGroupDisplayTile " + (canClick ? "clickable" : "")} id={"show-group-tile-" + showGroup.showGroupId} onClick={onClick}>
             <div className="header">
                 <div className="ShowGroupNameDiv">
-                    <label htmlFor="ShowGroup">Show Group: {showGroup.name}</label>
+                    <label htmlFor="ShowGroup">{showGroup.name}</label>
                    
                 </div>
                 {canDelete && <div>
@@ -28,8 +28,7 @@ function ShowGroupDisplayTile({showGroup, onDelete, canDelete } :ShowGroupDispla
                     }}/>
                 </div>}
             </div>
-           <br />
-           <div className="characters-section">
+           { showCharacters && <> <br /> <div className="characters-section">
                 <label htmlFor="Characters">Characters: </label>
                 <div className="characters" id={"characters-" + id}>
 
@@ -44,7 +43,7 @@ function ShowGroupDisplayTile({showGroup, onDelete, canDelete } :ShowGroupDispla
                 </div>
 
                 
-                    </div>
+            </div> </>}
 
 
            

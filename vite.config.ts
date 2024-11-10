@@ -15,7 +15,7 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
-  base: '/',
+  base: '/Campus.Connect/',
   build: {
     outDir,
     emptyOutDir: true,
@@ -33,6 +33,9 @@ export default defineConfig({
         createSchedule: resolve(root, 'Activity/Shows/Show/CreateSchedule/index.html'),
         conflictForm: resolve(root, 'Activity/Shows/Show/ConflictForm/index.html'),
         calendar: resolve(root, 'Calendar/index.html'),
+        settings: resolve(root, 'Activity/Settings/index.html'),
+        messages: resolve(root, 'Activity/Messages/index.html'),
+        resources: resolve(root, 'Activity/Shows/Show/Resources/index.html'),
       }
     }
   }

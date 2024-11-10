@@ -18,7 +18,7 @@ import { useRef, useState } from 'react'
 
 
 import './show.css'
-import Dashboard_Tile from '../../../components/Dashboard_Tile'
+import DashboardTile from '../../../components/Dashboard_Tile'
 import { Show } from '../../../constants'
 import { getActivityShow } from '../../../firebase/db'
 
@@ -74,35 +74,41 @@ function App() {
         <div className='center'>
             <div className='tiles'>
               
-                {accountType == "teacher" ? <> <Dashboard_Tile title={"Assign Roles"} description={"Assign roles to characters"} onClick={() => {
+                {accountType == "teacher" ? <> <DashboardTile title={"Assign Roles"} description={"Assign roles to characters"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Activity/Shows/Show/Assign/?activityId=${activityId}&showId=${showId}`
+                    window.location.href = `/Campus.Connect/Activity/Shows/Show/Assign/?activityId=${activityId}&showId=${showId}`
                 } }/>
-                { show?.canCreateSchedule && <Dashboard_Tile title={"Create/Edit Schedule"} description={"Create/Edit the rehersal schedule"} onClick={() => {
+                { show?.canCreateSchedule && <DashboardTile title={"Create/Edit Schedule"} description={"Create/Edit the rehersal schedule"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Activity/Shows/Show/CreateSchedule/?activityId=${activityId}&showId=${showId}`
+                    window.location.href = `/Campus.Connect/Activity/Shows/Show/CreateSchedule/?activityId=${activityId}&showId=${showId}`
                 } }/>}
-                <Dashboard_Tile title={"Conflict Form"} description={"Create/View the conflict form"} onClick={() => {
+                <DashboardTile title={"Conflict Form"} description={"Create/View the conflict form"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Activity/Shows/Show/ConflictForm/?activityId=${activityId}&showId=${showId}`
-                } }/> </> : <>{show?.conflictForm && <Dashboard_Tile title={"Conflict Form"} description={"Complete/View the conflict form"} onClick={() => {
+                    window.location.href = `/Campus.Connect/Activity/Shows/Show/ConflictForm/?activityId=${activityId}&showId=${showId}`
+                } }/> </> : <>{show?.conflictForm && <DashboardTile title={"Conflict Form"} description={"Complete/View the conflict form"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Activity/Shows/Show/ConflictForm/?activityId=${activityId}&showId=${showId}`
+                    window.location.href = `/Campus.Connect/Activity/Shows/Show/ConflictForm/?activityId=${activityId}&showId=${showId}`
                 } }/>} </>}
+                <DashboardTile title={"Resources"} description={"View all resources"} onClick={() => {
+                    //Save show to local storage
+
+                    localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
+                    window.location.href = `/Campus.Connect/Activity/Shows/Show/Resources/?activityId=${activityId}&showId=${showId}`
+                } }/>
                 
                 
             </div>
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Activity/Shows/?activityId=${activityId}`
+                window.location.href = `/Campus.Connect/Activity/Shows/?activityId=${activityId}`
             }}>
                 Back
             </button>

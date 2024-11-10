@@ -33,9 +33,14 @@
 }
 .ShowGroupNameDiv{
     width: 100%;
+    text-align: center;
+
 }
 
 .characters-section{
     width: 100%;
 }
 
+.clickable {
+    cursor: pointer;
+}

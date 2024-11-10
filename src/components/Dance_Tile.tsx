@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react"
-import { Character, Dance, DanceTileProps, EnsembleSection, ShowGroup } from "../constants"
+import { Character, Dance, DanceTileProps, EnsembleSection, FullCast, ShowGroup } from "../constants"
 import CharacterTile from "./Character_Tile"
 import EnsembleSectionTile from "./Ensemble_Section_Tile"
 import "./Dance_Tile.css"
 import ShowGroupTile from "./Show_Group_Tile"
 import TrashIcon from "../assets/trash.png"
+import FullCastTile from "./Full_Cast_Tile"
 
 function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters, showGroups, hasEnsemble} :DanceTileProps){
     const [addedEnsemble, setAddedEnsemble] = useState(false)
+    const [addedFullCast, setAddedFullCast] = useState(false)
     const [id, setId] = useState(0)
 
     useEffect(() => {
@@ -51,7 +53,7 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                             setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index), dance.danceId,dance.lastUpdated))
                         }}/>
                     else if(character instanceof EnsembleSection)
-                        return <EnsembleSectionTile key={index} isAssign={false}  ensembleSection={character} isCreate={isCreate} actors={[]} setEnsembleSection={(newEnsembleSection) => {
+                        return <EnsembleSectionTile key={index} isGroupChatCreate={false} onAddEnsemble={() => {}} isAssign={false}  ensembleSection={character} isCustom={false} isCreate={isCreate} actors={[]} setEnsembleSection={(newEnsembleSection) => {
                             setDance(Dance.fromBlank(dance.name, dance.characters.map((c, i) => {
                                 if (i === index) {
                                     return newEnsembleSection
@@ -77,10 +79,15 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                     } removeShowGroup={() => {
                         setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index),dance.danceId, dance.lastUpdated))
                     }}/>
+                else if (character instanceof FullCast)
+                    return <FullCastTile key={index} canDelete={true} onDelete={() => {
+                        setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index),dance.danceId, dance.lastUpdated))
+                        setAddedFullCast(false)
+                    }}/>
                     })}
                 </div>
                 <br />
-                 <button className="AddCharacterBtn" onClick={() => {
+                 <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
                     const characterId = Math.floor(Math.random() * 100000)
                       setDance(Dance.fromBlank(dance.name, [...dance.characters, Character.fromBlank("Character 1", null,characterId ,0)],dance.danceId, dance.lastUpdated))
                       setTimeout(() => {
@@ -91,7 +98,7 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                     },100)
                 }}>Add Character</button>
                  <br />
-                <button className="AddShowGroupBtn" onClick={() => {
+                <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
                   //Scroll to bottom of characters div
                   const showGroupId = Math.floor(Math.random() * 100000)
                   setDance(Dance.fromBlank(dance.name, [...dance.characters, ShowGroup.fromBlank("Show Group 1", [],showGroupId, 0)],dance.danceId, dance.lastUpdated))
@@ -104,8 +111,23 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                     },100)
                 }}>Add Show Group</button>
                 <br />
+                <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
+                    //Scroll to bottom of characters div
+
+                    setAddedFullCast(true)
+                    setDance(Dance.fromBlank(dance.name, [...dance.characters, new FullCast()],dance.danceId, dance.lastUpdated))
+                    //get last child of characters div and scroll to it
+                    setTimeout(() => {
+                        const element = document.getElementById("characters-"+id)!;
+                        element.scrollTop = element.scrollHeight;
+                        const element2 = document.getElementById("dance-tile-" + dance.danceId)!;
+                        element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                    },100)
+                }}>Add Full Cast</button>
+
+                <br />
                 { hasEnsemble &&
-                    <button className={"AddEnsembleBtn " + (addedEnsemble ? "disabled" : "")} disabled={addedEnsemble} onClick={() => {
+                    <button className={"ActionBtn " + ((addedEnsemble || addedFullCast) ? "disabled" : "")} disabled={addedEnsemble || addedFullCast} onClick={() => {
                     if(addedEnsemble)
                         return
                     setAddedEnsemble(true)

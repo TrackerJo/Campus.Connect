@@ -22,7 +22,7 @@ import './assign_roles.css'
 
 
 
-import { Act, Actor, Character, Dance, Ensemble, Show, ShowGroup, Song } from '../../../../constants'
+import { Act, Actor, Character, Dance, Ensemble, EnsembleSection, Show, ShowGroup, Song } from '../../../../constants'
 import ActTile from '../../../../components/Act_Tile'
 import CharacterTile from '../../../../components/Character_Tile'
 import ShowGroupTile from '../../../../components/Show_Group_Tile'
@@ -48,6 +48,7 @@ function App() {
     const [ensemble, setEnsemble] = useState<Actor[]>([])
     const [settingUp, setSettingUp] = useState<boolean>(false)
     const dialogRef = useRef<HTMLDialogElement>(null)
+    const [hasShowGroup, setHasShowGroup] = useState<boolean>(false)
 
 
     async function assginRoles(){
@@ -231,6 +232,15 @@ function App() {
 
             setCharacters(Show.fromMap(JSON.parse(show)).characters)
             setShowGroups(Show.fromMap(JSON.parse(show)).showGroups)
+            const showGroups = Show.fromMap(JSON.parse(show)).showGroups
+            let showGroupHasEnsemble = false
+            for (let i = 0; i < showGroups.length; i++) {
+                const showGroup = showGroups[i];
+                if(showGroup.characters.map((c) => c instanceof EnsembleSection).includes(true)){
+                    showGroupHasEnsemble = true
+                }
+            }
+            setHasShowGroup(showGroupHasEnsemble)
         }
        
 
@@ -262,10 +272,14 @@ function App() {
                 })}
                 
             </div>
-            
+            { hasShowGroup && <>
             <h2>Assign Show Groups</h2>
             <div className='showGroups' id='create-showGroups'>
                 {showGroups.map((showGroup, index) => {
+                    //dont show if show group has no ensemble
+                    if(!showGroup.characters.map((c) => c instanceof EnsembleSection).includes(true)){
+                        return null
+                    }
                     return <ShowGroupTile key={index} showGroup={showGroup} showGroups={[]} hasEnsemble={false} characters={characters} actors={actors} isAssign={true} setShowGroup={(newShowGroup) => {
                         setShowGroups((prev) => {
                             const newShowGroups = [...prev]
@@ -277,7 +291,7 @@ function App() {
                     }} isCreate={false}/>
                 })}
                
-            </div>
+            </div></>}
             {
                 show?.hasEnsemble && <>
                  <h2>Assign Ensemble</h2>
@@ -301,13 +315,18 @@ function App() {
 
            {isLoading ? <div className="loader"></div> : <button className='CreateShowTemplateBtn' onClick={async () => {
                 await assginRoles()
-                window.location.href = '/Activity/Shows/Show/?activityId=' + activityId + '&showId=' + showId
+                window.location.href = '/Campus.Connect/Activity/Shows/Show/?activityId=' + activityId + '&showId=' + showId
 
 
             }}>
                Save
             </button>
 }
+<button className='ActionBtn' onClick={() => {
+                window.location.href = "/Campus.Connect/Activity/Shows/Show/?activityId=" + activityId + "&showId=" + showId
+            }}>
+                Back
+            </button>
         </div>
 
        {show?.hasEnsemble && !settingUp && <AssignActorDialog dialogRef={dialogRef as LegacyRef<HTMLDialogElement>} keepPastResult={false} actor={new Actor()} addedActors={ensemble} actors={actors} setActor={(actor) => {

@@ -23,7 +23,7 @@ export async function logout(){
     return signOut(auth);
 }
 
-export async function register(email: string, password: string){
+export async function register(email: string, password: string): Promise<string | boolean>{
     return setPersistence(auth, browserLocalPersistence).then( async () => {
 
         try {
@@ -32,7 +32,8 @@ export async function register(email: string, password: string){
 
 
 
-            return true;
+
+            return auth.currentUser!.uid!;
         }
         catch (e){
             return false;
@@ -41,13 +42,15 @@ export async function register(email: string, password: string){
 }
 
 export async function isLoggedIn(setIsLoggedIn: (isLoggedIn: boolean) => void){
+    console.log("Checking if user is logged in");
    onAuthStateChanged(auth, (user) => {
          if(user){
               setIsLoggedIn(true);
+              console.log("User is logged in");
          } else {
               setIsLoggedIn(false);
               //Set the url to the login page
-              window.location.href = "/Auth/login/";
+              window.location.href = "/Campus.Connect/Auth/login/";
          }
     });
    

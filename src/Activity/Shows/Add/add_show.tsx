@@ -78,7 +78,7 @@ function App() {
                 {isLoading ? <div className='loader'></div>: <button className='ActionBtn' onClick={async () => {
                     setIsLoading(true)
                     const id = await createShow(selectedShow!, activityId)
-                    window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`
+                    window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`
                     setIsLoading(false)
 
                 }}>Select Show</button>}
@@ -88,7 +88,7 @@ function App() {
             <br />
             <div className=''>
                 <button className='ActionBtn' onClick={() => {
-                    window.location.href = `/Activity/Shows/CreateTemplate/?activityId=${activityId}`
+                    window.location.href = `/Campus.Connect/Activity/Shows/CreateTemplate/?activityId=${activityId}`
                 }}>Create new Show Template</button>
                 </div>
         </div>

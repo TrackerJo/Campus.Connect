@@ -1,8 +1,12 @@
-import { addDoc, DocumentData, getDocs, getFirestore, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, deleteDoc, DocumentData, FieldValue, getDocs, getFirestore, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { app } from "./init";
 import { collection, doc, getDoc } from "firebase/firestore"; 
-import { Activity, ActivityEvent, ActivityMember, Actor, ConflictForm, ConflictResponse, Event, Show, TheaterActivity, TheaterEvent } from "../constants";
+import { Act, Activity, ActivityEvent, ActivityGC, ActivityMember, Actor, ConflictForm, ConflictResponse, Event, Message, MiniUser, Resource, Show, StudentData, TeacherData, TheaterActivity, TheaterEvent, TheaterLocation } from "../constants";
 import { getCurrentUserId, reauthenticateUser } from "./auth";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { Stream } from "stream";
+import { on } from "events";
+const functions = getFunctions(app);
 const db = getFirestore(app);
 
 const schoolsCollection = collection(db, "schools");
@@ -15,7 +19,7 @@ export const getSchool = async (schoolId: string) => {
 
 export const getSchools = async () => {
     const schoolsSnapshot = await getDocs(schoolsCollection);
-    const schools: DocumentData = [];
+    const schools: DocumentData[] = [];
     schoolsSnapshot.forEach((doc) => {
         schools.push(doc.data());
     });
@@ -173,6 +177,12 @@ export async function deleteActivityTheaterEvent(theaterEvent: TheaterEvent) {
     await updateDoc(eventDoc, {
         deleted: true
     });
+    await httpsCallable(functions, "startDeleteActivityEvent")({
+        activityId: theaterEvent.activityId,
+        eventId: theaterEvent.id,
+        schoolId: schoolId
+    })
+
 }
 
 export async function getActivityShows(activityId: string): Promise<Show[]> {
@@ -198,6 +208,8 @@ export async function saveActivityShowConflictForm(activityId: string, showId: s
     await updateDoc(showDoc, {
         conflictForm: conflictForm.toMap()
     });
+    await httpsCallable(functions, "addConflictFormDeadline")({activityId: activityId, showId: showId, schoolId: schoolId, deadline: conflictForm.deadline.toISOString()    });
+
 }
 
 export async function getCurrentUserAsActor(): Promise<Actor | null> {
@@ -205,7 +217,8 @@ export async function getCurrentUserAsActor(): Promise<Actor | null> {
     const schoolId = localStorage.getItem("schoolId");
     if (!schoolId) return null;
     const schoolDoc = doc(db, "schools", schoolId);
-    const actorDoc = doc(collection(schoolDoc, "students"), user);
+    const studentsCol = collection(schoolDoc, "students");
+    const actorDoc = doc(studentsCol, user);
     const actorSnap = await getDoc(actorDoc);
     if (!actorSnap.exists()) return null;
     return Actor.fromMap(actorSnap.data());
@@ -267,50 +280,77 @@ export async function getShowTemplates(): Promise<Show[]> {
 export async function joinActivity(activityCode: string): Promise<Activity | TheaterActivity | null> {
     const schoolId = localStorage.getItem("schoolId");
     const userId = localStorage.getItem("userId");
-    if (!schoolId || !userId) return null;
+    const accountType = localStorage.getItem("accountType");
+    console.log("SC: " + schoolId + " UID: " + userId + " AT: " + accountType);
+    if (!schoolId || !userId || !accountType) return null;
     const schoolDoc = doc(db, "schools", schoolId);
     const activityQuery = query(collection(schoolDoc, "activities"), where("joinCode", "==", activityCode));
     const activitySnap = await getDocs(activityQuery);
     if (activitySnap.empty) return null;
     const activityDoc = activitySnap.docs[0];
-    const userDoc = doc(collection(schoolDoc, "students"), userId);
+    const userDoc = doc(collection(schoolDoc, accountType == "student" ? "students" : "teachers"), userId);
     const userSnap = await getDoc(userDoc);
+    console.log(userSnap.data());
     if (!userSnap.exists()) return null;
+
    
     if(activityDoc.data().type == "theater") {
-        if(userSnap.data().gender == null) {
+        if(userSnap.data().gender == null && accountType == "student") {
             console.log("needsGender");
     
             localStorage.setItem("needsGender", "true");
         }
-        if(userSnap.data().phoneNumber == "") {
+        if(userSnap.data().phoneNumber == "" && accountType == "student") {
             localStorage.setItem("needsPhoneNumber", "true");
     
         }
-        if(userSnap.data().phoneNumber == "" || userSnap.data().gender == null) {
+        if((userSnap.data().phoneNumber == "" || userSnap.data().gender == null) && accountType == "student") {
             return null;
         }
-        await updateDoc(activityDoc.ref, {
-            studentUids: [...activityDoc.data().studentUids, userId],
-            students: [...activityDoc.data().students, Actor.fromMap(userSnap.data()).toMap()]
-                
-        });
-        return TheaterActivity.fromMap(activityDoc.data());
+        if(accountType == "student") {
+            await updateDoc(activityDoc.ref, {
+                studentUids: [...activityDoc.data().studentUids, userId],
+                students: [...activityDoc.data().students, Actor.fromMap(userSnap.data()).toMap()]
+                    
+            });
+            return TheaterActivity.fromMap(activityDoc.data());
+        } else {
+            console.log("Joining as teacher");
+            console.log(userSnap.data());
+            const activityMember = ActivityMember.fromBlank(userSnap.data().fullname, userSnap.data().uid, userSnap.data().FCMToken);
+            console.log(activityMember.toMap());
+            await updateDoc(activityDoc.ref, {
+                teacherUids: [...activityDoc.data().teacherUids, userId],
+                teachers: [...activityDoc.data().teachers, activityMember.toMap()]
+            });
+            return TheaterActivity.fromMap(activityDoc.data());
+        }
     } else {
-        await updateDoc(activityDoc.ref, {
-            studentUids: [...activityDoc.data().studentUids, userId],
-            students: [...activityDoc.data().students, ActivityMember.fromMap(userSnap.data()).toMap()]
-        });
-        return Activity.fromMap(activityDoc.data());
+        if(accountType == "student") {
+            const activityMember = ActivityMember.fromBlank(userSnap.data().fullname, userSnap.data().uid, userSnap.data().FCMToken);
+            await updateDoc(activityDoc.ref, {
+                studentUids: [...activityDoc.data().studentUids, userId],
+                students: [...activityDoc.data().students, activityMember.toMap()]
+            });
+            return Activity.fromMap(activityDoc.data());
+        } else {
+            const activityMember = ActivityMember.fromBlank(userSnap.data().fullname, userSnap.data().uid, userSnap.data().FCMToken);
+            await updateDoc(activityDoc.ref, {
+                teacherUids: [...activityDoc.data().teacherUids, userId],
+                teachers: [...activityDoc.data().teachers, activityMember.toMap()]
+            });
+            return Activity.fromMap(activityDoc.data());
+        }
     }
 }
 
 export async function updateUserGender(gender: "male" | "female") {
     const schoolId = localStorage.getItem("schoolId");
     const userId = localStorage.getItem("userId");
-    if (!schoolId || !userId) return;
+    const accountType = localStorage.getItem("accountType");
+    if (!schoolId || !userId || !accountType) return;
     const schoolDoc = doc(db, "schools", schoolId);
-    const userDoc = doc(collection(schoolDoc, "students"), userId);
+    const userDoc = doc(collection(schoolDoc, accountType == "student" ? "students" : "teachers"), userId);
     await updateDoc(userDoc, {
         gender: gender
     });
@@ -319,9 +359,10 @@ export async function updateUserGender(gender: "male" | "female") {
 export async function updateUserPhoneNumber(phoneNumber: string) {
     const schoolId = localStorage.getItem("schoolId");
     const userId = localStorage.getItem("userId");
-    if (!schoolId || !userId) return;
+    const accountType = localStorage.getItem("accountType");
+    if (!schoolId || !userId || !accountType) return;
     const schoolDoc = doc(db, "schools", schoolId);
-    const userDoc = doc(collection(schoolDoc, "students"), userId);
+    const userDoc = doc(collection(schoolDoc, accountType == "student" ? "students" : "teachers"), userId);
     await updateDoc(userDoc, {
         phoneNumber: phoneNumber
     });
@@ -386,4 +427,199 @@ export async function getUserConflictFormResponse(activityId: string, showId: st
     return ConflictResponse.fromMap(responsesSnapshot.data());
    
 
+}
+
+export async function updateTheaterActivityRehearsalLocation(activityId: string, theatherLocations: TheaterLocation[]) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    await updateDoc(activityDoc, {
+        rehearsalLocations: theatherLocations.map((location) => location.toMap())
+    });
+
+}
+
+export async function getActivityGCsStream( activityId: string, updateGCs: (gcs: ActivityGC[]) => void) {
+    const schoolId = localStorage.getItem("schoolId");
+    const userId = localStorage.getItem("userId");
+    if (!schoolId) return [];
+    const accountType = localStorage.getItem("accountType");
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    if(accountType == "teacher"){
+
+        onSnapshot(collection(activityDoc, "groupChats"), async (docs) => {
+            const gcs: ActivityGC[] = [];
+            for (const doc of docs.docs) {
+                const gc = ActivityGC.fromMap(doc.data());
+                if(gc.generalTarget == "direct"){
+                    const otherMember = gc.members.find((member) => member.memberUid != userId);
+                    gc.name = otherMember?.memberName || "Unknown";
+                }
+                //Get last message
+                const messagesCol = collection(doc.ref, "messages");
+                const messagesSnapshot = query(messagesCol, orderBy("timeSent", "desc"), limit(1));
+                const messages = await getDocs(messagesSnapshot);
+                if (!messages.empty) {
+                    gc.lastMessage = Message.fromMap(messages.docs[0].data());
+                }
+                
+                gcs.push(gc);
+            }
+            //Sort by last message
+            gcs.sort((a, b) => {
+                if (!a.lastMessage) return 1;
+                if (!b.lastMessage) return -1;
+                return b.lastMessage.timeSent.getTime() - a.lastMessage.timeSent.getTime();
+            });
+            updateGCs(gcs);
+        });
+    }
+   
+} 
+
+export async function getActivityGCMessagesStream(activityId: string, gcId: string, updateMessages: (messages: Message[]) => void) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return [];
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    console.log("Getting messages for " + gcId);
+    const gcDoc = doc(collection(activityDoc, "groupChats"), gcId);
+    const messagesCol = collection(gcDoc, "messages");
+    
+    onSnapshot(messagesCol, (doc) => {
+        const messages: Message[] = [];
+        doc.forEach((message) => {
+            messages.push(Message.fromMap(message.data()));
+        });
+        //Sort messages by date
+        messages.sort((a, b) => {
+            return a.timeSent.getTime() - b.timeSent.getTime();
+        });
+        updateMessages(messages);
+    });
+
+    
+
+}
+
+export async function getUserData() {
+    const schoolId = localStorage.getItem("schoolId");
+    const userId = localStorage.getItem("userId");
+    const accountType = localStorage.getItem("accountType");
+    if (!schoolId || !userId) return null;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const userDoc = doc(collection(schoolDoc, accountType == "student" ? "students" : "teachers"), userId);
+    const userSnap = await getDoc(userDoc);
+    if (!userSnap.exists()) return null;
+    return userSnap.data();
+}
+
+export async function sendActivityGCMessage(activityId: string, gcId: string,message: Message, recipientData?: ActivityMember) {
+    const schoolId = localStorage.getItem("schoolId");
+    const userId = localStorage.getItem("userId");
+    if (!schoolId || !userId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const gcDoc = doc(collection(activityDoc, "groupChats"), gcId);
+    //Check if document exists
+    const gcSnap = await getDoc(gcDoc);
+    if (!gcSnap.exists()) {
+        if(recipientData == null){
+            return;
+        }
+        //Create group chat
+        const gc = ActivityGC.fromBlank("", recipientData.memberUid, [
+            ActivityMember.fromBlank(message.senderName, message.senderUid, message.senderFCMToken),
+            recipientData
+            
+        ], "direct", activityId);
+
+        const ref = await setDoc(gcDoc, gc.toMap());
+        //Create messages collection
+        const messagesCol = collection(gcDoc, "messages");
+        const messageRef = await addDoc(messagesCol, message.toMap());
+        message.messageId = messageRef.id;
+        await updateDoc(messageRef, {
+            messageId: messageRef.id
+        });
+        return;
+    }
+
+    const messagesCol = collection(gcDoc, "messages");
+    const ref = await addDoc(messagesCol, message.toMap());
+    message.messageId = ref.id;
+    await updateDoc(ref, {
+        messageId: ref.id
+    });
+
+}
+
+export async function createActivityGroupChat(activityGC: ActivityGC) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityGC.activityId);
+    const gcsCol = collection(activityDoc, "groupChats");
+    const ref = await addDoc(gcsCol, activityGC.toMap());
+    activityGC.id = ref.id;
+    await updateDoc(ref, {
+        id: ref.id
+    });
+}
+
+export async function addActivityShowResource(activityId: string, showId: string, resource: Resource) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const showDoc = doc(collection(activityDoc, "shows"), showId);
+   updateDoc(showDoc, {
+         resources: arrayUnion(resource.toMap())
+    });
+}
+
+export async function deleteActivityShowResource(activityId: string, showId: string, resource: Resource) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const showDoc = doc(collection(activityDoc, "shows"), showId);
+    updateDoc(showDoc, {
+        resources: arrayRemove(resource.toMap())
+    });
+}
+
+export async function deleteActivityShowConflictResponse(activityId: string, showId: string, conflictResponse: ConflictResponse) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const showDoc = doc(collection(activityDoc, "shows"), showId);
+    const responsesCol = collection(showDoc, "conflictResponses");
+    const responseDoc = doc(responsesCol, conflictResponse.id);
+    await deleteDoc(responseDoc);
+}
+
+export async function getSchoolUsingCode(type: "student" | "teacher", code: string) {
+    const schoolQuery = query(schoolsCollection, where(type == "student" ? "schoolCode" : "schoolTeacherCode", "==", code));
+    const schoolSnap = await getDocs(schoolQuery);
+    if (schoolSnap.empty) return null;
+    return schoolSnap.docs[0].data();
+}
+
+export async function createUser(type: "student" | "teacher", user: StudentData | TeacherData) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const usersCol = collection(schoolDoc, type + "s");
+    await setDoc(doc(usersCol, user.uid), user.toMap());
+
+    //Add user to school
+    const miniUser = MiniUser.fromBlank(user.fullname, user.FCMToken, user.uid);
+    await updateDoc(schoolDoc, {
+        [type + "Uids"]: arrayUnion(user.uid),
+        [type + "s"]: arrayUnion(miniUser.toMap())
+    });
 }

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react"
-import { Character, EnsembleSection, ShowGroup, Song, SongTileProps } from "../constants"
+import { Character, EnsembleSection, FullCast, Scene, ShowGroup, Song, SongTileProps } from "../constants"
 import CharacterTile from "./Character_Tile"
 import EnsembleSectionTile from "./Ensemble_Section_Tile"
 import "./Song_Tile.css"
 import ShowGroupTile from "./Show_Group_Tile"
 import TrashIcon from "../assets/trash.png"
+import FullCastTile from "./Full_Cast_Tile"
 
 function SongTile({song, setSong, isCreate, removeSong, isAssign, characters, showGroups, hasEnsemble} :SongTileProps){
     const [addedEnsemble, setAddedEnsemble] = useState(false)
+    const [addedFullCast, setAddedFullCast] = useState(false)
     const [id, setId] = useState(0)
 
     useEffect(() => {
@@ -51,7 +53,7 @@ function SongTile({song, setSong, isCreate, removeSong, isAssign, characters, sh
                             setSong(Song.fromBlank(song.name, song.characters.filter((c, i) => i !== index),song.songId, song.lastUpdated))
                         }}/>
                     else if(character instanceof EnsembleSection)
-                        return <EnsembleSectionTile key={index} ensembleSection={character} isAssign={isAssign} actors={[]} isCreate={isCreate} setEnsembleSection={(newEnsembleSection) => {
+                        return <EnsembleSectionTile key={index} isGroupChatCreate={false} onAddEnsemble={() => {}} ensembleSection={character} isAssign={isAssign} actors={[]} isCustom={false} isCreate={isCreate} setEnsembleSection={(newEnsembleSection) => {
                             setSong(Song.fromBlank(song.name, song.characters.map((c, i) => {
                                 if (i === index) {
                                     return newEnsembleSection
@@ -77,10 +79,15 @@ function SongTile({song, setSong, isCreate, removeSong, isAssign, characters, sh
                     } removeShowGroup={() => {
                         setSong(Song.fromBlank(song.name, song.characters.filter((c, i) => i !== index),song.songId, song.lastUpdated))
                     }}/>
+                    else if(character instanceof FullCast)
+                        return <FullCastTile key={index} canDelete={true} onDelete={() => {
+                            setAddedFullCast(false)
+                            setSong(Song.fromBlank(song.name, song.characters.filter((c, i) => i !== index), song.songId,song.lastUpdated))
+                        }}/>
                     })}
                 </div>
                 <br />
-                 <button className="AddCharacterBtn" onClick={() => {
+                 <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
                     const characterId = Math.floor(Math.random() * 100000)
                       setSong(Song.fromBlank(song.name, [...song.characters, Character.fromBlank("Character 1", null, characterId ,0)],song.songId, song.lastUpdated))
                       setTimeout(() => {
@@ -91,7 +98,7 @@ function SongTile({song, setSong, isCreate, removeSong, isAssign, characters, sh
                     },100)
                 }}>Add Character</button>
                  <br />
-                <button className="AddShowGroupBtn" onClick={() => {
+                <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
                   //Scroll to bottom of characters div
                   const showGroupId = Math.floor(Math.random() * 100000)
                   setSong(Song.fromBlank(song.name, [...song.characters, ShowGroup.fromBlank("Show Group 1", [],showGroupId, 0)],song.songId, song.lastUpdated))
@@ -104,8 +111,21 @@ function SongTile({song, setSong, isCreate, removeSong, isAssign, characters, sh
                     },100)
                 }}>Add Show Group</button>
                 <br />
+                <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
+                    setAddedFullCast(true)
+                    setSong(Song.fromBlank(song.name, [...song.characters, new FullCast()],song.songId, song.lastUpdated))
+                    //Scroll to bottom
+                    setTimeout(() => {
+                        const element = document.getElementById("characters"+id)!;
+                        element.scrollTop = element.scrollHeight;
+                        const element2 = document.getElementById("song-tile-" + song.songId)!;
+                        element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                    },100)
+
+                }}>Add Full Cast</button>
+                <br />
                 { hasEnsemble &&
-                    <button className={"AddEnsembleBtn " + (addedEnsemble ? "disabled" : "")} disabled={addedEnsemble} onClick={() => {
+                    <button className={"ActionBtn " + ((addedEnsemble || addedFullCast) ? "disabled" : "")} disabled={addedEnsemble || addedFullCast} onClick={() => {
                     if(addedEnsemble)
                         return
                     setAddedEnsemble(true)

@@ -92,3 +92,10 @@
     width: 100%;
     text-align: center;
 }
+
+.AddEnsembleBtnDiv {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

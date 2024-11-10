@@ -63,7 +63,7 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                             setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.filter((c, i) => i !== index),showGroup.showGroupId, showGroup.lastUpdated))
                         }}/>
                     else if(character instanceof EnsembleSection)
-                        return <EnsembleSectionTile key={index} ensembleSection={character} isAssign={isAssign} actors={actors} isCustom={false} isCreate={true} setEnsembleSection={(newEnsembleSection) => {
+                        return <EnsembleSectionTile key={index} isGroupChatCreate={false} onAddEnsemble={() => {}} ensembleSection={character} isAssign={isAssign} actors={actors} isCustom={false} isCreate={true} setEnsembleSection={(newEnsembleSection) => {
                             setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.map((c, i) => {
                                 if (i === index) {
                                     return newEnsembleSection
@@ -82,7 +82,7 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                 </div>
 
                 {isCreate && <>
-                <button className="AddCharacterBtn" onClick={() => {
+                <button className="ActionBtn" onClick={() => {
                         const characterId = Math.floor(Math.random() * 100000)
                         setShowGroup(ShowGroup.fromBlank(showGroup.name, [...showGroup.characters, Character.fromBlank("Character 1", null,characterId ,0)], showGroup.showGroupId,showGroup.lastUpdated))
                         setTimeout(() => {
@@ -93,7 +93,7 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                     <br />
                 
                 { hasEnsemble &&
-                    <button className={"AddEnsembleBtn " + (addedEnsemble ? "disabled" : "")} disabled={addedEnsemble} onClick={() => {
+                    <button className={"ActionBtn " + (addedEnsemble ? "disabled" : "")} disabled={addedEnsemble} onClick={() => {
                         if(addedEnsemble)
                             return
                         setAddedEnsemble(true)

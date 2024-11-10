@@ -9,17 +9,16 @@ import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { CalendarEvent } from './constants'
 import Calendar from './components/Calendar'
-import Dashboard_Tile from './components/Dashboard_Tile'
+import DashboardTile from './components/Dashboard_Tile'
 import { isLoggedIn, logout } from './firebase/auth'
 
 function App() {
   const [loggedIn, setIsLoggedIn] = useState(false)
   useEffect(() => {
-    async function checkAuth() {
-      await isLoggedIn(setIsLoggedIn)
-      // await logout()
-    }
-    checkAuth()
+
+ isLoggedIn(setIsLoggedIn)
+
+
   }, [])
 
  
@@ -31,11 +30,11 @@ function App() {
     </div>
       <div className='center'>
         <div className='tiles'>
-          <Dashboard_Tile title='Calendar' description='View your calendar' onClick={() => {
-            window.location.href = '/Calendar/'
+          <DashboardTile title='Calendar' description='View your calendar' onClick={() => {
+            window.location.href = '/Campus.Connect/Calendar/'
           }}/>
-          <Dashboard_Tile title='Activities' description='View your activities' onClick={() => {
-            window.location.href = '/Activities/'
+          <DashboardTile title='Activities' description='View your activities' onClick={() => {
+            window.location.href = '/Campus.Connect/Activities/'
           }}/>
 
         </div>

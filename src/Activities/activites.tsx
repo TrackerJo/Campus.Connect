@@ -61,7 +61,7 @@ function App() {
                 {activities.map((activity) => {
                     return (
                         <div className='activity' key={activity.id} onClick={() => {
-                            window.location.href = `/Activity/?activityId=${activity.id}`
+                            window.location.href = `/Campus.Connect/Activity/?activityId=${activity.id}`
                         }}>
                             <h1>{activity.name}</h1>
                         </div>
@@ -69,26 +69,26 @@ function App() {
                 })}
             </div>
             <br />
-            {accountType == "teacher" ? 
+            {accountType == "teacher" && 
             <button className='ActionBtn' onClick={() => {}}>
                 Create Activity
-            </button>
-            : <button className='ActionBtn' onClick={() => {
+            </button>}
+            <button className='ActionBtn' onClick={() => {
                 joinActivityDialogRef.current!.showModal()
-            }}>Join Activity</button>}
+            }}>Join Activity</button>
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = '/Dashboard/'
+                window.location.href = '/Campus.Connect/'
             }}>
                 Back
             </button>
         </div>
-        {
-            accountType == "student" &&
+
+
             <JoinActivityDialog dialogRef={joinActivityDialogRef} close={() => {
                 joinActivityDialogRef.current!.close()
             }} />
-        }
+
         
         
         </>

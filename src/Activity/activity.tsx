@@ -21,7 +21,7 @@ import './activity.css'
 import { Activity, TheaterActivity } from '../constants'
 import { getActivity } from '../firebase/db'
 
-import Dashboard_Tile from '../components/Dashboard_Tile'
+import DashboardTile from '../components/Dashboard_Tile'
 
 
 
@@ -65,17 +65,26 @@ function App() {
         <div className='center'>
             <div className='tiles'>
                 {activity?.type == "theater" ? (
-                    <Dashboard_Tile title="Shows" description='View all current shows' onClick={() => {
-                        window.location.href = `/Activity/Shows/?activityId=${activityId}`
+                    <DashboardTile title="Shows" description='View all current shows' onClick={() => {
+                        window.location.href = `/Campus.Connect/Activity/Shows/?activityId=${activityId}`
                     }} />
                 ) : (
-                    <Dashboard_Tile title="Events" description='View all current events' onClick={() => {}} />
+                    <DashboardTile title="Events" description='View all current events' onClick={() => {}} />
                 )}
+                <DashboardTile title="Messages" description='View all messages' onClick={() => {
+                    window.location.href = `/Campus.Connect/Activity/Messages/?activityId=${activityId}`
+                }} />
+                {accountType == "teacher" && (
+                    <DashboardTile title="Settings" description='Change activity settings' onClick={() => {
+                        window.location.href = `/Campus.Connect/Activity/Settings/?activityId=${activityId}`
+                    }} />
+                )}
+               
                 
             </div>
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = '/Activities/'
+                window.location.href = '/Campus.Connect/Activities/'
             }}>
                 Back
             </button>

@@ -32,8 +32,9 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
     }
 
     return (
-        <dialog ref={dialogRef}>
-            <h2>Find Actor</h2>
+        <dialog ref={dialogRef} >
+            <div className="AssignActorDialog">
+                <h2>Find Actor</h2>
             <input type="text" className="ActorSearchInput" value={searchString} onChange={
                 (val) => {
                     setSearchString(val.target.value)
@@ -45,7 +46,6 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
 
                 }
             }/>
-            <br />
 
             <h3>Results</h3>
             <div className="ActorResults">
@@ -74,6 +74,8 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
                 Close
             </button>
 
+            </div>
+            
             
         </dialog>
     );

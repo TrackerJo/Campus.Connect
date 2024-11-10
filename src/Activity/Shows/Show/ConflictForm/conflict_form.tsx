@@ -18,10 +18,13 @@ import { useRef, useState } from 'react'
 
 
 import './conflict_form.css'
-import { ConflictDate, ConflictForm, ConflictResponse, ConflictResponseDate, EventDate, Show } from '../../../../constants'
+import { ActivityMember, Actor, ConflictDate, ConflictForm, ConflictResponse, ConflictResponseDate, EventDate, Show } from '../../../../constants'
 import ConflictDateTile from '../../../../components/Conflict_Date_Tile'
-import { getActvityShowConflictFormResponses, getCurrentUserAsActor, saveActivityShowConflictForm, submitActivityShowConflictForm } from '../../../../firebase/db'
+import { deleteActivityShowConflictResponse, getActvityShowConflictFormResponses, getCurrentUserAsActor, saveActivityShowConflictForm, submitActivityShowConflictForm } from '../../../../firebase/db'
 import ConflictDateFormTile from '../../../../components/Conflict_Date_Form_Tile'
+import AddRecurringConflictDialog from '../../../../components/Add_Recurring_Conflict_Dialog'
+import SimpleConflictResponseDisplayTile from '../../../../components/Simple_Conflict_Response_Date_Display_Tile'
+import AddUserDialog from '../../../../components/Add_User_Dialog'
 
 
 
@@ -47,7 +50,12 @@ function App() {
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
     const [formResponses, setFormResponses] = useState<ConflictResponse[]>([])
     const [excludeWeekends, setExcludeWeekends] = useState<boolean>(true)
-    
+    const [formDeadline, setFormDeadline] = useState<Date | null>(null)
+    const [addingConflictResponse, setAddingConflictResponse] = useState<boolean>(false)
+    const [selectedActor, setSelectedActor] = useState<Actor>()
+    const [members, setMembers] = useState<Actor[]>([])
+    const addActorDialogRef = useRef<HTMLDialogElement>(null)
+    const addRecurringConflictsDialog = useRef<HTMLDialogElement>(null)
     
 
     useEffect(() => {
@@ -65,6 +73,20 @@ function App() {
         const show = localStorage.getItem('show-' + showId)
         if (show) {
             setShow(Show.fromMap(JSON.parse(show)))
+            let allMembers =[...Show.fromMap(JSON.parse(show)).characters.map((character) => {
+                return character.actor!
+            })]
+            if(Show.fromMap(JSON.parse(show)).ensemble) {
+                allMembers = [...allMembers, ...Show.fromMap(JSON.parse(show)).ensemble!.actors]
+            }
+            //Remove duplicates
+            allMembers = allMembers.filter((actor, index, self) =>
+                index === self.findIndex((t) => (
+                    t.userId === actor.userId
+                ))
+            )
+            setMembers(allMembers)
+            
             console.log(Show.fromMap(JSON.parse(show)))
             getActvityShowConflictFormResponses(activityId!, showId!).then((responses) => {
                 setFormResponses(responses)
@@ -77,7 +99,7 @@ function App() {
             if(accountType == "student" && show  && Show.fromMap(JSON.parse(show)).conflictForm) {
                 const conflictResponseDates: ConflictResponseDate[] = []
                 Show.fromMap(JSON.parse(show)).conflictForm!.dates.map((conflictDate) => {
-                    conflictResponseDates.push(ConflictResponseDate.fromBlank(conflictDate.date.date,null,null, false))
+                    conflictResponseDates.push(ConflictResponseDate.fromBlank(conflictDate.date.date,null,null, false,""))
                 })
                 setConflictResponseDates(conflictResponseDates)
             }
@@ -146,6 +168,15 @@ function App() {
                 <input type='checkbox' checked={excludeWeekends} onChange={(e) => {
                     setExcludeWeekends(e.target.checked)
                 }}/>
+                 <br />
+                <label>Form Deadline</label>
+                <input type='date' onChange={(e) => {
+                    const endDate = new Date(e.target.value)
+                    //Add 1 day to the end date
+                    endDate.setDate(endDate.getDate() + 1)
+                    endDate.setHours(0, 0, 0, 0)
+                    setFormDeadline(endDate)
+                }}/>
                 <br />
                 <button className='ActionBtn' onClick={() => {
                     if (startDate && endDate && defaultStartDate && defaultEndDate) {
@@ -196,8 +227,13 @@ function App() {
                     <br />
                     {isLoading ? <div className='loader'></div> : <button className='ActionBtn' onClick={async () => {
                         setIsLoading(true)
+                        if (formDeadline == null) {
+                            alert("Please set a form deadline")
+                            setIsLoading(false)
+                            return
+                        }
                         const newShow = Show.fromMap(show!.toMap())
-                        newShow!.conflictForm = ConflictForm.fromBlank(conflictDates, Date.now())
+                        newShow!.conflictForm = ConflictForm.fromBlank(conflictDates, formDeadline!,Date.now())
                         setShow(newShow)
                         console.log(newShow)
                         await saveActivityShowConflictForm(activityId, showId, newShow.conflictForm)
@@ -216,7 +252,7 @@ function App() {
                  </>}
 
                 </> 
-                :  accountType == "teacher" ? 
+                :  accountType == "teacher" && !addingConflictResponse ? 
                 <>
                 <h2>Conflict Form Responses</h2>
                 <div className='conflicts'>
@@ -236,7 +272,14 @@ function App() {
                                                   <div className='conflict-response-date'>
                                                     {date.date!.toDateString()}
                                                     <br />
-                                                    {date.from!.toLocaleTimeString()} - {date.to!.toLocaleTimeString()}
+                                                    {date.from!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {date.to!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {
+                                                        date.note != "" && <br/>
+                                                    }
+                                                    {
+                                                        date.note != "" && <label htmlFor="Actor">Note: {date.note}</label>
+                                                    }
+                                                   
                                                    
                                                     
                                                   </div>
@@ -251,6 +294,15 @@ function App() {
                                             )
                                         }
                                     })}
+
+                                     <button className='ActionBtn' onClick={async () => {
+                                            const newResponses = [...formResponses]
+                                            newResponses.splice(formResponses.indexOf(response), 1)
+                                            setFormResponses(newResponses)
+                                            await deleteActivityShowConflictResponse(activityId, showId, response)
+                                     }}>Delete</button>
+
+                                     
                                      </div>
                                 </div>
                             )
@@ -258,12 +310,27 @@ function App() {
                     }
 
                 </div>
+                <button className='ActionBtn' onClick={() => {
+                    addActorDialogRef.current?.showModal()
+                }}>Add Conflict Response</button>
                 </>
-                : formResponses.length == 0 ?
+                : (formResponses.length == 0 && show?.formStatus == "open") || addingConflictResponse ?
                 <>
                 <h2>Conflict Form</h2>
-                <br />
                 <p>Select can attend even if you can't make the full rehersal, just add a conflict</p>
+                <div className='quick-actions'>
+                    <button className='ActionBtn' onClick={() => {
+                        const newDates: ConflictResponseDate[] = []
+                        show?.conflictForm?.dates.map((conflictDate) => {
+                            newDates.push(ConflictResponseDate.fromBlank(conflictDate.date.date,null, null, true,""))
+                        })
+                        setConflictResponseDates(newDates)
+                    }}>I can attend all the rehersals</button>
+                    <button className='ActionBtn' onClick={(e) => {
+                        addRecurringConflictsDialog.current?.showModal()
+                    }}>Add recurring conflict</button>
+                </div>
+                
                 <div className='conflicts'>
                     {show?.conflictForm?.dates.map((conflictDate, index) => {
 
@@ -285,7 +352,14 @@ function App() {
                     const newDates = conflictResponseDates.filter((date) => {
                         return (date.canAttend && date.from) || !date.canAttend
                     })
-                    const currentActor = await getCurrentUserAsActor()
+                    
+
+                    let currentActor;
+                    if(addingConflictResponse) {
+                        currentActor = selectedActor
+                    } else {
+                        currentActor = await getCurrentUserAsActor()
+                    }
                     const response: ConflictResponse = ConflictResponse.fromBlank(newDates, "", currentActor!,activityId, showId, Date.now())
                     console.log(response)
                     await submitActivityShowConflictForm(activityId, showId, response)
@@ -293,6 +367,7 @@ function App() {
                     newFormResponses.push(response)
                     setFormResponses(newFormResponses)
                     setIsLoading(false)
+                    setAddingConflictResponse(false)
 
                     // const newShow = Show.fromMap(show!.toMap())
                     // newShow!.conflictForm = ConflictForm.fromBlank(conflictDates, Date.now())
@@ -303,17 +378,79 @@ function App() {
                 }}>
                     Submit Conflict Form
                 </button>}
-                </> : <>
-                <h2>Already Submitted Conflict Form</h2>
+                </>  : show?.formStatus == "open" ? <>
+                <h2>Conflict Form Response</h2>
+                <div className='conflicts'>
+                    {formResponses[0].dates.map((date) => {
+                        return (
+                            <SimpleConflictResponseDisplayTile conflictResponseDate={date}/>
+                        )
+                    })}
+                </div>
+                
 
+                </> :
+                <>
+                <h2>Conflict Form Closed</h2>
                 </>}
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
+                window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
             }}>
                 Close
             </button>
         </div>
+        <AddRecurringConflictDialog dialogRef={addRecurringConflictsDialog} addConflicts={(conflicts) => {
+            const newDates = [...conflictResponseDates]
+            //Replace all dates with the new dates
+            conflicts.map((conflict) => {
+                console.log("FInding conflict")
+                console.log(conflict)
+                if(conflictResponseDates.findIndex((date) => {
+                    console.log("Checking date")
+                    console.log(date.date.toDateString())
+                    return date.date.toDateString() == conflict.date.toDateString()
+                }) == -1) {
+                    return
+                }
+                const index = conflictResponseDates.findIndex((date) => {
+                    return date.date.toDateString() == conflict.date.toDateString()
+                })
+                console.log("Index")
+                console.log(index)
+                console.log("Current Conflicts")
+                console.log(show?.conflictForm?.dates)
+                console.log(conflictResponseDates)
+                const currentConflictDate = show!.conflictForm!.dates[index]
+
+                //check if new conflict from is before current conflict form
+                if(currentConflictDate.date.from && conflict.from! < currentConflictDate.date.from) {
+                    conflict.from = currentConflictDate.date.from
+                }
+                if(currentConflictDate.date.to && conflict.to! > currentConflictDate.date.to) {
+                    conflict.to = currentConflictDate.date.to
+                }
+                newDates[newDates.findIndex((date) => {
+                    return date.date.toDateString() == conflict.date.toDateString()
+                })] = conflict
+
+            })
+            setConflictResponseDates(newDates)
+            addRecurringConflictsDialog.current!.close()
+
+        }} close={() => {
+            addRecurringConflictsDialog.current!.close()
+        }}/>
+        <AddUserDialog dialogRef={addActorDialogRef} close={() => {
+            addActorDialogRef.current!.close()
+        }} members={members} addedMembers={[]} addUser={(newMember: ActivityMember | Actor) => {
+            if(newMember instanceof Actor){
+                setSelectedActor(newMember)
+            }
+            addActorDialogRef.current!.close()
+            setAddingConflictResponse(true)
+            
+        }}/>
         </>
     )
 }

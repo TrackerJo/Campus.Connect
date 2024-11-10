@@ -93,7 +93,7 @@ function App() {
                 })}
                 
             </div>
-            <button className='AddCharacterBtn' onClick={() => {
+            <button className='ActionBtn' onClick={() => {
                 const characterId = Date.now()
                     setCharacters([...characters, Character.fromBlank("", null,characterId, 0)])
                     //Scroll to bottom
@@ -119,7 +119,7 @@ function App() {
                 })}
                
             </div>
-            <button className='AddShowGroupBtn' onClick={() => {
+            <button className='ActionBtn' onClick={() => {
                 const showGroupId = Math.floor(Math.random() * 100000)
                     setShowGroups([...showGroups, ShowGroup.fromBlank("", [],showGroupId, 0)])
                       //Scroll to bottom
@@ -144,7 +144,7 @@ function App() {
                     }}/>
                 })}
                 {/* <br /> */}
-                <button className='AddActBtn' onClick={() => {
+                <button className='ActionBtn' onClick={() => {
                     //Randomly generate act id
                     const actId =  Date.now()
                     setLayout([...layout, Act.fromBlank("Act " + (layout.length + 1), [], actId, 0)])
@@ -169,7 +169,7 @@ function App() {
                     }} isCreate={false}/>
                 })}
                 
-                <button className='AddSongBtn' onClick={() => {
+                <button className='ActionBtn' onClick={() => {
                     const songId =Date.now()
                     setSongs([...songs, Song.fromBlank("Song " + (songs.length + 1),[],songId ,0)])
                     //Scroll into view
@@ -194,7 +194,7 @@ function App() {
                     }} isCreate={false}/>
                 })}
                 
-                <button className='AddDanceBtn' onClick={() => {
+                <button className='ActionBtn' onClick={() => {
                     const danceId =Date.now()
                     setDances([...dances, Dance.fromBlank("Dance " + (dances.length + 1),[],danceId ,0)])
                     //Scroll into view
@@ -208,11 +208,11 @@ function App() {
            {isLoading ? <div className="loader"></div> : <button className='CreateShowTemplateBtn' onClick={async () => {
                 //Create show template\
                 setIsLoading(true)
-                const show = Show.fromBlank(showName, "",layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,Date.now() )
+                const show = Show.fromBlank(showName, "",layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", Date.now() )
                 console.log(show.toMap())
                 await addShowTemplate(show)
                 const id = await createShow(show, activityId)
-                window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`
+                window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`
                 setIsLoading(false)
             }}>
                 Create Show Template

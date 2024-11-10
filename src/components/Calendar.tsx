@@ -7,6 +7,8 @@ import './Calendar.css'
 import EventContextMenu from './Custom_Context_Menu'
 import { EventClickArg } from '@fullcalendar/core/index.js'
 import { useState } from 'react'
+import { EventImpl } from '@fullcalendar/core/internal'
+import CalendarHoverEventTile from './Calendar_Hover_Event_Tile'
 
 
 
@@ -18,6 +20,10 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
   const [contextMenuItems, setContextMenuItems] = useState<ContextMenuItem[]>([])
   const [selectedDay, setSelectedDay] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
+  const [showHoverMenu, setShowHoverMenu] = useState(false)
+  const [hoverMenuTop, setHoverMenuTop] = useState(0)
+  const [hoverMenuLeft, setHoverMenuLeft] = useState(0)
+  const [hoveredEvent, setHoveredEvent] = useState<EventImpl | null>(null)
   
 
   function getEvent() : EventClickArg | undefined {
@@ -162,6 +168,20 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
         allDaySlot={false}
           
           eventMouseEnter={(arg) => {
+            setHoveredEvent(arg.event)
+            setShowHoverMenu(true)
+            //get postion of the hovered event relative to the screen, account for scroll
+            const x = arg.el.getBoundingClientRect().left + arg.el.getBoundingClientRect().width
+           //Make the y so its in the middle of the event, the hover menu has a height of 75px, offest so no matter how much the user scrolls the hover menu will be in the middle of the event
+
+            let y = arg.el.getBoundingClientRect().top + (arg.el.getBoundingClientRect().height / 2) + 62.5
+            y -= 100 - window.scrollY
+            console.log(window.scrollY)
+
+            console.log(x, y)
+            setHoverMenuTop(y)
+            setHoverMenuLeft(x)
+            console.log("Mouse enter")
             if(!canOpenContextMenu){
               return
             }
@@ -202,6 +222,8 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
           }}}
           
           eventMouseLeave={(arg) => {
+            setShowHoverMenu(false)
+            setHoveredEvent(null)
             window.oncontextmenu = null
           }}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -223,7 +245,7 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
           events={events} // alternatively, use the `events` setting to fetch from a feed
         />
         {(event != undefined || showContextMenu) && <EventContextMenu top={top} left={left} items={contextMenuItems} />}
-
+          {showHoverMenu && hoveredEvent && <CalendarHoverEventTile top={hoverMenuTop} left={hoverMenuLeft} event={hoveredEvent} />}
         </div>
     )
 }

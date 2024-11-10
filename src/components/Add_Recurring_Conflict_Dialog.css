@@ -1,0 +1,59 @@
+.conflict-times {
+  display: flex;
+  /* justify-content: space-between; */
+  margin-top: 10px;
+  align-items: center;
+    flex-direction: column;
+}
+
+.conflict-times label {
+    font-size: 1.2em;
+    color: white;
+}
+
+.conflict-times input {
+    font-size: 1.2em;
+    border: 1px solid white;
+    border-radius: 5px;
+    margin: 0 1em;
+}
+
+dialog {
+    text-align: center;
+}
+
+.repeat-days
+{
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    gap: 10px;
+    
+}
+
+.day-of-week
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px;
+    width: 30px;
+}
+
+.day-of-week label
+{
+    font-size: 1.2em;
+    color: white;
+    cursor: pointer;
+}
+
+.day-chosen {
+    background-color: #f5f5f5;
+    color: black;
+    border-radius: 50px;
+}
+
+.day-chosen label {
+    color: black;
+}

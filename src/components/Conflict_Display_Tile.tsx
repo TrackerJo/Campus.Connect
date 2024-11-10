@@ -12,7 +12,7 @@ function ConflictDisplayTile({conflictResponseDate, actor} :ConflictDisplayTileP
                     <label htmlFor="Actor">Date: {conflictResponseDate.date.toDateString()}</label>
                     <br />
                     {
-                        conflictResponseDate.canAttend ? <label htmlFor="Actor">{conflictResponseDate.from!.toLocaleTimeString()} - {conflictResponseDate.to!.toLocaleTimeString()}</label> : 
+                        conflictResponseDate.canAttend ? <label htmlFor="Actor">{conflictResponseDate.from!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {conflictResponseDate.to!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</label> : 
                         <label htmlFor="Actor">Can't Attend</label>
                     }
 
