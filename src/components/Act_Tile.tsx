@@ -50,7 +50,7 @@ function ActTile({act, setAct, isCreate, removeAct, isAssign, characters, showGr
                 </div>
 
                 {act.scenes.length == 0 && <br /> }
-                <button className="AddSceneBtn" onClick={() => {
+                <button className="ActionBtn" onClick={() => {
                     const sceneID: number = Math.floor(Math.random() * 100000)
                     setAct(Act.fromBlank(act.name, [...act.scenes, Scene.fromBlank("Scene " + (act.scenes.length + 1), [],sceneID, 0)],act.actId,act.lastUpdated))
                     setTimeout(() => {

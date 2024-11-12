@@ -10,7 +10,7 @@ function AddConflictDialog({minTime, maxTime, setConflict, dialogRef, close, dat
     }, [minTime, maxTime, date])
 
     return (
-        <dialog ref={dialogRef}>
+        <dialog ref={dialogRef} className="AddConflictDialog">
             <h2>Add Conflict</h2>
             <div className="conflict-times">
                 <label htmlFor="">From: </label>

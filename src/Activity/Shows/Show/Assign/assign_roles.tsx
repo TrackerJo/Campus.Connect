@@ -305,7 +305,7 @@ function App() {
                      })
                }
             </div>
-            <button className='AddActorBtn' onClick={() => {
+            <button className='ActionBtn' onClick={() => {
                 dialogRef.current?.showModal()
             }}>Add Actor</button>
 
@@ -313,7 +313,7 @@ function App() {
             }
             
 
-           {isLoading ? <div className="loader"></div> : <button className='CreateShowTemplateBtn' onClick={async () => {
+           {isLoading ? <div className="loader"></div> : <button className='ActionBtn' onClick={async () => {
                 await assginRoles()
                 window.location.href = '/Campus.Connect/Activity/Shows/Show/?activityId=' + activityId + '&showId=' + showId
 

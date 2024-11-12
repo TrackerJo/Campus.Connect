@@ -49,7 +49,7 @@ function AddUserDialog({members, dialogRef, addUser, close, addedMembers}: AddUs
 
                     }}>
                         <label htmlFor="">{member instanceof ActivityMember ? member.memberName : member.name}</label>
-                        <button className="AddBtn" onClick={() => {
+                        <button className="ActionBtn" onClick={() => {
                             console.log("Added user")
                             addUser(member)
 
@@ -60,7 +60,7 @@ function AddUserDialog({members, dialogRef, addUser, close, addedMembers}: AddUs
                 })}
                 </div>
 
-            <button className="AddUserCloseBtn" onClick={() => {
+            <button className="ActionBtn" onClick={() => {
                 close()
             }
             }>

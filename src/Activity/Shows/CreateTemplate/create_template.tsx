@@ -76,7 +76,11 @@ function App() {
             </div>
             <div className='form-question'>
                 <label htmlFor="ensemble">Has Ensemble: </label>
-                <input type="checkbox" id="ensemble" checked={hasEnsemble} onChange={(e) => setHasEnsemble(e.target.checked)} />
+                <label className="custom-checkbox">
+                    <input type="checkbox" id="ensemble" checked={hasEnsemble} onChange={(e) => setHasEnsemble(e.target.checked)} />
+                    <span className="checkmark"></span>
+                </label>
+                
             </div>
             <h2>Create Characters</h2>
             <div className='characters' id='create-characters'>
@@ -205,7 +209,7 @@ function App() {
                 }}>Add Dance</button>
 
             </div>
-           {isLoading ? <div className="loader"></div> : <button className='CreateShowTemplateBtn' onClick={async () => {
+           {isLoading ? <div className="loader"></div> : <button className='ActionBtn' onClick={async () => {
                 //Create show template\
                 setIsLoading(true)
                 const show = Show.fromBlank(showName, "",layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", Date.now() )
@@ -218,6 +222,11 @@ function App() {
                 Create Show Template
             </button>
 }
+            <button className='ActionBtn' onClick={() => {
+                window.location.href = `/Campus.Connect/Activity/Shows/Add/?activityId=${activityId}`
+            }}>
+                Back
+            </button>
         </div>
 
         

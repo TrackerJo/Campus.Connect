@@ -57,31 +57,31 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
                         {addedMembers.map((member, index) => {
                             return <div key={index} className="broadcast-message-dialog-member">
                                 <label htmlFor="">{ member.memberName}</label>
-                                <button className="broadcast-message-dialog-remove-member-btn" onClick={() => {
+                                <button className="ActionBtn" onClick={() => {
                                     setAddedMembers(addedMembers.filter((addedMember) => addedMember != member))
                                 }}>Remove</button>
                             </div>
                         })}
 
                     </div> </>}
-                    <button className="broadcast-message-dialog-add-member-btn" onClick={() => {
+                    <button className="ActionBtn" onClick={() => {
                         addMemberDialogRef.current!.showModal()
                     }}>Add Recipient</button>
-                    {activityGroups.length > 0 && <button className="broadcast-message-dialog-add-group-btn" onClick={() => {
+                    {activityGroups.length > 0 && <button className="ActionBtn" onClick={() => {
                         addFromGroupRef.current!.showModal()
                     }}>
                         Add from Group
                     </button>}
                     {
                         activity instanceof TheaterActivity ? (
-                            <button className="broadcast-message-dialog-add-play-btn" onClick={() => {
+                            <button className="ActionBtn" onClick={() => {
                                 addFromPlayRef.current!.showModal()
                             }}>
                                 Add from Play
                             </button>
                         ) : null
                     }
-                    <button className="broadcast-message-dialog-create-btn" onClick={async () => {
+                    <button className="ActionBtn" onClick={async () => {
                         if(inputRef.current!.value == ""){
                             alert("Please enter a message to broadcast")
                             return

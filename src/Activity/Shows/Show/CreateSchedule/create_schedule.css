@@ -52,7 +52,7 @@
     height: 100%;
 
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 1em;
     font-weight: 600;
@@ -96,12 +96,7 @@
   
   
 
-  .ActionBtn.disabled{
-    background-color: rgb(245, 245, 245);
-    color: #b3b3b3;
-    cursor: not-allowed;
-
-}
+  
 
 .date-div {
   display: flex;
@@ -136,4 +131,34 @@
 .conflicts{
   max-height: 60vh;
   overflow-y: auto;
+}
+
+.characters {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+@media screen and (max-width: 728px) {
+  .date-div {
+    flex-direction: column !important;
+  }
+
+  #location{
+    max-width:80vw !important;
+  }
+
+  #rehearsal-location{
+    max-width: 80vw !important;
+  }
+  
+}
+
+#location{
+  max-width: 30vw;
+}
+
+#rehearsal-location{
+  max-width: 30vw;
 }

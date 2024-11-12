@@ -1,9 +1,10 @@
 .fc .fc-toolbar-title {
-    font-size: 1.75em
+    font-size: 1.5em;
+    margin: 10px;
 }
 
 .calendar {
-    width: 1000px;
+    width: 80vw;
 
    
 }
@@ -24,4 +25,53 @@
 
 .fc-timegrid-slot {
     cursor: pointer;
+}
+
+@media screen and (max-width: 728px) {
+    .calendar {
+        width: 80vw;
+    }
+
+    .fc-col-header-cell-cushion {
+        font-size: 0.5em;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 0.75em;
+        margin-right: 5px;
+    }
+    .fc-button.fc-button-primary{
+        width: 50px ;
+        height: 30px ;
+        font-size: 0.75em !important;
+
+    }
+
+    .fc-prev-button {
+        width: 30px !important;
+        height: 25px !important;
+        font-size: 0.5em !important;
+    }
+
+    .fc-prev-button span {
+        font-size: 1.25em !important;
+        vertical-align: unset !important;
+    }
+    .fc-next-button {
+        width: 30px !important;
+        height: 25px !important;
+        font-size: 0.5em !important;
+    }
+    .fc-next-button span {
+        font-size: 1.25em !important;
+        vertical-align: unset !important;
+    }
+
+    .fc-today-button {
+        width: 50px !important;
+        height: 30px !important;
+        font-size: 0.5em !important;
+    }   
+
+    
+    
 }

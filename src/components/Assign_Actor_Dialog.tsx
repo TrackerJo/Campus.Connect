@@ -56,7 +56,7 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
 
                     }}>
                         <label htmlFor="">{actor.name}</label>
-                        <button className="AssignBtn" onClick={() => {
+                        <button className="ActionBtn" onClick={() => {
                             console.log("Assigning actor")
                             setActor(actor)
 
@@ -67,7 +67,7 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
                 })}
                 </div>
 
-            <button className="AssignCloseBtn" onClick={() => {
+            <button className="ActionBtn" onClick={() => {
                 close()
             }
             }>

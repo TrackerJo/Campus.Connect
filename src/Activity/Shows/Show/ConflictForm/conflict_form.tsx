@@ -25,6 +25,7 @@ import ConflictDateFormTile from '../../../../components/Conflict_Date_Form_Tile
 import AddRecurringConflictDialog from '../../../../components/Add_Recurring_Conflict_Dialog'
 import SimpleConflictResponseDisplayTile from '../../../../components/Simple_Conflict_Response_Date_Display_Tile'
 import AddUserDialog from '../../../../components/Add_User_Dialog'
+import AddAdditionalDayDialog from '../../../../components/Add_Additional_Day_Dialog'
 
 
 
@@ -54,8 +55,13 @@ function App() {
     const [addingConflictResponse, setAddingConflictResponse] = useState<boolean>(false)
     const [selectedActor, setSelectedActor] = useState<Actor>()
     const [members, setMembers] = useState<Actor[]>([])
+    const [additionalDates, setAdditionalDates] = useState<ConflictDate[]>([])
+
     const addActorDialogRef = useRef<HTMLDialogElement>(null)
     const addRecurringConflictsDialog = useRef<HTMLDialogElement>(null)
+    const addAdditionalDayDialog = useRef<HTMLDialogElement>(null)
+
+
     
 
     useEffect(() => {
@@ -163,6 +169,7 @@ function App() {
                     setDefaultEndDate(date)
                     console.log({date})
                 }}/>
+                
                 <br />
                 <label>Exclude Weekends</label>
                 <input type='checkbox' checked={excludeWeekends} onChange={(e) => {
@@ -205,6 +212,10 @@ function App() {
                     Next
                 </button> </> :
                 <>
+                
+                <button className='ActionBtn' onClick={() => {
+                    addAdditionalDayDialog.current?.showModal()
+                }}>Add Additional Day</button>
                     <div className='conflicts'>
 
                         {
@@ -450,6 +461,15 @@ function App() {
             addActorDialogRef.current!.close()
             setAddingConflictResponse(true)
             
+        }}/>
+
+        <AddAdditionalDayDialog dialogRef={addAdditionalDayDialog} close={() => {
+            addAdditionalDayDialog.current!.close()
+        }} addDay={(day) => {
+            const newDates = [...conflictDates]
+            newDates.push(day)
+            setConflictDates(newDates)
+            addAdditionalDayDialog.current!.close()
         }}/>
         </>
     )

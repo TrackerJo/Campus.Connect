@@ -9,3 +9,10 @@
     justify-content: center;
     align-items: center;
 }
+
+@media screen and (max-width: 728px) {
+    .JoinActivityDialog {
+        width: 70vw;
+    }
+    
+}

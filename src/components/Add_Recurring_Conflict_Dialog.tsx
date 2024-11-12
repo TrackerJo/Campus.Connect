@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {  AddRecurringConflictDialogProps, ConflictResponseDate } from "../constants";
 
 import "./Add_Recurring_Conflict_Dialog.css"
@@ -13,7 +13,7 @@ function AddRecurringConflictDialog({ dialogRef, close, addConflicts}: AddRecurr
     const [repeatDays, setRepeatDays] = useState<number[]>([])
     const [excludeWeekends, setExcludeWeekends] = useState<boolean>(false)
     return (
-        <dialog ref={dialogRef}>
+        <dialog ref={dialogRef} className="AddRecurringConflictDialog">
             <h2>Add Recurring Conflict</h2>
             <label htmlFor="">Note: Only use this if you can still attend part of the rehersal!</label>
             <div className="conflict-times">
@@ -28,9 +28,11 @@ function AddRecurringConflictDialog({ dialogRef, close, addConflicts}: AddRecurr
                 {recurringType == "daily" && <>
                 <br />
                 <label htmlFor="">Exclude weekends: </label>
-                <input type="checkbox" name="exclude-weekends" id="exclude-weekends" value={excludeWeekends ? "true" : "false"} onChange={(e) => {
-                    setExcludeWeekends(e.target.checked)
-                }}/>
+                <label className="custom-checkbox">
+                    <input type="checkbox" id="ensemble" checked={excludeWeekends} onChange={(e) => setExcludeWeekends(e.target.checked)} />
+                    <span className="checkmark"></span>
+                </label>
+               
                 </>}
                 {(recurringType == "weekly" || recurringType == "biweekly") && <>
                 <br />

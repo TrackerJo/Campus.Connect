@@ -166,6 +166,7 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
         }>
         <FullCalendar
         allDaySlot={false}
+    
           
           eventMouseEnter={(arg) => {
             setHoveredEvent(arg.event)

@@ -57,31 +57,31 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
                         {addedMembers.map((member, index) => {
                             return <div key={index} className="create-group-chat-dialog-member">
                                 <label htmlFor="">{ member.memberName}</label>
-                                <button className="create-group-chat-dialog-remove-member-btn" onClick={() => {
+                                <button className="ActionBtn" onClick={() => {
                                     setAddedMembers(addedMembers.filter((addedMember) => addedMember != member))
                                 }}>Remove</button>
                             </div>
                         })}
 
                     </div> </>}
-                    <button className="create-group-chat-dialog-add-member-btn" onClick={() => {
+                    <button className="ActionBtn" onClick={() => {
                         addMemberDialogRef.current!.showModal()
                     }}>Add Member</button>
-                    {activityGroups.length > 0 && <button className="create-group-chat-dialog-add-group-btn" onClick={() => {
+                    {activityGroups.length > 0 && <button className="ActionBtn" onClick={() => {
                         addFromGroupRef.current!.showModal()
                     }}>
                         Add from Group
                     </button>}
                     {
                         activity instanceof TheaterActivity ? (
-                            <button className="create-group-chat-dialog-add-play-btn" onClick={() => {
+                            <button className="ActionBtn" onClick={() => {
                                 addFromPlayRef.current!.showModal()
                             }}>
                                 Add from Play
                             </button>
                         ) : null
                     }
-                    <button className="create-group-chat-dialog-create-btn" onClick={async () => {
+                    <button className="ActionBtn" onClick={async () => {
                         if(inputRef.current!.value == ""){
                             alert("Please enter a name for the group chat")
                             return

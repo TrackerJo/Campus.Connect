@@ -21,3 +21,10 @@
 dialog {
     text-align: center;
 }
+
+@media screen and (max-width: 728px) {
+    .AddConflictDialog {
+        width: 70vw;
+    }
+    
+}

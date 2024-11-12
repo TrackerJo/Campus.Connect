@@ -69,7 +69,7 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
 
                         </div>
                     })}
-                    <button className="AssignActorsBtn" onClick={() => {
+                    <button className="ActionBtn" onClick={() => {
                         //Open dialog to assign actors
                         dialogRef.current?.showModal()
                     }}>

@@ -21,7 +21,7 @@
     max-width: calc(100% - 67px);
     overflow-wrap: break-word;
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 0.5em;
     font-weight: 600;
@@ -35,7 +35,7 @@
 
 
 .isSender {
-    background-color: #747bff;
+    background-color: #FF6B35;
 
 
 }
@@ -43,7 +43,7 @@
 
 .notSender {
 /* background color opposite of isSender */
-    background-color: #00bcb6;
+    background-color: #4169E1;
 
 }
 

@@ -7,7 +7,7 @@
     height: 5vh;
 
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 1em;
     font-weight: 600;
@@ -58,4 +58,14 @@
     z-index: 10000;
     background-color: #f5f5f5;  
     color: black;
+}
+
+@media screen and (max-width: 768px) {
+    .SongDisplayTile {
+        width: 80vw;
+
+        margin: 1.5em;
+    }
+
+    
 }

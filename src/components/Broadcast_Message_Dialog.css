@@ -19,7 +19,7 @@
     height: 100%;
 
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 0.5em;
     font-weight: 600;
@@ -35,7 +35,7 @@
     height: 100%;
 
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 0.5em;
     font-weight: 600;
@@ -51,7 +51,7 @@
     height: 100%;
 
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 0.5em;
     font-weight: 600;
@@ -67,7 +67,7 @@
     height: 100%;
 
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 0.5em;
     font-weight: 600;
@@ -83,7 +83,7 @@
     height: 100%;
 
     border-radius: 5px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 0.5em;
     font-weight: 600;
@@ -140,7 +140,7 @@
     height: 100%;
 
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 0.5em;
     font-weight: 600;
@@ -149,4 +149,12 @@
     background-color: #f5f5f5;
     cursor: pointer;
     margin: 1em;
+}
+
+@media screen and (max-width: 728px) {
+    .broadcast-message-dialog-inner {
+        width: 70vw;
+        text-align: center;
+    }
+    
 }

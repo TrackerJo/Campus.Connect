@@ -83,14 +83,21 @@ function App() {
 
                 }}>Select Show</button>}
             </div>
-            <br />
+
             <h1>Or</h1>
-            <br />
+
             <div className=''>
                 <button className='ActionBtn' onClick={() => {
                     window.location.href = `/Campus.Connect/Activity/Shows/CreateTemplate/?activityId=${activityId}`
                 }}>Create new Show Template</button>
                 </div>
+                
+            <br />
+            <button className='ActionBtn' onClick={() => {
+                window.location.href = `/Campus.Connect/Activity/Shows/?activityId=${activityId}`
+            }}>
+                Back
+            </button>
         </div>
         
         

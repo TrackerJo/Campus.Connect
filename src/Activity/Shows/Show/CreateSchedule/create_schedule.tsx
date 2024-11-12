@@ -56,6 +56,8 @@ function App() {
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const [editEvent, setEditEvent] = useState<TheaterEvent | null>(null)
     const [rehearsalLocation, setRehearsalLocation] = useState<TheaterLocation | undefined>()
+    const [isMobile, setIsMobile] = useState<boolean>(false)
+    const [filterEnsmeble, setFilterEnsemble] = useState<boolean>(false)
 
 
     useEffect(() => {
@@ -132,6 +134,16 @@ function App() {
             }
             setCalendarEvents(calendarEvents)
         })
+        const handleResize = () => {
+            if (window.innerWidth < 800) {
+                setIsMobile(true)
+            } else {
+                setIsMobile(false)
+            }
+        }
+        window.addEventListener('resize', handleResize)
+        handleResize()
+        return () => window.removeEventListener('resize', handleResize)
     }, [])
 
 
@@ -171,6 +183,12 @@ function App() {
             <div className='date-div'>
                 <div>
                     <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
+                    <label htmlFor="">Ignore Ensemble Conflicts</label>
+                    <label className="custom-checkbox">
+
+                        <input type="checkbox" id="ensemble" checked={filterEnsmeble} onChange={(e) => setFilterEnsemble(e.target.checked)} />
+                        <span className="checkmark"> </span>
+                    </label>
                     <div className='conflicts'>
                         {
                             currentConflicts.map((conflict, index) => {
@@ -274,8 +292,14 @@ function App() {
             </button>
             </> : creationState == "type" ? <>
             <h2 className='title'>Select a Rehersal Type</h2>
-                <div className='conflicts-div'>
+                {!isMobile && <div className='conflicts-div'>
                     <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
+                    <label htmlFor="">Ignore Ensemble Conflicts</label>
+                    <label className="custom-checkbox">
+
+                        <input type="checkbox" id="ensemble" checked={filterEnsmeble} onChange={(e) => setFilterEnsemble(e.target.checked)} />
+                        <span className="checkmark"> </span>
+                    </label>
                     <div className='conflicts'>
                         {
                             currentConflicts.map((conflict, index) => {
@@ -283,7 +307,7 @@ function App() {
                             })
                         }
                     </div>
-                </div>
+                </div>}
 
 
                 <button onClick={() =>{
@@ -629,8 +653,14 @@ function App() {
 
             
             </> : <>
-                <div className='conflicts-div'>
+               {!isMobile && <div className='conflicts-div'>
                     <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
+                    <label htmlFor="">Ignore Ensemble Conflicts</label>
+                    <label className="custom-checkbox">
+
+                        <input type="checkbox" id="ensemble" checked={filterEnsmeble} onChange={(e) => setFilterEnsemble(e.target.checked)} />
+                        <span className="checkmark"> </span>
+                    </label>
                     <div className='conflicts'>
                         {
                             currentConflicts.map((conflict, index) => {
@@ -638,7 +668,7 @@ function App() {
                             })
                         }
                     </div>
-                </div>
+                </div>}
                 <h2 className='title'>Enter Rehersal Information</h2>
                 <label htmlFor="Name">Name: </label>
                 <input type="text" value={name} onChange={(val) => {
@@ -667,7 +697,7 @@ function App() {
                 </select>
                 <br />
                 <label htmlFor="location">Rehersal Location: </label>
-                <select name="location" id="location" onChange={(e) => {
+                <select name="location" id="rehersal-location" onChange={(e) => {
                     setRehearsalLocation(activity?.rehearsalLocations.find((location) => location.name == e.target.value))
                 }}>
                     {activity?.rehearsalLocations.map((location, index) => {
@@ -679,9 +709,11 @@ function App() {
                 {
                     type == "custom" ? <>
                     <label htmlFor="fullCast">Full Cast: </label>
-                    <input type="checkbox" checked={addFullCast} onChange={(e) => {
-                        setAddFullCast(e.target.checked)
-                    }}/>
+                    <label className="custom-checkbox">
+                        <input type="checkbox" id="ensemble" checked={addFullCast} onChange={(e) => setAddFullCast(e.target.checked)} />
+                        <span className="checkmark"></span>
+                    </label>
+                    
                     </> : <></>
                 }
                 {type == "custom" && <br />}
@@ -916,7 +948,7 @@ function App() {
                             isAllDay: false,
                             interactive: true,
                             description: "Location: " + newEvent.rehearsalLocation.name + "\n" + newEvent.info,
-                            color: "blue",
+                            color: addAlpha(intToHexColor(newEvent.rehearsalLocation.color), 0.8),
                             id: newEvent.id,
                         }
                         const newCalendarEvents = calendarEvents.filter((e) => e.id != newEvent.id)
@@ -938,7 +970,7 @@ function App() {
                         end: endDate.toISOString(),
                         isAllDay: false,
                         interactive: true,
-                        color: "blue",
+                        color: addAlpha(intToHexColor(newEvent.rehearsalLocation.color), 0.8),
                         id: newEvent.id,
                         description: "Location: " + newEvent.rehearsalLocation.name + "\n" + newEvent.info,
                       

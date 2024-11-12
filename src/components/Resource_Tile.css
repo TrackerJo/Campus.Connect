@@ -8,10 +8,10 @@
     padding: 1rem;
     border-radius: 1rem;
     background-color: transparent;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s;
     color: white;
-    border: 1px solid white;
+    border: 1px solid #FF6B35;
 }
 
 .resource-tile h3 {

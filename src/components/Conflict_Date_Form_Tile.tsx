@@ -31,10 +31,13 @@ function ConflictDateFormTile({conflict, conflictResponseDate, setConflict} :Con
             </div>
             <div className="can-attend-div">
                 <label htmlFor="can-attend-cbox">Can attend rehersal: </label>
-                <input type="checkbox" className="can-attend-cbox" name="can-attend-cbox" checked={conflictResponseDate?.canAttend} onChange={(e) => {
-                    setConflict(ConflictResponseDate.fromBlank(conflict.date.date,null,null, e.target.checked, ""))
+                <div className="custom-checkbox" onClick={() => {
+                    setConflict(ConflictResponseDate.fromBlank(conflict.date.date,null,null, !conflictResponseDate?.canAttend, ""))
+                }}>
+                    <input type="checkbox" id="ensemble" checked={conflictResponseDate?.canAttend} onChange={(e) => setConflict(ConflictResponseDate.fromBlank(conflict.date.date,null,null, e.target.checked, ""))} />
+                    <span className="checkmark"></span>
+                </div>
                 
-                }}/>
             </div>
 
            {conflictResponseDate?.from && <> 

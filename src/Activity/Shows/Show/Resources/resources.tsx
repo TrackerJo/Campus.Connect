@@ -109,10 +109,13 @@ function App() {
 
         <AddResourceDialog dialogRef={addResourceDialogRef} activityId={activityId} close={() => {
             addResourceDialogRef.current?.close()
-        }} addResource={(resource) => {
-            addActivityShowResource(activityId, showId, resource)
+        }} addResource={async (resource) => {
+            await addActivityShowResource(activityId, showId, resource)
             show?.resources.push(resource)
             localStorage.setItem('show-' + showId, JSON.stringify(show))
+            setShow(Show.fromMap(JSON.parse(localStorage.getItem('show-' + showId)!)))
+            addResourceDialogRef.current?.close()
+
 
         } }/>
        

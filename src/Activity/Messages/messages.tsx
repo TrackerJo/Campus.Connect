@@ -30,7 +30,7 @@ import BroadcastMessageDialog from '../../components/Broadcast_Message_Dialog'
 
 
 
-
+import Back from '../../assets/back.png'
 
 function App() {
     const [activityId, setActivityId] = useState<string>("")
@@ -39,9 +39,13 @@ function App() {
     const [selectedGroupChat, setSelectedGroupChat] = useState<ActivityGC | null>(null)
     const [messages, setMessages] = useState<Message[]>([])
     const [userData, setUserData] = useState<DocumentData | null>(null)
+    const [isMobile, setIsMobile] = useState<boolean>(false)
+
     const messagesRef = useRef<HTMLDivElement>(null)
     const createGroupChatDialogRef = useRef<HTMLDialogElement>(null)
     const broadcastMessageDialogRef = useRef<HTMLDialogElement>(null)
+
+
 
     function updateMessages(messages: Message[]) {
         setMessages(messages)
@@ -57,6 +61,19 @@ function App() {
         getActivityGCMessagesStream(selectedGroupChat.activityId, selectedGroupChat!.id, updateMessages)
 
     },[selectedGroupChat])
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 800) {
+                setIsMobile(true)
+            } else {
+                setIsMobile(false)
+            }
+        }
+        window.addEventListener('resize', handleResize)
+        handleResize()
+        return () => window.removeEventListener('resize', handleResize)
+    },[])
 
 
 
@@ -112,7 +129,7 @@ function App() {
         </div>
         <div className='center'>
             <div className='window'>
-                <div className='left'>
+                {((!isMobile) || (isMobile && !selectedGroupChat)) && <div className='left'>
                     <div className='groupChats'>
                         {groupChats.map((groupChat) => {
                             return (
@@ -122,24 +139,31 @@ function App() {
                             )
                         })}
                     </div>
-                    <button className='CreateGCBtn' onClick={() => {
-                        createGroupChatDialogRef.current!.showModal()
-                    }}>
-                        Create Group Chat
-                    </button>
+                    <div className='GCOptions'>
+                        <button className='ActionBtn' onClick={() => {
+                            createGroupChatDialogRef.current!.showModal()
+                        }}>
+                            Create Group Chat
+                        </button>
 
-                    <button className='CreateGCBtn' onClick={() => {
-                        broadcastMessageDialogRef.current!.showModal()
-                    }}>
-                        Broadcast Message
-                    </button>
+                        <button className='ActionBtn' onClick={() => {
+                            broadcastMessageDialogRef.current!.showModal()
+                        }}>
+                            Broadcast Message
+                        </button>
+                    </div>
+                   
                    
 
-                </div>
-                <div className='right'>
+                </div>}
+                {((!isMobile) || (isMobile && selectedGroupChat)) && <div className='right'>
                     {
                         selectedGroupChat ? (
                             <div className='selectedGroupChat'>
+                                {isMobile && <div className='back-div'>
+                                    <img src={Back} alt="" onClick={() => setSelectedGroupChat(null)} />
+                                    <h2>{selectedGroupChat.name}</h2>
+                                </div>}
                                 <div className='messages' ref={messagesRef}>
                                     {
                                         messages.map((message) => {
@@ -158,7 +182,7 @@ function App() {
                             </div>
                         )
                     }
-                </div>  
+                </div>}  
                 
                 
             </div>

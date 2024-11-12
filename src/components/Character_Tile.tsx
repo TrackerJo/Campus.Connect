@@ -9,30 +9,31 @@ function CharacterTile({character, setCharacter, isCreate, removeCharacter, isAs
         <div className="CharacterTile" id={"character-tile-" + character.characterId}>
             <div className="header">
                 <div className="CharacterNameDiv">
-                    <label htmlFor="Character">Character: </label>
+                    <label htmlFor="Character">Character:  {isAssign ? character.name: ""}</label>
                     {isCreate ?
                     <input type="text" name="" id="" value={character.name} onChange={(val) => {
                         setCharacter(Character.fromBlank(val.target.value, character.actor,character.characterId,character.lastUpdated))
                     }}/>: isAssign ? 
                     <>
-                        <label htmlFor="Character">{character.name} </label>
                         <br />
-                       {character.actor != null ? <>
-                        <label htmlFor="Actor">Actor: </label>
-                        <label htmlFor="">{character.actor.name}</label>
-                        <button className="EditActorBtn" onClick={() => {
-                            dialogRef.current?.showModal()
-                        }}>
-                            Edit Actor
-                        </button>
-                        </> : <>
-                        <button className="AssignActorBtn" onClick={() => {
-                            dialogRef.current?.showModal()
-                        }}>
-                            Assign Actor
-                        </button>
-                        </>
-                        }
+                        <div className="CharacterActorDiv">
+                            {character.actor != null ? <>
+                                <label htmlFor="Actor">Actor: {character.actor.name}</label>
+                                <button className="ActionBtn" onClick={() => {
+                                    dialogRef.current?.showModal()
+                                }}>
+                                    Edit Actor
+                                </button>
+                                </> : <>
+                                <button className="ActionBtn" onClick={() => {
+                                    dialogRef.current?.showModal()
+                                }}>
+                                    Assign Actor
+                                </button>
+                                </>
+                            }
+                        </div>
+                       
                     </>
                     :
                     //Dropdown for selecting existing characters

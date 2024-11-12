@@ -10,6 +10,9 @@
   text-align: center;
 }
 
+.title {
+  color: #FF6B35;
+}
 
 
 .logo {
@@ -40,13 +43,7 @@
   }
 }
 
-.card {
-  padding: 2em;
-}
 
-.read-the-docs {
-  color: #888;
-}
 
 .tiles {
   display: grid;

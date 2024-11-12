@@ -36,7 +36,7 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
             <br />
             <div>
                 <label htmlFor="Characters">Characters: </label>
-                <div className="characters" id={"characters-" + id}>
+                <div className="scene-characters" id={"characters-" + id}>
 
 
                 {scene.characters.map((character, index) => {

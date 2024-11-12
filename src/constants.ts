@@ -325,7 +325,7 @@ export type BroadcastMessageDialogProps = {
 }
 
 export type AddResourceDialogProps = { 
-    addResource: (resource: Resource) => void;
+    addResource: (resource: Resource) => Promise<void>;
     close: () => void;
     dialogRef: LegacyRef<HTMLDialogElement>;
     activityId: string;
@@ -335,6 +335,12 @@ export type ResourceTileProps = {
     resource: Resource;
     canRemove: boolean;
     removeResource: () => void;
+}
+
+export type AddAdditionalDayDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    addDay: (date: ConflictDate) => void;
 }
 
 export class Activity {
@@ -811,8 +817,12 @@ export class EventDate {
                 const parsedTime = new Date();
                 parsedTime.setHours(hours, minutes, 0, 0);
                 return parsedTime;
+            } else {
+                //Time must be 2024-11-11T08:30:00.000Z
+                return new Date(time);
             }
         }
+
         throw new Error('Invalid time format');
 
     }
@@ -830,6 +840,10 @@ export class EventDate {
             console.log(map.date);
             eventDate.date = map.date.toDate();
         }
+        console.log(map.date);
+        console.log(map.from);
+        console.log(map.to);
+        
         eventDate.from = this._parseTime(map.from);
         eventDate.to = this._parseTime(map.to);
         return eventDate;

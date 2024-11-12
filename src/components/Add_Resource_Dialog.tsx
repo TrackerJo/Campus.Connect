@@ -23,17 +23,17 @@ function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResou
                     selectedType == "unset" ?
                     <div className="ResourceTypeSelect">
                         <h3>Resource Type</h3>
-                        <button className="ResourceTypeSelectBtn" onClick={() => {
+                        <button className="ActionBtn" onClick={() => {
                             setSelectedType("link")
                         }}>
                             Link
                         </button>
-                        <button className="ResourceTypeSelectBtn" onClick={() => {
+                        <button className="ActionBtn" onClick={() => {
                             setSelectedType("image")
                         }}>
                             Image
                         </button>
-                        <button className="ResourceTypeSelectBtn" onClick={() => {
+                        <button className="ActionBtn" onClick={() => {
                             setSelectedType("video")
                         }}>
                             Video
@@ -69,7 +69,7 @@ function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResou
                             setIsLoading(true)
                             if(selectedType == "link"){
                                 const resource = Resource.fromBlank(resourceName, resourceDescription, selectedType, resourceLink)
-                                addResource(resource)
+                                await addResource(resource)
                             } else {
                                 const file = fileInputRef.current!.files![0]
                                 if(file == undefined) return
@@ -78,7 +78,7 @@ function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResou
                                 const url = await uploadFile(schoolId!, activityId, fileName, file)
                                 const fbFile = FBFile.fromBlank(fileName, url)
                                 const resource = Resource.fromBlank(resourceName, resourceDescription, selectedType, "", fbFile)
-                                addResource(resource)
+                                await addResource(resource)
                             }
                             setSelectedType("unset")
                             setResourceName("")
@@ -86,7 +86,6 @@ function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResou
                             setResourceLink("")
 
                             setIsLoading(false)
-                            close()
                         }}>
                             Add Resource
                         </button>}
@@ -94,7 +93,7 @@ function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResou
                     </>
                 }
             <br />
-            <button className="AddResourceCloseBtn" onClick={() => {
+            <button className="ActionBtn" onClick={() => {
                 setSelectedType("unset")
                 setResourceName("")
                 setResourceDescription("")

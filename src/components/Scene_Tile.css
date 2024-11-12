@@ -7,7 +7,7 @@
     height: 100%;
 
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
     padding: 1em;
     font-weight: 600;
@@ -23,12 +23,7 @@
     display: inline;
 }
 
-.ActionBtn.disabled{
-    background-color: rgb(245, 245, 245);
-    color: #b3b3b3;
-    cursor: not-allowed;
 
-}
  
 .TrashIcon {
     color: white;
@@ -49,7 +44,17 @@
     width: 100%;
 }
 
-.characters {
+.scene-characters {
     max-height: 40vh;
     overflow-y: auto;
+}
+
+@media screen and (max-width: 768px) {
+    .SceneTile {
+        width: 70vw;
+
+        margin: 1.5em;
+    }
+
+    
 }

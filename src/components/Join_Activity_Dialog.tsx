@@ -12,7 +12,7 @@ function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
     const [gender, setGender] = useState<"male" | "female">("male")
 
     return (
-        <dialog ref={dialogRef}>
+        <dialog ref={dialogRef} className="JoinActivityDialog">
             <div className="dialogContents">
             {!needsGender || !needsPhoneNumber ? <> <h2>Join Activity</h2>
                 <label htmlFor="">Activity Code</label>

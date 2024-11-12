@@ -36,7 +36,7 @@ function AddFromGroupDialog({ dialogRef, close, addMembers, activityGroups}: Add
                 
 
 
-            <button className="AddUserCloseBtn" onClick={() => {
+            <button className="ActionBtn" onClick={() => {
                 close()
             }
             }>

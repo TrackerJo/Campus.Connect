@@ -37,7 +37,7 @@ function SongTile({song, setSong, isCreate, removeSong, isAssign, characters, sh
             <br />
             <div>
                 <label htmlFor="Characters">Characters: </label>
-                <div className="characters" id={"characters-"+id}>
+                <div className="song-characters" id={"characters-"+id}>
 
 
                 {song.characters.map((character, index) => {

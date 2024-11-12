@@ -565,7 +565,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                 }
 
 
-            <button className="AddUserCloseBtn" onClick={() => {
+            <button className="ActionBtn" onClick={() => {
                 close()
             }
             }>
