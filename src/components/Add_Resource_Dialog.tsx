@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { AddResourceDialogProps, FBFile, Resource } from "../constants";
 
 import "./Add_Resource_Dialog.css"
-import { uploadFile } from "../firebase/storage";
+import { uploadFile } from "../api/storage";
 
 function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResourceDialogProps){
     const [selectedType, setSelectedType] = useState<"link" | "image" | "video" | "unset">("unset")

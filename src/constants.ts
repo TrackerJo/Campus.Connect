@@ -13,6 +13,7 @@ export type CalendarProps = {
     deleteEvent: (event: EventImpl) => void;
     viewConflicts: (date: Date) => void;
     editEvent: (event: EventImpl) => void;
+    viewEvent: (event: EventImpl) => void;
     canOpenContextMenu: boolean;
     
 };
@@ -249,6 +250,11 @@ export type JoinActivityDialogProps = {
     close: () => void;
 }
 
+export type CreateActivityDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+}
+
 export type CalendarHoverEventTileProps = {
     event: EventImpl;
     top: number;
@@ -369,7 +375,7 @@ export class Activity {
         this.teachers = [];
         this.locations = [];
         this.eventTypes = [];
-        this.defaultLocation = Location.fromEmpty("", "", new GeoPoint(0, 0));
+        this.defaultLocation = Location.fromBlank("", "", new GeoPoint(0, 0));
         this.showBy = "";
         this.lastUpdated = 0;
     }
@@ -406,9 +412,9 @@ export class Activity {
         "joinCode": this.joinCode,
         "teachers": this.teachers.map((e) => e.toMap()),
         "locations": this.locations.map((e) => e.toMap()),
-        "teachersUids": this.teachers.map((e) => e.memberUid),
-        "studentsUids": this.students.map((e) => e.memberUid),
-        "parentsUids": this.parents.map((e) => e.memberUid),
+        "teacherUids": this.teachers.map((e) => e.memberUid),
+        "studentUids": this.students.map((e) => e.memberUid),
+        "parentUids": this.parents.map((e) => e.memberUid),
         "defaultLocation": this.defaultLocation.toMap(),
         "showBy": this.showBy,
         "eventTypes": this.eventTypes.map((e) => e.toMap()),
@@ -493,7 +499,7 @@ export class TheaterActivity {
         this.teachers = [];
         this.locations = [];
         this.eventTypes = [];
-        this.defaultLocation = Location.fromEmpty("", "", new GeoPoint(0, 0));
+        this.defaultLocation = Location.fromBlank("", "", new GeoPoint(0, 0));
         this.showBy = "";
         this.lastUpdated = 0;
     }
@@ -529,9 +535,9 @@ export class TheaterActivity {
         "groups": this.groups.map((e) => e.toMap()),
         "joinCode": this.joinCode,
         "teachers": this.teachers.map((e) => e.toMap()),
-        "teachersUids": this.teachers.map((e) => e.memberUid),
-        "studentsUids": this.students.map((e) => e.userId),
-        "parentsUids": this.parents.map((e) => e.memberUid),
+        "teacherUids": this.teachers.map((e) => e.memberUid),
+        "studentUids": this.students.map((e) => e.userId),
+        "parentUids": this.parents.map((e) => e.memberUid),
         "locations": this.locations.map((e) => e.toMap()),
         "defaultLocation": this.defaultLocation.toMap(),
         "showBy": this.showBy,
@@ -638,7 +644,7 @@ export class Location {
         this.location = new GeoPoint(0, 0);
     }
 
-    public static fromEmpty(name: string, address: string, location: GeoPoint): Location {
+    public static fromBlank(name: string, address: string, location: GeoPoint): Location {
         const newLocation = new Location();
         newLocation.name = name;
         newLocation.address = address;
@@ -833,6 +839,8 @@ export class EventDate {
         if(map.date instanceof Date){
             eventDate.date = map.date;
         } else if(typeof map.date == "string"){
+            //Time must be 2024-11-11T08:30:00.000Z
+
             eventDate.date = new Date(map.date);
 
         } else {
@@ -864,7 +872,7 @@ export class Event {
     constructor() {
         this.name = '';
         this.info = '';
-        this.location = Location.fromEmpty('', '', new GeoPoint(0, 0));
+        this.location = Location.fromBlank('', '', new GeoPoint(0, 0));
         this.date = EventDate.fromBlank(new Date(), new Date(), new Date());
         this.type = '';
         this.lastUpdated = 0;
@@ -947,7 +955,7 @@ export class ActivityEvent {
         this.activityName = '';
         this.name = '';
         this.info = '';
-        this.location = Location.fromEmpty('', '', new GeoPoint(0, 0));
+        this.location = Location.fromBlank('', '', new GeoPoint(0, 0));
         this.date = EventDate.fromBlank(new Date(), new Date(), new Date());
         this.type = '';
         this.lastUpdated = 0;
@@ -1129,6 +1137,7 @@ export class ActivityGC {
     generalTarget: string;
     activityId: string;
     lastMessage?: Message;
+    lastUpdated: number;
 
 
     constructor() {
@@ -1137,16 +1146,18 @@ export class ActivityGC {
         this.members = [];
         this.generalTarget = '';
         this.activityId = '';
+        this.lastUpdated = 0;
     }
 
 
-    public static fromBlank(name: string, id: string, members: ActivityMember[], generalTarget: string, activityId: string): ActivityGC {
+    public static fromBlank(name: string, id: string, members: ActivityMember[], generalTarget: string, activityId: string, lastUpdated: number): ActivityGC {
         const activityGC = new ActivityGC();
         activityGC.name = name;
         activityGC.id = id;
         activityGC.members = members;
         activityGC.generalTarget = generalTarget;
         activityGC.activityId = activityId;
+        activityGC.lastUpdated = lastUpdated;
         return activityGC;
     }
 
@@ -1157,6 +1168,7 @@ export class ActivityGC {
         "members": this.members.map((e) => e.toMap()),
         "generalTarget": this.generalTarget,
         "activityId": this.activityId,
+            "lastUpdated": this.lastUpdated,
         };
     }
 
@@ -1172,6 +1184,7 @@ export class ActivityGC {
         activityGC.members = formattedMembers;
         activityGC.generalTarget = map.generalTarget;
         activityGC.activityId = map.activityId;
+        activityGC.lastUpdated = map.lastUpdated;
         return activityGC;
     }
 
@@ -1225,6 +1238,7 @@ export class Message {
         "messageId": this.messageId,
         "timeSent": this.timeSent,
         "readBy": this.readBy,
+            "lastUpdated": this.timeSent.getTime(),
         };
     }
 
@@ -1253,16 +1267,20 @@ export class TheaterEvent {
     dateFilter: string;
     id: string;
     activityId: string;
+    activityName: string;
     showId: string;
+    showName: string;
     characters: (Character | ShowGroup | EnsembleSection | FullCast)[];
     targets: ActivityMember[];
     theaterEventType: string;
+    activityEventType: EventType;
     rehearsalLocation: TheaterLocation;
+
 
     constructor() {
         this.name = '';
         this.info = '';
-        this.location = Location.fromEmpty('', '', new GeoPoint(0, 0));
+        this.location = Location.fromBlank('', '', new GeoPoint(0, 0));
         this.date = EventDate.fromBlank(new Date(), new Date(), new Date());
         this.type = '';
         this.lastUpdated = 0;
@@ -1273,6 +1291,9 @@ export class TheaterEvent {
         this.characters = [];
         this.targets = [];
         this.theaterEventType = '';
+        this.showName = '';
+        this.activityName = '';
+        this.activityEventType = new EventType();
         this.rehearsalLocation = new TheaterLocation();
     }
 
@@ -1284,10 +1305,13 @@ export class TheaterEvent {
         type: string,
         lastUpdated: number,
         activityId: string,
+        activityName: string,
         showId: string,
+        showName: string,
         characters: (Character | ShowGroup | EnsembleSection | FullCast)[],
         targets: ActivityMember[],
         theaterEventType: string,
+        activityEventType: EventType,
         rehearsalLocation: TheaterLocation
     ): TheaterEvent {
         const theaterEvent = new TheaterEvent();
@@ -1305,6 +1329,9 @@ export class TheaterEvent {
         theaterEvent.targets = targets;
         theaterEvent.theaterEventType = theaterEventType;
         theaterEvent.rehearsalLocation = rehearsalLocation;
+        theaterEvent.activityName = activityName;
+        theaterEvent.showName = showName;
+        theaterEvent.activityEventType = activityEventType;
         return theaterEvent;
     }
 
@@ -1318,12 +1345,15 @@ export class TheaterEvent {
         "lastUpdated": this.lastUpdated,
         "dateFilter": this.dateFilter,
         "activityId": this.activityId,
+        "activityName": this.activityName,
         "showId": this.showId,
+        "showName": this.showName,
         "characters": this.characters.map((e) => e.toMap()),
         "targets": this.targets.map((e) => e.toMap()),
         "targetUids": this.targets.map((e) => e.memberUid),
         "id": this.id,
         "theaterEventType": this.theaterEventType,
+        "activityEventType": this.activityEventType.toMap(),
         "rehearsalLocation": this.rehearsalLocation.toMap(),
         };
     }
@@ -1361,6 +1391,9 @@ export class TheaterEvent {
         }
         theaterEvent.targets = formattedTargets;
         theaterEvent.id = map.id;
+        theaterEvent.activityName = map.activityName;
+        theaterEvent.showName = map.showName;
+        theaterEvent.activityEventType = EventType.fromMap(map.activityEventType);
         theaterEvent.rehearsalLocation = TheaterLocation.fromMap(map.rehearsalLocation);
         return theaterEvent;
     }
@@ -1370,6 +1403,7 @@ export class TheaterEvent {
 export class Show {
     name: string;
     id: string;
+    activityId: string;
     layout: Act[];
     characters: Character[];
     ensemble: Ensemble | null;
@@ -1386,6 +1420,7 @@ export class Show {
     constructor() {
         this.name = "";
         this.id = "";
+        this.activityId = "";
         this.layout = [];
         this.characters = [];
         this.ensemble = new Ensemble();
@@ -1400,10 +1435,11 @@ export class Show {
         this.resources = [];
     }
 
-    public static fromBlank(name: string, id: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,resources: Resource[],formStatus: "open" | "closed", lastUpdated: number): Show {
+    public static fromBlank(name: string, id: string, activityId: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,resources: Resource[],formStatus: "open" | "closed", lastUpdated: number): Show {
         const show = new Show();
         show.name = name;
         show.id = id;
+        show.activityId = activityId;
         show.layout = layout;
         show.characters = characters;
         show.ensemble = ensemble;
@@ -1423,6 +1459,7 @@ export class Show {
         return {
         "name": this.name,
         "id": this.id,
+        "activityId": this.activityId,
         "layout": this.layout.map((e) => e.toMap()),
         "characters": this.characters.map((e) => e.toMap()),
         "ensemble": this.ensemble ? this.ensemble.toMap() : "null",
@@ -1442,6 +1479,7 @@ export class Show {
         const show = new Show();
         show.name = map.name;
         show.id = map.id;
+        show.activityId = map.activityId;
         const layout = map.layout;
         const formattedLayout: Act[] =  [];
         for (const act of layout) {

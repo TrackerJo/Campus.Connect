@@ -1,0 +1,19 @@
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1em;
+    margin-top: 2em;
+  }
+
+ 
+  .center {
+    flex-direction: column;
+  }
+
+  .title {
+    /* display: block;
+    font-size: 20px;
+    */
+    color: white;
+    text-align: center;
+  }

@@ -2,7 +2,7 @@ import "./Broadcast_Message_Dialog.css";
 
 import { Activity, ActivityGroup, ActivityMember, Actor, BroadcastMessageDialogProps, Message, TheaterActivity } from "../constants";
 import { useEffect, useRef, useState } from "react";
-import { getActivity, sendActivityGCMessage } from "../firebase/db";
+import { getActivity, sendActivityGCMessage } from "../api/db";
 import AddUserDialog from "./Add_User_Dialog";
 import AddFromPlayDialog from "./Add_From_Play_Dialog";
 import AddFromGroupDialog from "./Add_From_Group_Dialog";

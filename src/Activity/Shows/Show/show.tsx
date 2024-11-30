@@ -20,7 +20,8 @@ import { useRef, useState } from 'react'
 import './show.css'
 import DashboardTile from '../../../components/Dashboard_Tile'
 import { Show } from '../../../constants'
-import { getActivityShow } from '../../../firebase/db'
+import { getActivityShow } from '../../../api/db'
+import { isLoggedIn } from '../../../api/auth'
 
 
 
@@ -37,6 +38,7 @@ function App() {
 
 
     useEffect(() => {
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
@@ -73,42 +75,53 @@ function App() {
         </div>
         <div className='center'>
             <div className='tiles'>
+                {accountType == "teacher" ? <> <DashboardTile title={"Edit Show Template"} description={"Edit the show template"} onClick={() => {
+                    //Save show to local storage
+
+                    localStorage.setItem('show', JSON.stringify(show?.toMap()))
+                    window.location.href = `/Activity/Shows/CreateTemplate/?activityId=${activityId}&isEditing=true`
+                }}/> </> : <></>}
               
                 {accountType == "teacher" ? <> <DashboardTile title={"Assign Roles"} description={"Assign roles to characters"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Campus.Connect/Activity/Shows/Show/Assign/?activityId=${activityId}&showId=${showId}`
+                    window.location.href = `/Activity/Shows/Show/Assign/?activityId=${activityId}&showId=${showId}`
                 } }/>
                 { show?.canCreateSchedule && <DashboardTile title={"Create/Edit Schedule"} description={"Create/Edit the rehersal schedule"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Campus.Connect/Activity/Shows/Show/CreateSchedule/?activityId=${activityId}&showId=${showId}`
+                    window.location.href = `/Activity/Shows/Show/CreateSchedule/?activityId=${activityId}&showId=${showId}`
                 } }/>}
                 <DashboardTile title={"Conflict Form"} description={"Create/View the conflict form"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Campus.Connect/Activity/Shows/Show/ConflictForm/?activityId=${activityId}&showId=${showId}`
+                    window.location.href = `/Activity/Shows/Show/ConflictForm/?activityId=${activityId}&showId=${showId}`
                 } }/> </> : <>{show?.conflictForm && <DashboardTile title={"Conflict Form"} description={"Complete/View the conflict form"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Campus.Connect/Activity/Shows/Show/ConflictForm/?activityId=${activityId}&showId=${showId}`
-                } }/>} </>}
+                    window.location.href = `/Activity/Shows/Show/ConflictForm/?activityId=${activityId}&showId=${showId}`
+                } }/>} <DashboardTile title={"Schedule"} description={"View Schedule"} onClick={() => {
+                    //Save show to local storage
+                    localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
+                    window.location.href = `/Activity/Shows/Show/Schedule/?activityId=${activityId}&showId=${showId}`
+                } }/>
+                 </>}
                 <DashboardTile title={"Resources"} description={"View all resources"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-                    window.location.href = `/Campus.Connect/Activity/Shows/Show/Resources/?activityId=${activityId}&showId=${showId}`
+                    window.location.href = `/Activity/Shows/Show/Resources/?activityId=${activityId}&showId=${showId}`
                 } }/>
                 
                 
             </div>
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Campus.Connect/Activity/Shows/?activityId=${activityId}`
+                window.location.href = `/Activity/Shows/?activityId=${activityId}`
             }}>
                 Back
             </button>

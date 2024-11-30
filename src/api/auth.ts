@@ -31,7 +31,7 @@ export async function register(email: string, password: string): Promise<string 
             localStorage.setItem("userId", auth.currentUser!.uid!);
 
 
-
+            console.log(auth.currentUser);
 
             return auth.currentUser!.uid!;
         }
@@ -50,7 +50,7 @@ export async function isLoggedIn(setIsLoggedIn: (isLoggedIn: boolean) => void){
          } else {
               setIsLoggedIn(false);
               //Set the url to the login page
-              window.location.href = "/Campus.Connect/Auth/login/";
+              window.location.href = "/Auth/?redirect=" + window.location.pathname;
          }
     });
    

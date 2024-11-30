@@ -23,7 +23,8 @@ import './shows.css'
 
 import DashboardTile from '../../components/Dashboard_Tile'
 import { Show } from '../../constants'
-import { getActivityShows } from '../../firebase/db'
+import { getActivityShows } from '../../api/db'
+import { isLoggedIn } from '../../api/auth'
 
 
 
@@ -35,6 +36,7 @@ function App() {
 
 
     useEffect(() => {
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
@@ -68,7 +70,7 @@ function App() {
                 {shows.map((show) => {
                     return (
                        <DashboardTile key={show.name} title={show.name} description={"View show"} onClick={() => {
-                            window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${show.id}`
+                            window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${show.id}`
                        } }/>
                     )
                 })}
@@ -77,10 +79,10 @@ function App() {
             <br />
             <div className=''>
                {accountType == "teacher" && <button className='ActionBtn' onClick={() => {
-                    window.location.href = `/Campus.Connect/Activity/Shows/Add/?activityId=${activityId}`
+                    window.location.href = `/Activity/Shows/Add/?activityId=${activityId}`
                 }}>Add Show</button>}
                 <button className='ActionBtn' onClick={() => {
-                    window.location.href = `/Campus.Connect/Activity/?activityId=${activityId}`
+                    window.location.href = `/Activity/?activityId=${activityId}`
                 }}>Back</button>
                 </div>
 

@@ -6,8 +6,26 @@ import '../../../../index.css'
 
 import 'react-calendar/dist/Calendar.css';
 import './create_schedule.css'
-import { Activity, Character, EnsembleSection, Show, ShowGroup, TheaterEvent, Location, EventDate, ActivityMember, CalendarEvent, TheaterActivity, DateConflict, TheaterLocation, intToHexColor, addAlpha, FullCast } from '../../../../constants';
-import { addActivityTheaterEvent, deleteActivityTheaterEvent, editActivityTheaterEvent, getActivity, getActivityShow, getActivityTheaterEvents, getActvityShowConflictFormResponses } from '../../../../firebase/db';
+import {
+    Activity,
+    Character,
+    EnsembleSection,
+    Show,
+    ShowGroup,
+    TheaterEvent,
+    Location,
+    EventDate,
+    ActivityMember,
+    CalendarEvent,
+    TheaterActivity,
+    DateConflict,
+    TheaterLocation,
+    intToHexColor,
+    addAlpha,
+    FullCast,
+    Actor
+} from '../../../../constants';
+import { addActivityTheaterEvent, deleteActivityTheaterEvent, editActivityTheaterEvent, getActivity, getActivityShow, getActivityTheaterEvents, getActvityShowConflictFormResponses } from '../../../../api/db';
 import ActDisplayTile from '../../../../components/Act_Display_Tile';
 import SongDisplayTile from '../../../../components/Song_Display_Tile';
 import DanceDisplayTile from '../../../../components/Dance_Display_Tile';
@@ -22,6 +40,7 @@ import EnsembleSectionTile from '../../../../components/Ensemble_Section_Tile';
 import ShowGroupTile from '../../../../components/Show_Group_Tile';
 import ConflictDisplayTile from '../../../../components/Conflict_Display_Tile';
 import FullCastTile from '../../../../components/Full_Cast_Tile';
+import { isLoggedIn } from '../../../../api/auth';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -58,9 +77,11 @@ function App() {
     const [rehearsalLocation, setRehearsalLocation] = useState<TheaterLocation | undefined>()
     const [isMobile, setIsMobile] = useState<boolean>(false)
     const [filterEnsmeble, setFilterEnsemble] = useState<boolean>(false)
+    const [ensembleActors, setEnsembleActors] = useState<Actor[]>([])
 
 
     useEffect(() => {
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
@@ -98,6 +119,9 @@ function App() {
         }
         getActivityShow(activityId!, showId!).then((show) => {
             setShow(show)
+            if(show?.hasEnsemble) {
+                setEnsembleActors(show!.ensemble!.actors)
+            }
         });
         getActivityTheaterEvents(activityId!, showId!).then((events) => {
             setTheaterEvents(events)
@@ -180,126 +204,213 @@ function App() {
             <h1 className='title'>Create Schedule</h1>
            
             {creationState == "date" ? <> <h2 className='title'>Select a Date</h2>
-            <div className='date-div'>
-                <div>
-                    <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
-                    <label htmlFor="">Ignore Ensemble Conflicts</label>
-                    <label className="custom-checkbox">
+                <div className='date-div'>
+                    <div>
+                        <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
+                        {show?.hasEnsemble && <>
+                            <label htmlFor="">Ignore Ensemble Conflicts</label>
+                            <label className="custom-checkbox">
 
-                        <input type="checkbox" id="ensemble" checked={filterEnsmeble} onChange={(e) => setFilterEnsemble(e.target.checked)} />
-                        <span className="checkmark"> </span>
-                    </label>
-                    <div className='conflicts'>
-                        {
-                            currentConflicts.map((conflict, index) => {
-                                return <ConflictDisplayTile key={index} conflictResponseDate={conflict.conflictResponseDate} actor={conflict.actor}/>
-                            })
+                                <input type="checkbox" id="ensemble" checked={filterEnsmeble} onChange={(e) => {
+                                    setFilterEnsemble(e.target.checked)
+                                    if (e.target.checked) {
+                                        const newConflicts: DateConflict[] = []
+                                        for (const conflict of conflicts) {
+                                            //ignore ensemble conflicts
+                                            if (ensembleActors.find((actor) => actor.userId == conflict.actor.userId)) {
+                                                continue
+                                            }
+                                            newConflicts.push(conflict)
+                                        }
+                                        setCurrentConflicts(newConflicts)
+                                    }
+                                }}/>
+                                <span className="checkmark"> </span>
+                            </label> </>
                         }
+                        <div className='conflicts'>
+                            {
+                                currentConflicts.map((conflict, index) => {
+                                    return <ConflictDisplayTile key={index}
+                                                                conflictResponseDate={conflict.conflictResponseDate}
+                                                                actor={conflict.actor}/>
+                                })
+                            }
+                        </div>
                     </div>
+                    <Calendar canOpenContextMenu={true} events={calendarEvents}
+                              editEvent={(event) => {
+                                  const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
+
+                                  if (theaterEvent) {
+                                      console.log(theaterEvent)
+                                      setCreationState("info")
+                                      setName(theaterEvent.name)
+                                      setDescription(theaterEvent.info)
+                                      setSelectedDate(theaterEvent.date.date)
+                                      setStartTime(theaterEvent.date.from)
+                                      setStartTimeString(theaterEvent.date.from.toLocaleTimeString([], {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          hour12: false
+                                      }))
+                                      setEndTime(theaterEvent.date.to)
+                                      setEndTimeString(theaterEvent.date.to.toLocaleTimeString([], {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          hour12: false
+                                      }))
+                                      setSelectedLocation(theaterEvent.location)
+                                      setRehearsalLocation(theaterEvent.rehearsalLocation)
+                                      setCharacters(theaterEvent.characters)
+                                      setIsEditing(true)
+                                      setType(theaterEvent.theaterEventType as "song" | "dance" | "scene" | "custom")
+                                      setEditEvent(theaterEvent)
+                                  }
+                              }
+                              }
+                              viewEvent={(event) => {
+                                  const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
+
+                                  if (theaterEvent) {
+                                      localStorage.setItem('event', JSON.stringify(theaterEvent))
+                                      localStorage.setItem('back', '/Activity/Shows/Show/CreateSchedule/?activityId=' + activityId + '&showId=' + showId)
+                                      window.location.href = "/Calendar/Event/"
+                                  }
+                              }}
+                              viewConflicts={(date) => {
+                                  const checkDate = new Date(date)
+                                  checkDate.setHours(0, 0, 0, 0)
+                                  setViewingDateForConflicts(checkDate)
+
+                                  const newConflicts: DateConflict[] = []
+                                  for (const conflict of conflicts) {
+
+                                      if (conflict.conflictResponseDate.date.getTime() == checkDate.getTime()) {
+                                          newConflicts.push(conflict)
+                                      }
+                                  }
+                                  setCurrentConflicts(newConflicts)
+                              }}
+                              deleteEvent={async (event) => {
+                                  console.log(event)
+                                  const deletedEvent = theaterEvents.find((e) => e.id == event.id)
+
+                                  const newEvents = theaterEvents.filter((e) => e.id != event.id)
+                                  setTheaterEvents(newEvents)
+                                  const newCalendarEvents = calendarEvents.filter((e) => e.id != event.id)
+                                  setCalendarEvents(newCalendarEvents)
+                                  await deleteActivityTheaterEvent(deletedEvent!)
+                              }}
+                              dateClick={(args) => {
+
+                                  console.log(args.date)
+                                  setSelectedDate(args.date)
+                                  const checkDate = new Date(args.date)
+                                  checkDate.setHours(0, 0, 0, 0)
+                                  setViewingDateForConflicts(checkDate)
+
+                                  const newConflicts: DateConflict[] = []
+                                  for (const conflict of conflicts) {
+
+                                      if (conflict.conflictResponseDate.date.getTime() == checkDate.getTime()) {
+                                          newConflicts.push(conflict)
+                                      }
+                                  }
+                                  setCurrentConflicts(newConflicts)
+                                  setStartTime(new Date(args.date))
+                                  setStartTimeString(args.date.toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: false
+                                  }))
+                                  //copy the date and add an hour
+                                  const newEndTime = new Date(args.date)
+
+                                  setEndTime(newEndTime.addHours(1))
+                                  console.log(newEndTime)
+                                  setEndTimeString(args.date.addHours(1).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: false
+                                  }))
+                                  setCreationState("type")
+                              }} eventClick={(args) => {
+
+
+                        setSelectedDate(args.event.start)
+                        const checkDate = new Date(args.event.start)
+                        checkDate.setHours(0, 0, 0, 0)
+                        setViewingDateForConflicts(checkDate)
+
+                        const newConflicts: DateConflict[] = []
+                        for (const conflict of conflicts) {
+
+                            if (conflict.conflictResponseDate.date.getTime() == checkDate.getTime()) {
+                                newConflicts.push(conflict)
+                            }
+                        }
+                        setCurrentConflicts(newConflicts)
+                        setStartTime(new Date(args.event.start!))
+                        setStartTimeString(args.event.start!.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        }))
+                        //copy the date and add an hour
+                        const newEndTime = new Date(args.event.end!)
+
+                        setEndTime(newEndTime)
+
+                        setEndTimeString(newEndTime.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        }))
+                        setCreationState("type")
+                    }}/>
                 </div>
-                <Calendar canOpenContextMenu={true} events={calendarEvents} 
-                editEvent={(event) => {
-                    const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
+                <button className={"ActionBtn"} onClick={() => {
+                    localStorage.setItem('events', JSON.stringify(theaterEvents))
 
-                    if(theaterEvent){
-                        console.log(theaterEvent)
-                        setCreationState("info")
-                        setName(theaterEvent.name)
-                        setDescription(theaterEvent.info)
-                        setSelectedDate(theaterEvent.date.date)
-                        setStartTime(theaterEvent.date.from)
-                        setStartTimeString(theaterEvent.date.from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
-                        setEndTime(theaterEvent.date.to)
-                        setEndTimeString(theaterEvent.date.to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
-                        setSelectedLocation(theaterEvent.location)
-                        setRehearsalLocation(theaterEvent.rehearsalLocation)
-                        setCharacters(theaterEvent.characters)
-                        setIsEditing(true)
-                        setType(theaterEvent.theaterEventType as "song" | "dance" | "scene" | "custom")
-                        setEditEvent(theaterEvent)
-                    }
-                }
-                }
-                viewConflicts={ (date) => {
-                    const checkDate = new Date(date)
-                    checkDate.setHours(0, 0, 0, 0)
-                    setViewingDateForConflicts(checkDate)
-
-                    const newConflicts: DateConflict[] = []
-                    for(const conflict of conflicts){
-
-                        if(conflict.conflictResponseDate.date.getTime() == checkDate.getTime()){
-                            newConflicts.push(conflict)
-                        }
-                    }
-                    setCurrentConflicts(newConflicts)
-                }}
-                deleteEvent={async (event) => {
-                    console.log(event)
-                    const deletedEvent = theaterEvents.find((e) => e.id == event.id)
-
-                    const newEvents = theaterEvents.filter((e) => e.id != event.id)
-                    setTheaterEvents(newEvents)
-                    const newCalendarEvents = calendarEvents.filter((e) => e.id != event.id)
-                    setCalendarEvents(newCalendarEvents)
-                    await deleteActivityTheaterEvent(deletedEvent!)
-                }}
-                dateClick={(args) => {
-
-                    console.log(args.date)
-                    setSelectedDate(args.date)
-                    const checkDate = new Date(args.date)
-                    checkDate.setHours(0, 0, 0, 0)
-                    setViewingDateForConflicts(checkDate)
-
-                    const newConflicts: DateConflict[] = []
-                    for(const conflict of conflicts){
-
-                        if(conflict.conflictResponseDate.date.getTime() == checkDate.getTime()){
-                            newConflicts.push(conflict)
-                        }
-                    }
-                    setCurrentConflicts(newConflicts)
-                    setStartTime(new Date(args.date))
-                    setStartTimeString(args.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
-                    //copy the date and add an hour
-                    const newEndTime = new Date(args.date)
-
-                    setEndTime(newEndTime.addHours(1))
-                    console.log(newEndTime)
-                    setEndTimeString(args.date.addHours(1).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
-                    setCreationState("type")
-                }} eventClick={(args) => {
-
-
-                    setSelectedDate(args.event.start)
-                    setStartTime(new Date(args.event.start!))
-                    setStartTimeString(args.event.start!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
-                    //copy the date and add an hour
-                    const newEndTime = new Date(args.event.end!)
-
-                    setEndTime(newEndTime)
-
-                    setEndTimeString(newEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
-                    setCreationState("type")
-                }}/> 
-            </div>
-            
-            <button className='ActionBtn' onClick={() => {
-                window.location.href = "/Campus.Connect/Activity/Shows/Show/?activityId=" + activityId + "&showId=" + showId
-            }}>
-                Back
-            </button>
+                    window.open('/Activity/Shows/Show/Schedule/Print/', "_blank")
+                }}>
+                    Print
+                </button>
+                <button className='ActionBtn' onClick={() => {
+                    window.location.href = "/Activity/Shows/Show/?activityId=" + activityId + "&showId=" + showId
+                }}>
+                    Back
+                </button>
             </> : creationState == "type" ? <>
-            <h2 className='title'>Select a Rehersal Type</h2>
+                <h2 className='title'>Select a Rehersal Type</h2>
                 {!isMobile && <div className='conflicts-div'>
                     <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
                     <label htmlFor="">Ignore Ensemble Conflicts</label>
-                    <label className="custom-checkbox">
+                    {show?.hasEnsemble && <><label className="custom-checkbox">
 
-                        <input type="checkbox" id="ensemble" checked={filterEnsmeble} onChange={(e) => setFilterEnsemble(e.target.checked)} />
+                        <input type="checkbox" id="ensemble" checked={filterEnsmeble}
+                               onChange={(e) => {
+                                   setFilterEnsemble(e.target.checked)
+                                   if (e.target.checked) {
+                                       const newConflicts: DateConflict[] = []
+                                       const checkDate = new Date(selectedDate!)
+                                       checkDate.setHours(0, 0, 0, 0)
+                                       for (const conflict of conflicts) {
+                                           //ignore ensemble conflicts
+                                           if (ensembleActors.find((actor) => actor.userId == conflict.actor.userId)) {
+                                               continue
+                                           }
+                                           if(conflict.conflictResponseDate.date.getTime() == checkDate.getTime()){
+                                               newConflicts.push(conflict)
+                                           }
+
+                                       }
+                                       setCurrentConflicts(newConflicts)
+                                   }
+                               }}/>
                         <span className="checkmark"> </span>
-                    </label>
+                    </label></>}
                     <div className='conflicts'>
                         {
                             currentConflicts.map((conflict, index) => {
@@ -655,12 +766,117 @@ function App() {
             </> : <>
                {!isMobile && <div className='conflicts-div'>
                     <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
-                    <label htmlFor="">Ignore Ensemble Conflicts</label>
-                    <label className="custom-checkbox">
+                   {show?.hasEnsemble && <><label htmlFor="">Ignore Ensemble Conflicts</label>
+                       <label className="custom-checkbox">
 
-                        <input type="checkbox" id="ensemble" checked={filterEnsmeble} onChange={(e) => setFilterEnsemble(e.target.checked)} />
-                        <span className="checkmark"> </span>
-                    </label>
+                       <input type="checkbox" id="ensemble" checked={filterEnsmeble}
+                   onChange={(e) => {
+                       setFilterEnsemble(e.target.checked)
+                       if (e.target.checked) {
+                           const newConflicts: DateConflict[] = []
+                           const actorsUIDs: string[] = []
+                           for(const character of characters){
+                               if(character instanceof Character){
+                                   if(actorsUIDs.includes(character.actor!.userId)){
+                                       actorsUIDs.push(character.actor!.userId)
+                                   }
+                               } else if(character instanceof ShowGroup){
+                                   for(const showCharacter of character.characters){
+                                       if(showCharacter instanceof Character){
+                                           if(actorsUIDs.includes(showCharacter.actor!.userId)){
+                                               actorsUIDs.push(showCharacter.actor!.userId)
+                                           }
+                                       } else {
+                                           if (showCharacter.includeAll) {
+                                               for (const actor of show!.ensemble!.actors) {
+                                                   if (actorsUIDs.includes(actor.userId)) {
+                                                       actorsUIDs.push(actor.userId)
+                                                   }
+                                               }
+                                           } else if (showCharacter.includeMale) {
+                                               for (const actor of show!.ensemble!.actors) {
+                                                   if (actor.gender == "male") {
+                                                       if (actorsUIDs.includes(actor.userId)) {
+                                                           actorsUIDs.push(actor.userId)
+                                                       }
+                                                   }
+                                               }
+                                           } else if (showCharacter.includeFemale) {
+                                               for (const actor of show!.ensemble!.actors) {
+                                                   if (actor.gender == "female") {
+                                                       if (actorsUIDs.includes(actor.userId)) {
+                                                           actorsUIDs.push(actor.userId)
+                                                       }
+                                                   }
+                                               }
+                                           } else if (showCharacter.includeCustom) {
+                                               for (const actor of showCharacter.customActors) {
+                                                   if (actorsUIDs.includes(actor.userId)) {
+                                                       actorsUIDs.push(actor.userId)
+                                                   }
+                                               }
+                                           }
+                                       }
+                                   }
+                               } else if(character instanceof EnsembleSection){
+                                   if(character.includeAll){
+                                       for(const actor of show!.ensemble!.actors){
+                                           if(actorsUIDs.includes(actor.userId)){
+                                               actorsUIDs.push(actor.userId)
+                                           }
+                                       }
+                                   } else if(character.includeMale){
+                                       for(const actor of show!.ensemble!.actors){
+                                           if(actor.gender == "male"){
+                                               if(actorsUIDs.includes(actor.userId)){
+                                                   actorsUIDs.push(actor.userId)
+                                               }
+                                           }
+                                       }
+                                   } else if(character.includeFemale){
+                                       for(const actor of show!.ensemble!.actors){
+                                           if(actor.gender == "female"){
+                                               if(actorsUIDs.includes(actor.userId)){
+                                                   actorsUIDs.push(actor.userId)
+                                               }
+                                           }
+                                       }
+                                   } else if(character.includeCustom){
+                                       for(const actor of character.customActors){
+                                           if(actorsUIDs.includes(actor.userId)){
+                                               actorsUIDs.push(actor.userId)
+                                           }
+                                       }
+                                   }
+                               } else {
+                                   {
+                                       for (const actor of show!.ensemble!.actors) {
+                                           actorsUIDs.push(actor.userId)
+                                       }
+                                       for (const character of show!.characters) {
+                                           if (actorsUIDs.includes(character.actor!.userId)) {
+                                               continue
+                                           }
+                                           actorsUIDs.push(character.actor!.userId)
+                                       }
+                                   }
+                               }
+                           }
+                           for (const conflict of conflicts) {
+                               //ignore ensemble conflicts
+                               if (ensembleActors.find((actor) => actor.userId == conflict.actor.userId)) {
+                                   continue
+                               }
+                               if(actorsUIDs.includes(conflict.actor.userId) && conflict.conflictResponseDate.date.getTime() == viewingDateForConflicts!.getTime()){
+                                   newConflicts.push(conflict)
+                               }
+
+                           }
+                           setCurrentConflicts(newConflicts)
+                       }
+                   }}/>
+                   <span className="checkmark"> </span>
+                   </label> </>}
                     <div className='conflicts'>
                         {
                             currentConflicts.map((conflict, index) => {
@@ -931,7 +1147,7 @@ function App() {
                             }
                         }
                     }
-                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, showId, characters, targets, type, rehearsalLocation!)
+                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, activity!.name, showId, show!.name , characters, targets, type, activity.eventTypes[0], rehearsalLocation!)
 
                     console.log(newEvent)
                     if(isEditing){
@@ -1034,6 +1250,8 @@ function App() {
                 </>
 
             }
+
+
             
             
 

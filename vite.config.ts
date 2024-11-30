@@ -15,14 +15,14 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
-  base: '/Campus.Connect/',
+  base: '/',
   build: {
     outDir,
     emptyOutDir: true,
     rollupOptions: {
       input: {
         index: resolve(root,  'index.html'),
-        login: resolve(root, 'Auth/login/index.html'),
+        login: resolve(root, 'Auth/index.html'),
         activities: resolve(root, 'Activities/index.html'),
         activity: resolve(root, 'Activity/index.html'),
         shows: resolve(root, 'Activity/Shows/index.html'),
@@ -36,6 +36,10 @@ export default defineConfig({
         settings: resolve(root, 'Activity/Settings/index.html'),
         messages: resolve(root, 'Activity/Messages/index.html'),
         resources: resolve(root, 'Activity/Shows/Show/Resources/index.html'),
+        event: resolve(root, 'Calendar/Event/index.html'),
+        printEvent: resolve(root, 'Calendar/Event/Print/index.html'),
+        schedule: resolve(root, 'Activity/Shows/Show/Schedule/index.html'),
+        printSchedule: resolve(root, 'Activity/Shows/Show/Schedule/Print/index.html'),
       }
     }
   }

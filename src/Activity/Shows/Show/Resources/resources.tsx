@@ -20,9 +20,10 @@ import { useRef, useState } from 'react'
 import './resources.css'
 import { Resource, Show } from '../../../../constants'
 import AddResourceDialog from '../../../../components/Add_Resource_Dialog'
-import { addActivityShowResource, deleteActivityShowResource } from '../../../../firebase/db'
-import { deleteFile } from '../../../../firebase/storage'
+import { addActivityShowResource, deleteActivityShowResource } from '../../../../api/db'
+import { deleteFile } from '../../../../api/storage'
 import ResourceTile from '../../../../components/Resource_Tile'
+import { isLoggedIn } from '../../../../api/auth'
 
 
 
@@ -37,6 +38,7 @@ function App() {
     
 
     useEffect(() => {
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
@@ -101,7 +103,7 @@ function App() {
                 </button>
             }
             <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
+                window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
             }}>
                 Back
             </button>

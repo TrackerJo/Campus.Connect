@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {   JoinActivityDialogProps } from "../constants";
 
 import "./Join_Activity_Dialog.css"
-import { joinActivity, updateUserGender, updateUserPhoneNumber } from "../firebase/db";
+import { joinActivity, updateUserGender, updateUserPhoneNumber } from "../api/db";
 
 function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
     const [activityCode, setActivityCode] = useState<string>("")
@@ -35,7 +35,7 @@ function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
                         return
                     }
                    
-                    window.location.href = `/Campus.Connect/Activity/?activityId=${activity.id}`
+                    window.location.href = `/Activity/?activityId=${activity.id}`
 
                     
                 }}>
@@ -73,7 +73,7 @@ function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
                         alert("Invalid activity code")
                         return
                     }
-                    window.location.href = `/Campus.Connect/Activity/?activityId=${activity.id}`
+                    window.location.href = `/Activity/?activityId=${activity.id}`
                 }}>Join</button>
                 </>}
 

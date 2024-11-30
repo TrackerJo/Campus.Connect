@@ -20,12 +20,13 @@ import { useRef, useState } from 'react'
 import './conflict_form.css'
 import { ActivityMember, Actor, ConflictDate, ConflictForm, ConflictResponse, ConflictResponseDate, EventDate, Show } from '../../../../constants'
 import ConflictDateTile from '../../../../components/Conflict_Date_Tile'
-import { deleteActivityShowConflictResponse, getActvityShowConflictFormResponses, getCurrentUserAsActor, saveActivityShowConflictForm, submitActivityShowConflictForm } from '../../../../firebase/db'
+import { deleteActivityShowConflictResponse, getActvityShowConflictFormResponses, getCurrentUserAsActor, saveActivityShowConflictForm, submitActivityShowConflictForm } from '../../../../api/db'
 import ConflictDateFormTile from '../../../../components/Conflict_Date_Form_Tile'
 import AddRecurringConflictDialog from '../../../../components/Add_Recurring_Conflict_Dialog'
 import SimpleConflictResponseDisplayTile from '../../../../components/Simple_Conflict_Response_Date_Display_Tile'
 import AddUserDialog from '../../../../components/Add_User_Dialog'
 import AddAdditionalDayDialog from '../../../../components/Add_Additional_Day_Dialog'
+import { isLoggedIn } from '../../../../api/auth'
 
 
 
@@ -65,6 +66,7 @@ function App() {
     
 
     useEffect(() => {
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
@@ -406,7 +408,7 @@ function App() {
                 </>}
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
+                window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
             }}>
                 Close
             </button>

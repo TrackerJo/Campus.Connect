@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 
 
@@ -7,12 +7,13 @@ import { useEffect, useRef, useState } from 'react'
 
 
 import './App.css'
-import { CalendarEvent } from './constants'
-import Calendar from './components/Calendar'
+
+
 import DashboardTile from './components/Dashboard_Tile'
-import { isLoggedIn, logout } from './firebase/auth'
+import { isLoggedIn, logout } from './api/auth'
 
 function App() {
+  // @ts-ignore
   const [loggedIn, setIsLoggedIn] = useState(false)
   useEffect(() => {
 
@@ -31,10 +32,10 @@ function App() {
       <div className='center'>
         <div className='tiles'>
           <DashboardTile title='Calendar' description='View your calendar' onClick={() => {
-            window.location.href = '/Campus.Connect/Calendar/'
+            window.location.href = '/Calendar/'
           }}/>
           <DashboardTile title='Activities' description='View your activities' onClick={() => {
-            window.location.href = '/Campus.Connect/Activities/'
+            window.location.href = '/Activities/'
           }}/>
 
         </div>

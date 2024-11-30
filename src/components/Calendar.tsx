@@ -12,7 +12,7 @@ import CalendarHoverEventTile from './Calendar_Hover_Event_Tile'
 
 
 
-function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, editEvent, canOpenContextMenu}:CalendarProps) {
+function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, editEvent, canOpenContextMenu, viewEvent}:CalendarProps) {
   const [event, setEvent] = useState<EventClickArg>()
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [top, setTop] = useState(0)
@@ -190,6 +190,10 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
               e.preventDefault()
               setEvent(arg)
               setContextMenuItems([
+                {name: 'View Event', onClick: () => {
+                    viewEvent(arg.event)
+                    setEvent(undefined)
+                }},
                 {name: 'Edit Event', onClick: () => {
                   editEvent(arg.event)
                   setEvent(undefined)
@@ -202,6 +206,7 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
                     setEvent(undefined)
                   
                 }},
+
                 {name: 'View Conflicts', onClick: () => {
                  viewConflicts(arg.event.start!)
                  setEvent(undefined)

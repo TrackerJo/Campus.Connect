@@ -23,7 +23,8 @@ import './add_show.css'
 
 
 import { Show } from '../../../constants'
-import { createShow, getShowTemplates } from '../../../firebase/db'
+import { createShow, getShowTemplates } from '../../../api/db'
+import { isLoggedIn } from '../../../api/auth'
 
 
 
@@ -36,6 +37,7 @@ function App() {
 
 
     useEffect(() => {
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
@@ -77,8 +79,11 @@ function App() {
                 </select>
                 {isLoading ? <div className='loader'></div>: <button className='ActionBtn' onClick={async () => {
                     setIsLoading(true)
-                    const id = await createShow(selectedShow!, activityId)
-                    window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`
+                    selectedShow!.activityId = activityId
+                    const id = await createShow(selectedShow!)
+                    selectedShow!.id = id
+                    localStorage.setItem('show', JSON.stringify(selectedShow))
+                    window.location.href = `/Activity/Shows/CreateTemplate/?activityId=${activityId}&isEditing=true`
                     setIsLoading(false)
 
                 }}>Select Show</button>}
@@ -88,13 +93,13 @@ function App() {
 
             <div className=''>
                 <button className='ActionBtn' onClick={() => {
-                    window.location.href = `/Campus.Connect/Activity/Shows/CreateTemplate/?activityId=${activityId}`
+                    window.location.href = `/Activity/Shows/CreateTemplate/?activityId=${activityId}`
                 }}>Create new Show Template</button>
                 </div>
                 
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Campus.Connect/Activity/Shows/?activityId=${activityId}`
+                window.location.href = `/Activity/Shows/?activityId=${activityId}`
             }}>
                 Back
             </button>

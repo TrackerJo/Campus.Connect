@@ -18,10 +18,12 @@ import { useRef, useState } from 'react'
 
 
 import './activities.css'
-import { Activity, Location } from '../constants'
-import { getActivities } from '../firebase/db'
-import { GeoPoint } from 'firebase/firestore'
+import { Activity } from '../constants'
+import { getActivities } from '../api/db'
+
 import JoinActivityDialog from '../components/Join_Activity_Dialog'
+import { isLoggedIn } from '../api/auth'
+import CreateActivityDialog from "../components/Create_Activity_Dialog.tsx";
 
 
 
@@ -30,8 +32,10 @@ function App() {
     const [activities, setActivities] = useState<Activity[]>([])
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
     const joinActivityDialogRef = useRef<HTMLDialogElement>(null)
+    const createActivityDialogRef = useRef<HTMLDialogElement>(null)
 
     useEffect(() => {
+        isLoggedIn(() => {})
         async function fetchActivities() {
             const fetchedActivities = await getActivities()
             
@@ -61,7 +65,7 @@ function App() {
                 {activities.map((activity) => {
                     return (
                         <div className='activity' key={activity.id} onClick={() => {
-                            window.location.href = `/Campus.Connect/Activity/?activityId=${activity.id}`
+                            window.location.href = `/Activity/?activityId=${activity.id}`
                         }}>
                             <h1>{activity.name}</h1>
                         </div>
@@ -70,7 +74,9 @@ function App() {
             </div>
             <br />
             {accountType == "teacher" && 
-            <button className='ActionBtn' onClick={() => {}}>
+            <button className='ActionBtn' onClick={() => {
+                createActivityDialogRef.current!.showModal()
+            }}>
                 Create Activity
             </button>}
             <button className='ActionBtn' onClick={() => {
@@ -78,7 +84,7 @@ function App() {
             }}>Join Activity</button>
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = '/Campus.Connect/'
+                window.location.href = '/'
             }}>
                 Back
             </button>
@@ -87,6 +93,10 @@ function App() {
 
             <JoinActivityDialog dialogRef={joinActivityDialogRef} close={() => {
                 joinActivityDialogRef.current!.close()
+            }} />
+
+            <CreateActivityDialog dialogRef={createActivityDialogRef} close={() => {
+                createActivityDialogRef.current!.close()
             }} />
 
         

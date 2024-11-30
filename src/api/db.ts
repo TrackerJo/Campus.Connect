@@ -1,7 +1,28 @@
 import { addDoc, arrayRemove, arrayUnion, deleteDoc, DocumentData, FieldValue, getDocs, getFirestore, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { app } from "./init";
 import { collection, doc, getDoc } from "firebase/firestore"; 
-import { Act, Activity, ActivityEvent, ActivityGC, ActivityMember, Actor, ConflictForm, ConflictResponse, Event, Message, MiniUser, Resource, Show, StudentData, TeacherData, TheaterActivity, TheaterEvent, TheaterLocation } from "../constants";
+import {
+    Act,
+    Activity,
+    ActivityEvent,
+    ActivityGC,
+    ActivityMember,
+    Actor,
+    ConflictForm,
+    ConflictResponse,
+    Event,
+    EventType, hexToInt,
+    Message,
+    MiniUser,
+    Resource,
+    Show,
+    StudentData,
+    TeacherData,
+    TheaterActivity,
+    Location,
+    TheaterEvent,
+    TheaterLocation
+} from "../constants";
 import { getCurrentUserId, reauthenticateUser } from "./auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { Stream } from "stream";
@@ -46,6 +67,7 @@ export const getActivities = async (): Promise<Activity[]> => {
         const activities: Activity[] = [];
         const activitiesSnapshotData = await getDocs(activitiesSnapshot);
         activitiesSnapshotData.forEach((doc) => {
+            console.log(doc.data());
             activities.push(Activity.fromMap(doc.data()));
         });
         return activities;
@@ -66,11 +88,11 @@ export async function getActivity(activityId: string): Promise<Activity | Theate
     return Activity.fromMap(activitySnap.data());
 }
 
-export async function createShow(show: Show, activityId: string): Promise<string> {
+export async function createShow(show: Show): Promise<string> {
     const schoolId = localStorage.getItem("schoolId");
     if (!schoolId) return "";
     const schoolDoc = doc(db, "schools", schoolId);
-    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), show.activityId);
     const showsCol = collection(activityDoc, "shows");
     const ref = await addDoc(showsCol, show.toMap());
     show.id = ref.id;
@@ -79,6 +101,15 @@ export async function createShow(show: Show, activityId: string): Promise<string
     });
     return ref.id;
 
+}
+
+export async function editShow(show: Show): Promise<void> {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), show.activityId);
+    const showDoc = doc(collection(activityDoc, "shows"), show.id);
+    await updateDoc(showDoc, show.toMap());
 }
 
 export async function addShowTemplate(showTemplate: Show) {
@@ -443,16 +474,28 @@ export async function updateTheaterActivityRehearsalLocation(activityId: string,
 export async function getActivityGCsStream( activityId: string, updateGCs: (gcs: ActivityGC[]) => void) {
     const schoolId = localStorage.getItem("schoolId");
     const userId = localStorage.getItem("userId");
-    if (!schoolId) return [];
+    if (!schoolId || !userId) return [];
     const accountType = localStorage.getItem("accountType");
     const schoolDoc = doc(db, "schools", schoolId);
+
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     if(accountType == "teacher"){
+        //get teacher data
+        const teacherDoc = doc(collection(schoolDoc, "teachers"), userId);
+        const teacherSnap = await getDoc(teacherDoc);
+        if (!teacherSnap.exists()) return;
+        const teacherData = TeacherData.fromMap(teacherSnap.data());
 
         onSnapshot(collection(activityDoc, "groupChats"), async (docs) => {
             const gcs: ActivityGC[] = [];
             for (const doc of docs.docs) {
                 const gc = ActivityGC.fromMap(doc.data());
+                if(gc.generalTarget == "direct" || gc.generalTarget == "custom"){
+                    const userAsMember = ActivityMember.fromBlank(teacherData.fullname, teacherData.uid, teacherData.FCMToken);
+                    if(!gc.members.find((member) => member.memberUid == userId)){
+                        continue;
+                    }
+                }
                 if(gc.generalTarget == "direct"){
                     const otherMember = gc.members.find((member) => member.memberUid != userId);
                     gc.name = otherMember?.memberName || "Unknown";
@@ -475,6 +518,77 @@ export async function getActivityGCsStream( activityId: string, updateGCs: (gcs:
             });
             updateGCs(gcs);
         });
+    } else {
+
+        const studentDoc = doc(collection(schoolDoc, "students"), userId);
+        const studentSnap = await getDoc(studentDoc);
+        if (!studentSnap.exists()) return;
+        const studentData = StudentData.fromMap(studentSnap.data());
+        console.log(studentData);
+
+        //Get group chats where user is a target
+        onSnapshot(collection(activityDoc, "groupChats"), async (docs) => {
+            const gcs: ActivityGC[] = [];
+            const userAsMember = ActivityMember.fromBlank(studentData.fullname, studentData.uid, studentData.FCMToken);
+            for (const doc of docs.docs) {
+                const gc = ActivityGC.fromMap(doc.data());
+                if(!(gc.generalTarget == "everyone" || gc.generalTarget == "students")){
+                    if(gc.generalTarget == "parents"){
+                        continue;
+                    }
+                    if(!gc.members.find((member) => member.memberUid == userId)){
+                        continue;
+                    }
+
+                }
+                if(gc.generalTarget == "direct"){
+                    const otherMember = gc.members.find((member) => member.memberUid != userId);
+                    gc.name = otherMember?.memberName || "Unknown";
+                }
+                //Get last message
+                const messagesCol = collection(doc.ref, "messages");
+                const messagesSnapshot = query(messagesCol, orderBy("timeSent", "desc"), limit(1));
+                const messages = await getDocs(messagesSnapshot);
+                if (!messages.empty) {
+                    gc.lastMessage = Message.fromMap(messages.docs[0].data());
+                }
+
+                gcs.push(gc);
+            }
+            //Sort by last message
+            gcs.sort((a, b) => {
+                if (!a.lastMessage) return 1;
+                if (!b.lastMessage) return -1;
+                return b.lastMessage.timeSent.getTime() - a.lastMessage.timeSent.getTime();
+            });
+            updateGCs(gcs);
+        });
+        // onSnapshot(collection(activityDoc, "groupChats"), async (docs) => {
+        //     const gcs: ActivityGC[] = [];
+        //     for (const doc of docs.docs) {
+        //         const gc = ActivityGC.fromMap(doc.data());
+        //         if(gc.generalTarget == "direct"){
+        //             const otherMember = gc.members.find((member) => member.memberUid != userId);
+        //             gc.name = otherMember?.memberName || "Unknown";
+        //         }
+        //         //Get last message
+        //         const messagesCol = collection(doc.ref, "messages");
+        //         const messagesSnapshot = query(messagesCol, orderBy("timeSent", "desc"), limit(1));
+        //         const messages = await getDocs(messagesSnapshot);
+        //         if (!messages.empty) {
+        //             gc.lastMessage = Message.fromMap(messages.docs[0].data());
+        //         }
+        //
+        //         gcs.push(gc);
+        //     }
+        //     //Sort by last message
+        //     gcs.sort((a, b) => {
+        //         if (!a.lastMessage) return 1;
+        //         if (!b.lastMessage) return -1;
+        //         return b.lastMessage.timeSent.getTime() - a.lastMessage.timeSent.getTime();
+        //     });
+        //     updateGCs(gcs);
+        // });
     }
    
 } 
@@ -534,7 +648,7 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
             ActivityMember.fromBlank(message.senderName, message.senderUid, message.senderFCMToken),
             recipientData
             
-        ], "direct", activityId);
+        ], "direct", activityId, Date.now());
 
         const ref = await setDoc(gcDoc, gc.toMap());
         //Create messages collection
@@ -623,3 +737,97 @@ export async function createUser(type: "student" | "teacher", user: StudentData 
         [type + "s"]: arrayUnion(miniUser.toMap())
     });
 }
+
+function createActivityJoinCode(name: string): string {
+    const now = new Date();
+    const millisecondsSinceEpoch = now.getTime().toString();
+    const firstChar = name.charCodeAt(0);
+    const code = `${firstChar}${now.getDate()}${millisecondsSinceEpoch.slice(-2)}`;
+    return code;
+}
+
+export async function createActivity(activityName: string, activityType: "theater" | "activity"): Promise<Activity | TheaterActivity | null> {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return null;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const schoolSnap = await getDoc(schoolDoc);
+    if (!schoolSnap.exists()) return null;
+    const schoolData = schoolSnap.data();
+
+    const activitiesCol = collection(schoolDoc, "activities");
+
+    const joinCode = createActivityJoinCode(activityName);
+    const defaultTheaterEventTypes: EventType[] = [
+        EventType.fromMap({
+            name: "Rehearsal",
+            color: hexToInt("#FF0000")
+        }),
+        EventType.fromMap({
+            name: "Performance",
+            color: hexToInt("#00FF00")
+        }),
+    ];
+
+    const defaultEventTypes: EventType[] = [
+        EventType.fromMap({
+            name: "Practice",
+            color: hexToInt("#FF0000")
+        }),
+        EventType.fromMap({
+            name: "Game",
+            color: hexToInt("#00FF00")
+        }),
+        ];
+
+    const defautTheaterLocations: TheaterLocation[] = [
+        TheaterLocation.fromMap({
+            name: "Auditorium",
+            color: hexToInt("#0000FF")
+        }),
+
+    ];
+
+    const defaultLocation: Location = Location.fromMap(schoolData.location);
+    const defaultLocations: Location[] = [defaultLocation];
+    const teacherData = await getUserData();
+    if (!teacherData) return null;
+    const teacher = ActivityMember.fromBlank(teacherData.fullname, teacherData.uid, teacherData.FCMToken);
+    let activity: Activity | TheaterActivity;
+    if (activityType == "theater") {
+        activity = TheaterActivity.fromBlank(activityName, "", joinCode,[],[],[],[teacher],defaultLocations, defaultTheaterEventTypes, defaultLocation, defautTheaterLocations, "type", Date.now());
+    } else {
+        activity = Activity.fromBlank(activityName, "", joinCode, [],[],[],[teacher], defaultLocations, defaultEventTypes, defaultLocation, "type", Date.now(), "activity");
+    }
+    const ref =await addDoc(activitiesCol, activity.toMap());
+    activity.id = ref.id;
+    await updateDoc(ref, {
+        id: ref.id
+    });
+    const everyoneGC = ActivityGC.fromMap({
+        name: "Everyone",
+        members: [],
+        id: "",
+        activityId: activity.id,
+        lastUpdated: Date.now(),
+        generalTarget: "everyone"});
+    await createActivityGroupChat(everyoneGC);
+    const parentsGC = ActivityGC.fromMap({
+        name: "Parents",
+        members: [],
+        id: "",
+        activityId: activity.id,
+        lastUpdated: Date.now(),
+        generalTarget: "parents"});
+    await createActivityGroupChat(parentsGC);
+    const studentsGC = ActivityGC.fromMap({
+        name: "Students",
+        members: [],
+        id: "",
+        activityId: activity.id,
+        lastUpdated: Date.now(),
+        generalTarget: "students"});
+    await createActivityGroupChat(studentsGC);
+
+    return activity;
+}
+

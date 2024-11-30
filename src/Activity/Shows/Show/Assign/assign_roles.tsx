@@ -27,10 +27,11 @@ import ActTile from '../../../../components/Act_Tile'
 import CharacterTile from '../../../../components/Character_Tile'
 import ShowGroupTile from '../../../../components/Show_Group_Tile'
 
-import {getActivityActors, setActivityShow } from '../../../../firebase/db'
+import {getActivityActors, setActivityShow } from '../../../../api/db'
 
 import ActorTile from '../../../../components/Actor_Tile'
 import AssignActorDialog from '../../../../components/Assign_Actor_Dialog'
+import { isLoggedIn } from '../../../../api/auth'
 
 
 
@@ -206,6 +207,7 @@ function App() {
 
 
     useEffect(() => {
+        isLoggedIn(() => {})
         setSettingUp(true)
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
@@ -315,7 +317,7 @@ function App() {
 
            {isLoading ? <div className="loader"></div> : <button className='ActionBtn' onClick={async () => {
                 await assginRoles()
-                window.location.href = '/Campus.Connect/Activity/Shows/Show/?activityId=' + activityId + '&showId=' + showId
+                window.location.href = '/Activity/Shows/Show/?activityId=' + activityId + '&showId=' + showId
 
 
             }}>
@@ -323,7 +325,7 @@ function App() {
             </button>
 }
 <button className='ActionBtn' onClick={() => {
-                window.location.href = "/Campus.Connect/Activity/Shows/Show/?activityId=" + activityId + "&showId=" + showId
+                window.location.href = "/Activity/Shows/Show/?activityId=" + activityId + "&showId=" + showId
             }}>
                 Back
             </button>

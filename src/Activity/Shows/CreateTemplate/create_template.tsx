@@ -27,8 +27,9 @@ import ActTile from '../../../components/Act_Tile'
 import CharacterTile from '../../../components/Character_Tile'
 import ShowGroupTile from '../../../components/Show_Group_Tile'
 import SongTile from '../../../components/Song_Tile'
-import { addShowTemplate, createShow } from '../../../firebase/db'
+import {addShowTemplate, createShow, editShow} from '../../../api/db'
 import DanceTile from '../../../components/Dance_Tile'
+import { isLoggedIn } from '../../../api/auth'
 
 
 
@@ -45,15 +46,33 @@ function App() {
     const [showName, setShowName] = useState<string>("")
     const [hasEnsemble, setHasEnsemble] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [isEditing, setIsEditing] = useState<boolean>(false)
+    const [showId, setShowId] = useState<string>("")
 
 
 
     useEffect(() => {
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
         if (activityId) {
             setActivityId(activityId)
+        }
+        const isEditing = urlParams.get('isEditing')
+        if (isEditing) {
+            setIsEditing(true)
+            const show = Show.fromMap(JSON.parse(localStorage.getItem('show')!))
+            setShowName(show.name)
+            setHasEnsemble(show.hasEnsemble)
+            setCharacters(show.characters)
+            setShowGroups(show.showGroups)
+            setLayout(show.layout)
+            setSongs(show.songs)
+            setDances(show.dances)
+            setShowId(show.id)
+
+
         }
        
 
@@ -212,18 +231,25 @@ function App() {
            {isLoading ? <div className="loader"></div> : <button className='ActionBtn' onClick={async () => {
                 //Create show template\
                 setIsLoading(true)
-                const show = Show.fromBlank(showName, "",layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", Date.now() )
+                const show = Show.fromBlank(showName, showId,activityId,layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", Date.now() )
                 console.log(show.toMap())
-                await addShowTemplate(show)
-                const id = await createShow(show, activityId)
-                window.location.href = `/Campus.Connect/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`
+               let id = showId
+                if(!isEditing) {
+                    await addShowTemplate(show)
+                    id = await createShow(show)
+                } else {
+                    await editShow(show)
+                    localStorage.removeItem('show')
+                }
+
+                window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`
                 setIsLoading(false)
             }}>
-                Create Show Template
+                {isEditing ? "Save Show Template" : "Create Show Template"}
             </button>
 }
             <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Campus.Connect/Activity/Shows/Add/?activityId=${activityId}`
+                window.location.href = `/Activity/Shows/Add/?activityId=${activityId}`
             }}>
                 Back
             </button>

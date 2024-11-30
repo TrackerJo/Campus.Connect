@@ -19,7 +19,7 @@ import { useRef, useState } from 'react'
 
 import './messages.css'
 import { ActivityGC, Message } from '../../constants'
-import { getActivityGCMessagesStream, getActivityGCsStream, getUserData, sendActivityGCMessage } from '../../firebase/db'
+import { getActivityGCMessagesStream, getActivityGCsStream, getUserData, sendActivityGCMessage } from '../../api/db'
 
 import MessageTile from '../../components/Message_Tile'
 import { DocumentData } from 'firebase/firestore'
@@ -31,6 +31,7 @@ import BroadcastMessageDialog from '../../components/Broadcast_Message_Dialog'
 
 
 import Back from '../../assets/back.png'
+import { isLoggedIn } from '../../api/auth'
 
 function App() {
     const [activityId, setActivityId] = useState<string>("")
@@ -63,6 +64,7 @@ function App() {
     },[selectedGroupChat])
 
     useEffect(() => {
+        isLoggedIn(() => {})
         const handleResize = () => {
             if (window.innerWidth < 800) {
                 setIsMobile(true)
@@ -160,10 +162,10 @@ function App() {
                     {
                         selectedGroupChat ? (
                             <div className='selectedGroupChat'>
-                                {isMobile && <div className='back-div'>
-                                    <img src={Back} alt="" onClick={() => setSelectedGroupChat(null)} />
+                                 <div className='back-div'>
+                                     {isMobile && <img src={Back} alt="" onClick={() => setSelectedGroupChat(null)}/>}
                                     <h2>{selectedGroupChat.name}</h2>
-                                </div>}
+                                </div>
                                 <div className='messages' ref={messagesRef}>
                                     {
                                         messages.map((message) => {
@@ -188,7 +190,7 @@ function App() {
             </div>
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = '/Campus.Connect/Activity/?activityId=' + activityId
+                window.location.href = '/Activity/?activityId=' + activityId
             }}>
                 Back
             </button>

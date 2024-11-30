@@ -18,10 +18,11 @@ import { useRef, useState } from 'react'
 
 
 import './settings.css'
-import { getActivity, updateTheaterActivityRehearsalLocation } from '../../firebase/db'
+import { getActivity, updateTheaterActivityRehearsalLocation } from '../../api/db'
 import DashboardTile from '../../components/Dashboard_Tile'
-import { Activity, intToHexColor, TheaterActivity, TheaterEvent, TheaterLocation } from '../../constants'
+import { Activity, EventType, intToHexColor, TheaterActivity, TheaterEvent, TheaterLocation } from '../../constants'
 import AddRehearsalLocationDialog from '../../components/Add_Rehearsal_Location_Dialog'
+import { isLoggedIn } from '../../api/auth'
 
 
 
@@ -33,8 +34,10 @@ function App() {
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
     const addRehearsalLocationDialogRef = useRef<HTMLDialogElement>(null)
     const [rehearsalLocations, setRehearsalLocations] = useState<TheaterLocation[]>([])
+    const [eventTypes, setEventTypes] = useState<EventType[]>([])
 
     useEffect(() => {
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
@@ -87,7 +90,7 @@ function App() {
             
             <br />
             <button className='ActionBtn' onClick={() => {
-                window.location.href = '/Campus.Connect/Activity/?activityId=' + activityId
+                window.location.href = '/Activity/?activityId=' + activityId
             }}>
                 Back
             </button>

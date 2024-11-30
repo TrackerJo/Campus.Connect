@@ -2,7 +2,7 @@ import "./Create_Group_Chat_Dialog.css";
 
 import { Activity, ActivityGC, ActivityGroup, ActivityMember, Actor, CreateGroupChatDialogProps, TheaterActivity } from "../constants";
 import { useEffect, useRef, useState } from "react";
-import { createActivityGroupChat, getActivity } from "../firebase/db";
+import { createActivityGroupChat, getActivity } from "../api/db";
 import AddUserDialog from "./Add_User_Dialog";
 import AddFromPlayDialog from "./Add_From_Play_Dialog";
 import AddFromGroupDialog from "./Add_From_Group_Dialog";
@@ -90,7 +90,7 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
                             alert("Please add at least one member to the group chat")
                             return
                         }
-                        const activityGroup = ActivityGC.fromBlank(inputRef.current!.value, "", addedMembers, "custom", activityId)
+                        const activityGroup = ActivityGC.fromBlank(inputRef.current!.value, "", addedMembers, "custom", activityId, Date.now())
                         await createActivityGroupChat(activityGroup)
                         refresh()
                             close()

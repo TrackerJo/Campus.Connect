@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {Actor,AddFromPlayDialogProps, Character, EnsembleSection, FullCast, Show, ShowGroup } from "../constants";
 
 import "./Add_From_Play_Dialog.css"
-import { getActivityShows } from "../firebase/db";
+import { getActivityShows } from "../api/db";
 import ActDisplayTile from "./Act_Display_Tile";
 import SongDisplayTile from "./Song_Display_Tile";
 import DanceDisplayTile from "./Dance_Display_Tile";

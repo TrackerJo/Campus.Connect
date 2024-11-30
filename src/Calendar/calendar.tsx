@@ -19,8 +19,9 @@ import { useRef, useState } from 'react'
 
 import './calendar.css'
 import { ActivityEvent, addAlpha, CalendarEvent, ConflictResponse, Event, intToHexColor, TheaterEvent } from '../constants'
-import { getAllUserEvents, getUserConflictFormResponse } from '../firebase/db'
+import { getAllUserEvents, getUserConflictFormResponse } from '../api/db'
 import Calendar from '../components/Calendar'
+import { isLoggedIn } from '../api/auth'
 
 
 
@@ -34,6 +35,8 @@ function App() {
     const [conflictResponse, setConflictResponse] = useState<ConflictResponse | null>(null)
 
     useEffect(() => {
+        isLoggedIn(() => {})
+
         async function fetchActivities() {
             const fetchedEvents = await getAllUserEvents();
             const conflictResponses: ConflictResponse[] = []
@@ -105,7 +108,7 @@ function App() {
                     
                     isAllDay: false,
                     interactive: true,
-                    description: event.info + (partialConflict ? ` \n(Excused from ${partialConflictStartDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to ${partialConflictEndDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : hasConflict && !partialConflict ? " \n(Fully Excused)" : ''),
+                    description: event.info + (isTheaterEvent ? `\nLocation: ${event.rehearsalLocation.name}` : "") +  (partialConflict ? ` \n(Excused from ${partialConflictStartDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to ${partialConflictEndDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : hasConflict && !partialConflict ? " \n(Fully Excused)" : ''),
                     color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' : isTheaterEvent ? addAlpha(intToHexColor(event.rehearsalLocation.color), 0.8) : 'blue',
                     id: event.id!,
                     
@@ -134,9 +137,16 @@ function App() {
             </h1>
         </div>
         <div className='center'>
-            <Calendar events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventClick={() => {}}/>
+            <Calendar viewEvent={(event) => {}} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventClick={(eventArg) => {
+                const event = events.find((event) => event.id === eventArg.event.id)
+                if(event){
+                    localStorage.setItem('event', JSON.stringify(event))
+                    localStorage.removeItem('back')
+                    window.location.href = '/Calendar/Event/'
+                }
+            }}/>
             <button className='ActionBtn' onClick={() => {
-                window.location.href = '/Campus.Connect/'
+                window.location.href = '/'
             }}>
                 Back
             </button>
