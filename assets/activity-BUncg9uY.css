@@ -1,0 +1,1 @@
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));margin-top:2em;gap:1em}.center{flex-direction:column}.join-code{display:flex;justify-content:center;align-items:center;margin-top:-1em;gap:1em}.join-code img{width:1.5em;height:1.5em;cursor:pointer}
