@@ -24,6 +24,9 @@ import { getActivity } from '../api/db'
 import DashboardTile from '../components/Dashboard_Tile'
 import { isLoggedIn } from '../api/auth'
 
+import LinkIcon from '../assets/link.png'
+
+
 
 
 
@@ -31,8 +34,10 @@ function App() {
     const [activityId, setActivityId] = useState<string>("")
     const [activity, setActivity] = useState<Activity | null | TheaterActivity>(null)
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
+    const [loadingInfo, setLoadingInfo] = useState(true)
 
     useEffect(() => {
+        setLoadingInfo(true)
         isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
@@ -44,11 +49,13 @@ function App() {
             if (activity) {
                 setActivity(activity)
             }
+            setLoadingInfo(false)
         });
         const accountType = localStorage.getItem('accountType')
         if (accountType) {
             setAccountType(accountType as "student" | "teacher")
         }
+        
 
     }, [])
 
@@ -56,34 +63,50 @@ function App() {
 
     return (
         <>
-        <div className='title'>
+       { loadingInfo ? <div className='center'> <div className="loader"></div></div> : <><div className='title'>
             <h1>
                 Activity: {activity?.name}
             </h1>
-            <h3>
-                Join Code: {activity?.joinCode}
-            </h3>
+            <div className='join-code'>
+                <h3>
+                    Join Code: {activity?.joinCode}
+                </h3>
+                <img src={LinkIcon} alt="copy join link" title="Copy Join Link" onClick={async () => {
+                    await navigator.clipboard.writeText(`${window.location.origin}/Activities/?activityJoinCode=${activity?.joinCode}`)
+                    alert("Copied join link to clipboard")
+                }}/>
+            </div>  
+            
         </div>
         <div className='center'>
-            <div className='tiles'>
-                {activity?.type == "theater" ? (
-                    <DashboardTile title="Shows" description='View all current shows' onClick={() => {
-                        window.location.href = `/Activity/Shows/?activityId=${activityId}`
-                    }} />
-                ) : (
-                    <DashboardTile title="Events" description='View all current events' onClick={() => {}} />
-                )}
-                <DashboardTile title="Messages" description='View all messages' onClick={() => {
-                    window.location.href = `/Activity/Messages/?activityId=${activityId}`
-                }} />
-                {accountType == "teacher" && (
-                    <DashboardTile title="Settings" description='Change activity settings' onClick={() => {
-                        window.location.href = `/Activity/Settings/?activityId=${activityId}`
-                    }} />
-                )}
-               
+          
+           
                 
+                <div className='tiles'>
+                    {activity?.type == "theater" ? (
+                        <DashboardTile title="Shows" description='View all current shows' onClick={() => {
+                            window.location.href = `/Activity/Shows/?activityId=${activityId}`
+                        }} />
+                    ) : (
+                        <DashboardTile title="Events" description='View all current events' onClick={() => {}} />
+                    )}
+                    <DashboardTile title="Messages" description='View all messages' onClick={() => {
+                        window.location.href = `/Activity/Messages/?activityId=${activityId}`
+                    }} />
+                    {accountType == "teacher" && (
+                        <DashboardTile title="Settings" description='Change activity settings' onClick={() => {
+                            window.location.href = `/Activity/Settings/?activityId=${activityId}`
+                        }} />
+                    )}
+                    <DashboardTile title="Members" description='View all members' onClick={() => {
+                        window.location.href = `/Activity/Members/?activityId=${activityId}`
+                    }} />
+                
+                    
+                
+
             </div>
+            <br />
             <br />
             <button className='ActionBtn' onClick={() => {
                 window.location.href = '/Activities/'
@@ -91,8 +114,8 @@ function App() {
                 Back
             </button>
         </div>
-      
-        
+      </>
+        }
         </>
     )
 }

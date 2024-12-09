@@ -1,4 +1,4 @@
-import { Actor, Character, CharacterTileProps } from "../constants"
+import { ActivityMember, Character, CharacterTileProps } from "../constants"
 import "./Character_Tile.css"
 import TrashIcon from "../assets/trash.png"
 import { LegacyRef, useRef } from "react"
@@ -37,7 +37,7 @@ function CharacterTile({character, setCharacter, isCreate, removeCharacter, isAs
                     </>
                     :
                     //Dropdown for selecting existing characters
-                    <select name="characters" id="characters" onChange={(val) => {
+                    <select name="characters" id="characters" value={character.name} onChange={(val) => {
                         if(val.target.value == "null") return
                         setCharacter(characters.find((e) => e.name == val.target.value)!)
                     }}>
@@ -61,7 +61,7 @@ function CharacterTile({character, setCharacter, isCreate, removeCharacter, isAs
             
            
             
-          <AssignActorDialog actor={character.actor ?? new Actor()}  actors={actors} keepPastResult={false} addedActors={[]} setActor={(actor) => {
+          <AssignActorDialog actor={character.actor ?? new ActivityMember()}  actors={actors} keepPastResult={false} addedActors={[]} setActor={(actor) => {
                 dialogRef.current?.close()
                 setCharacter(Character.fromBlank(character.name, actor, character.characterId, character.lastUpdated))
           }} dialogRef={dialogRef as LegacyRef<HTMLDialogElement>} close={() => {

@@ -33,8 +33,11 @@ function App() {
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
     const joinActivityDialogRef = useRef<HTMLDialogElement>(null)
     const createActivityDialogRef = useRef<HTMLDialogElement>(null)
+    const [activityJoinCode, setActivityJoinCode] = useState<string>("")
+    const [loadingInfo, setLoadingInfo] = useState(true)
 
     useEffect(() => {
+        setLoadingInfo(true)
         isLoggedIn(() => {})
         async function fetchActivities() {
             const fetchedActivities = await getActivities()
@@ -42,12 +45,21 @@ function App() {
             setActivities(fetchedActivities)
             console.log(fetchedActivities)
             // alert("fetchedActivities")
+            setLoadingInfo(false)
 
         }
         fetchActivities()
         const accountType = localStorage.getItem('accountType')
         if (accountType) {
             setAccountType(accountType as "student" | "teacher")
+        }
+
+        const urlParams = new URLSearchParams(window.location.search)
+
+        const activityJoinCode = urlParams.get('activityJoinCode')
+        if (activityJoinCode) {
+            setActivityJoinCode(activityJoinCode)
+            joinActivityDialogRef.current!.showModal()
         }
     }, [])
 
@@ -62,7 +74,7 @@ function App() {
         </div>
         <div className='center'>
             <div className='activities'>
-                {activities.map((activity) => {
+                {loadingInfo ? <div className='loader-center'><div className='loader'></div></div> :  activities.map((activity) => {
                     return (
                         <div className='activity' key={activity.id} onClick={() => {
                             window.location.href = `/Activity/?activityId=${activity.id}`
@@ -91,7 +103,7 @@ function App() {
         </div>
 
 
-            <JoinActivityDialog dialogRef={joinActivityDialogRef} close={() => {
+            <JoinActivityDialog dialogRef={joinActivityDialogRef} activityJoinCode={activityJoinCode} close={() => {
                 joinActivityDialogRef.current!.close()
             }} />
 

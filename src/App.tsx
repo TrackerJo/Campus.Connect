@@ -11,6 +11,7 @@ import './App.css'
 
 import DashboardTile from './components/Dashboard_Tile'
 import { isLoggedIn, logout } from './api/auth'
+import { fixStudents, fixTeachers } from './api/db'
 
 function App() {
   // @ts-ignore
@@ -37,6 +38,7 @@ function App() {
           <DashboardTile title='Activities' description='View your activities' onClick={() => {
             window.location.href = '/Activities/'
           }}/>
+         
 
         </div>
         <br />

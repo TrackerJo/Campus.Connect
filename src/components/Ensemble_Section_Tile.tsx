@@ -1,4 +1,4 @@
-import { Actor, EnsembleSection, EnsembleSectionProps } from "../constants"
+import { ActivityMember, EnsembleSection, EnsembleSectionProps } from "../constants"
 import "./Ensemble_Section_Tile.css"
 import TrashIcon from "../assets/trash.png"
 import { LegacyRef, useRef } from "react"
@@ -80,7 +80,7 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
 
 
             
-           {(isAssign || isCustom) && <AssignActorDialog dialogRef={dialogRef as LegacyRef<HTMLDialogElement>} keepPastResult={false} actor={new Actor()} addedActors={ensembleSection.customActors} actors={actors} setActor={(actor) => {
+           {(isAssign || isCustom) && <AssignActorDialog dialogRef={dialogRef as LegacyRef<HTMLDialogElement>} keepPastResult={false} actor={new ActivityMember()} addedActors={ensembleSection.customActors} actors={actors} setActor={(actor) => {
                 const newActors = ensembleSection.customActors
                 newActors.push(actor)
                 console.log("Setting actors")

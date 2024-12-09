@@ -15,7 +15,7 @@ import {
     TheaterEvent,
     Location,
     EventDate,
-    ActivityMember,
+    
     CalendarEvent,
     TheaterActivity,
     DateConflict,
@@ -23,7 +23,8 @@ import {
     intToHexColor,
     addAlpha,
     FullCast,
-    Actor
+    ActivityMember,
+    EventType
 } from '../../../../constants';
 import { addActivityTheaterEvent, deleteActivityTheaterEvent, editActivityTheaterEvent, getActivity, getActivityShow, getActivityTheaterEvents, getActvityShowConflictFormResponses } from '../../../../api/db';
 import ActDisplayTile from '../../../../components/Act_Display_Tile';
@@ -75,9 +76,10 @@ function App() {
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const [editEvent, setEditEvent] = useState<TheaterEvent | null>(null)
     const [rehearsalLocation, setRehearsalLocation] = useState<TheaterLocation | undefined>()
+    const [eventType, setEventType] = useState<EventType | undefined>(undefined)
     const [isMobile, setIsMobile] = useState<boolean>(false)
     const [filterEnsmeble, setFilterEnsemble] = useState<boolean>(false)
-    const [ensembleActors, setEnsembleActors] = useState<Actor[]>([])
+    const [ensembleActors, setEnsembleActors] = useState<ActivityMember[]>([])
 
 
     useEffect(() => {
@@ -92,6 +94,8 @@ function App() {
                     return
                 setActivity(activity)
                 setRehearsalLocation(activity?.rehearsalLocations[0])
+                setEventType(activity?.eventTypes[0])
+                setSelectedLocation(activity?.defaultLocation)
 
             });
         }
@@ -142,15 +146,14 @@ function App() {
                 console.log(startDate)
                 console.log(endDate)
                 console.log(event.rehearsalLocation.color)
-                console.log(addAlpha(intToHexColor(event.rehearsalLocation.color), 0))
-                console.log(addAlpha(intToHexColor(event.rehearsalLocation.color), 1))
+
                 calendarEvents.push({
                     title: event.name,
                     start: startDate.toISOString(),
                     end: endDate.toISOString(),
                     isAllDay: false,
                     interactive: true,
-                    color: addAlpha(intToHexColor(event.rehearsalLocation.color), 0.8),
+                    color: event.rehearsalLocation.color.setAlpha(0.8).toHex(),
                     description: "Location: " + event.rehearsalLocation.name + "\n" + event.info,
                     id: event.id,
                     
@@ -263,6 +266,7 @@ function App() {
                                       setSelectedLocation(theaterEvent.location)
                                       setRehearsalLocation(theaterEvent.rehearsalLocation)
                                       setCharacters(theaterEvent.characters)
+                                      setEventType(theaterEvent.activityEventType)
                                       setIsEditing(true)
                                       setType(theaterEvent.theaterEventType as "song" | "dance" | "scene" | "custom")
                                       setEditEvent(theaterEvent)
@@ -339,7 +343,7 @@ function App() {
 
 
                         setSelectedDate(args.event.start)
-                        const checkDate = new Date(args.event.start)
+                        const checkDate = new Date(args.event.start!)
                         checkDate.setHours(0, 0, 0, 0)
                         setViewingDateForConflicts(checkDate)
 
@@ -907,7 +911,7 @@ function App() {
                     setSelectedLocation(activity?.locations.find((location) => location.name == e.target.value))
                 }}>
                     {activity?.locations.map((location, index) => {
-                        return <option value={location.name} key={index}>{location.name + " (" + location.address + ")"}</option>
+                        return <option value={location.name} key={index} selected={selectedLocation?.name == location.name}>{location.name + " (" + location.address + ")"}</option>
                     })
                     }
                 </select>
@@ -917,7 +921,17 @@ function App() {
                     setRehearsalLocation(activity?.rehearsalLocations.find((location) => location.name == e.target.value))
                 }}>
                     {activity?.rehearsalLocations.map((location, index) => {
-                        return <option value={location.name} key={index}>{location.name}</option>
+                        return <option value={location.name} key={index} selected={rehearsalLocation?.name == location.name}>{location.name}</option>
+                    })
+                    }
+                </select>
+                <br />
+                <label htmlFor="eventType">Event Type: </label>
+                <select name="eventType" id="event-type" onChange={(e) => {
+                    setEventType(activity?.eventTypes.find((type) => type.name == e.target.value))
+                }}>
+                    {activity?.eventTypes.map((type, index) => {
+                        return <option value={type.name} key={index} selected={eventType?.name == type.name}>{type.name}</option>
                     })
                     }
                 </select>
@@ -1025,6 +1039,13 @@ function App() {
                  <br />
                 {isLoading ? <div className="loader"></div>  : <button onClick={async () => {
                     setIsLoading(true)
+                    if(name == "" || description == "" || startTime == undefined || endTime == undefined || selectedLocation == undefined || rehearsalLocation == undefined || eventType == undefined){
+                        alert("Please fill out all fields")
+                        console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation}, Rehearsal Location: ${rehearsalLocation}, Event Type: ${eventType}`)
+                        setIsLoading(false)
+                        return
+                    }
+                    
                     console.log("Submit")
                     const location: Location = selectedLocation != undefined ? selectedLocation : activity!.locations[0]
                     console.log(startTime)
@@ -1034,67 +1055,67 @@ function App() {
                     const targets: ActivityMember[] = []
                     if(addFullCast){
                         for(const actor of show!.ensemble!.actors){
-                            targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                            targets.push(actor)
                         }
                         for(const character of show!.characters){
-                            if(targets.find((e) => e.memberUid == character.actor!.userId) != undefined){
+                            if(targets.find((e) => e.userId == character.actor!.userId) != undefined){
                                 continue
                             }
-                            targets.push(ActivityMember.fromBlank(character.actor!.name, character.actor!.userId, character.actor!.FCMToken))
+                            targets.push(character.actor!)
                         }
                     } else {
                         for(const character of characters){
                             if(character instanceof FullCast){
                                 for(const actor of show!.ensemble!.actors){
-                                    targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                    targets.push(actor)
                                 }
                                 for(const character of show!.characters){
-                                    if(targets.find((e) => e.memberUid == character.actor!.userId) != undefined){
+                                    if(targets.find((e) => e.userId == character.actor!.userId) != undefined){
                                         continue
                                     }
-                                    targets.push(ActivityMember.fromBlank(character.actor!.name, character.actor!.userId, character.actor!.FCMToken))
+                                    targets.push(character.actor!)
                                 }
                                 break
                             } 
                             if(character instanceof Character){
-                                if(targets.find((e) => e.memberUid == character.actor!.userId) != undefined){
+                                if(targets.find((e) => e.userId == character.actor!.userId) != undefined){
                                     continue
                                 }
-                                targets.push(ActivityMember.fromBlank(character.actor!.name,character.actor!.userId,character.actor!.FCMToken))
+                                targets.push(character.actor!)
                             }
                             if(character instanceof EnsembleSection){
                                 if(character.includeAll){
                                 
                                     for(const actor of show!.ensemble!.actors){
-                                        if(targets.find((e) => e.memberUid == actor.userId) != undefined){
+                                        if(targets.find((e) => e.userId == actor.userId) != undefined){
                                             continue
                                         }
-                                        targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                        targets.push(actor)
                                     }
                                 } else if(character.includeMale){
                                     for(const actor of show!.ensemble!.actors){
                                         if(actor.gender == "male"){
-                                            if(targets.find((e) => e.memberUid == actor.userId) != undefined){
+                                            if(targets.find((e) => e.userId == actor.userId) != undefined){
                                                 continue
                                             }
-                                            targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                            targets.push(actor)
                                         } 
                                     }
                                 } else if(character.includeFemale){
                                     for(const actor of show!.ensemble!.actors){
                                         if(actor.gender == "female"){
-                                            if(targets.find((e) => e.memberUid == actor.userId) != undefined){
+                                            if(targets.find((e) => e.userId == actor.userId) != undefined){
                                                 continue
                                             }
-                                            targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                            targets.push(actor)
                                         }
                                     }
                                 } else if(character.includeCustom){
                                     for(const actor of character.customActors){
-                                        if(targets.find((e) => e.memberUid == actor.userId) != undefined){
+                                        if(targets.find((e) => e.userId == actor.userId) != undefined){
                                             continue
                                         }
-                                        targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                        targets.push(actor)
                                     }
                                 }
 
@@ -1102,43 +1123,43 @@ function App() {
                             if(character instanceof ShowGroup){
                                 for(const showCharacter of character.characters){
                                     if(showCharacter instanceof Character){
-                                        if(targets.find((e) => e.memberUid == showCharacter.actor!.userId) != undefined){
+                                        if(targets.find((e) => e.userId == showCharacter.actor!.userId) != undefined){
                                             continue
                                         }
-                                        targets.push(ActivityMember.fromBlank(showCharacter.actor!.name,showCharacter.actor!.userId,showCharacter.actor!.FCMToken))
+                                        targets.push(showCharacter.actor!)
                                     }
                                     if(showCharacter instanceof EnsembleSection){
                                         if(showCharacter.includeAll){
                                             for(const actor of show!.ensemble!.actors){
-                                                if(targets.find((e) => e.memberUid == actor.userId) != undefined){
+                                                if(targets.find((e) => e.userId == actor.userId) != undefined){
                                                     continue
                                                 }
-                                                targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                                targets.push(actor)
                                             }
                                         } else if(showCharacter.includeMale){
                                             for(const actor of show!.ensemble!.actors){
                                                 if(actor.gender == "male"){
-                                                    if(targets.find((e) => e.memberUid == actor.userId) != undefined){
+                                                    if(targets.find((e) => e.userId == actor.userId) != undefined){
                                                         continue
                                                     }
-                                                    targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                                    targets.push(actor)
                                                 }
                                             }
                                         } else if(showCharacter.includeFemale){
                                             for(const actor of show!.ensemble!.actors){
                                                 if(actor.gender == "female"){
-                                                    if(targets.find((e) => e.memberUid == actor.userId) != undefined){
+                                                    if(targets.find((e) => e.userId == actor.userId) != undefined){
                                                         continue
                                                     }
-                                                    targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                                    targets.push(actor)
                                                 }
                                             }
                                         } else if(showCharacter.includeCustom){
                                             for(const actor of showCharacter.customActors){
-                                                if(targets.find((e) => e.memberUid == actor.userId) != undefined){
+                                                if(targets.find((e) => e.userId == actor.userId) != undefined){
                                                     continue
                                                 }
-                                                targets.push(ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken))
+                                                targets.push(actor)
                                             }
                                         }
                                     }
@@ -1147,7 +1168,7 @@ function App() {
                             }
                         }
                     }
-                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, activity!.name, showId, show!.name , characters, targets, type, activity.eventTypes[0], rehearsalLocation!)
+                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, activity!.name, showId, show!.name , characters, targets, type, eventType!, rehearsalLocation!)
 
                     console.log(newEvent)
                     if(isEditing){
@@ -1164,7 +1185,7 @@ function App() {
                             isAllDay: false,
                             interactive: true,
                             description: "Location: " + newEvent.rehearsalLocation.name + "\n" + newEvent.info,
-                            color: addAlpha(intToHexColor(newEvent.rehearsalLocation.color), 0.8),
+                            color: newEvent.rehearsalLocation.color.setAlpha(0.8).toHex(),
                             id: newEvent.id,
                         }
                         const newCalendarEvents = calendarEvents.filter((e) => e.id != newEvent.id)
@@ -1186,7 +1207,7 @@ function App() {
                         end: endDate.toISOString(),
                         isAllDay: false,
                         interactive: true,
-                        color: addAlpha(intToHexColor(newEvent.rehearsalLocation.color), 0.8),
+                        color: newEvent.rehearsalLocation.color.setAlpha(0.8).toHex(),
                         id: newEvent.id,
                         description: "Location: " + newEvent.rehearsalLocation.name + "\n" + newEvent.info,
                       
@@ -1208,6 +1229,9 @@ function App() {
                     setStartTimeString("")
                     setEndTimeString("")
                     setSelectedLocation(undefined)
+                    setRehearsalLocation(undefined)
+                    setEventType(undefined)
+                    setCharacters([])
                     setAddedEnsemble(false)
                     setViewingDateForConflicts(null)
                     setCurrentConflicts(conflicts)

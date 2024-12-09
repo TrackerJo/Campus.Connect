@@ -13,7 +13,7 @@ function MessageTile({ message, isSender }: MessageTileProps) {
                     <h1 className="message-sender">{message.senderName}</h1>
                     <div className="message-body">
                         <p className="message-text">{message.message}</p>
-                        <p className="message-time-sent">{message.timeSent.toLocaleTimeString()}</p>
+                        <p className="message-time-sent">{message.timeSent.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                 </div>
 

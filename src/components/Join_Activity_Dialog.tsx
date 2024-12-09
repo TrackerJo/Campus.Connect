@@ -4,39 +4,63 @@ import {   JoinActivityDialogProps } from "../constants";
 import "./Join_Activity_Dialog.css"
 import { joinActivity, updateUserGender, updateUserPhoneNumber } from "../api/db";
 
-function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
+function JoinActivityDialog({dialogRef, close, activityJoinCode}: JoinActivityDialogProps){
     const [activityCode, setActivityCode] = useState<string>("")
     const [needsPhoneNumber, setNeedsPhoneNumber] = useState<boolean>(false)
     const [needsGender, setNeedsGender] = useState<boolean>(false)
     const [phoneNumber, setPhoneNumber] = useState<string>("")
     const [gender, setGender] = useState<"male" | "female">("male")
+    const [redirect, setRedirect] = useState<string>("")
+
+
+
+    async function handleJoinActivity(activityCode: string) { 
+        console.log("Joining activity")
+        localStorage.setItem('needsPhoneNumber', "false")
+        localStorage.setItem('needsGender', "false")
+        const activity = await joinActivity(activityCode)
+        setNeedsPhoneNumber(localStorage.getItem('needsPhoneNumber') == "true")
+        setNeedsGender(localStorage.getItem('needsGender') == "true")
+        if(localStorage.getItem('needsPhoneNumber') == "true" || localStorage.getItem('needsGender') == "true"){
+            return
+        }
+        if(!activity){
+            alert("Invalid activity code")
+            return
+        }
+        if(redirect){
+            window.location.href = redirect.replace(/~/g, "&")
+            return
+        }
+        
+        
+        window.location.href = `/Activity/?activityId=${activity.id}`
+    }
+
+    useEffect(() => {
+        if(activityJoinCode != ""){
+            setActivityCode(activityJoinCode)
+            handleJoinActivity(activityJoinCode)
+        }
+        const urlParams = new URLSearchParams(window.location.search)
+        const redirect = urlParams.get('redirect')
+        if(redirect){
+            setRedirect(redirect)
+        }
+    }, [activityJoinCode])
 
     return (
         <dialog ref={dialogRef} className="JoinActivityDialog">
             <div className="dialogContents">
-            {!needsGender || !needsPhoneNumber ? <> <h2>Join Activity</h2>
+            {!needsGender && !needsPhoneNumber ? <> <h2>Join Activity</h2>
                 <label htmlFor="">Activity Code</label>
                 <input type="text" value={activityCode} onChange={(e) => {
                     setActivityCode(e.target.value)
                 }}/>
                 
                 <button className="ActionBtn" onClick={async() => {
-                    console.log("Joining activity")
-                    localStorage.setItem('needsPhoneNumber', "false")
-                    localStorage.setItem('needsGender', "false")
-                    const activity = await joinActivity(activityCode)
-                    setNeedsPhoneNumber(localStorage.getItem('needsPhoneNumber') == "true")
-                    setNeedsGender(localStorage.getItem('needsGender') == "true")
-                    if(localStorage.getItem('needsPhoneNumber') == "true" || localStorage.getItem('needsGender') == "true"){
-                        return
-                    }
-                    if(!activity){
-                        alert("Invalid activity code")
-                        return
-                    }
-                   
-                    window.location.href = `/Activity/?activityId=${activity.id}`
-
+                    
+                    await handleJoinActivity(activityCode)
                     
                 }}>
                     Join
@@ -47,6 +71,7 @@ function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
                     <input type="text" value={phoneNumber} onChange={(e) => {
                         setPhoneNumber(e.target.value)
                     }}/>
+                    <label htmlFor="">If you don't have a phone number type none</label>
                     <br />
                 </> : <></>}
                 {needsGender ? <>
@@ -61,7 +86,7 @@ function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
                 <button className="ActionBtn" onClick={async() => {
                     console.log("Joining activity")
                     if(needsPhoneNumber){
-                        await updateUserPhoneNumber(phoneNumber)
+                        await updateUserPhoneNumber(phoneNumber.replace("none", ""))
                         localStorage.setItem('needsPhoneNumber', "false")
                     }
                     if(needsGender){
@@ -71,6 +96,10 @@ function JoinActivityDialog({dialogRef, close}: JoinActivityDialogProps){
                     const activity = await joinActivity(activityCode)
                     if(!activity){
                         alert("Invalid activity code")
+                        return
+                    }
+                    if(redirect){
+                        window.location.href = redirect.replace(/~/g, "&")
                         return
                     }
                     window.location.href = `/Activity/?activityId=${activity.id}`

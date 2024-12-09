@@ -77,15 +77,15 @@ function App() {
                 console.log(startDate)
                 console.log(endDate)
                 console.log(event.rehearsalLocation.color)
-                console.log(addAlpha(intToHexColor(event.rehearsalLocation.color), 0))
-                console.log(addAlpha(intToHexColor(event.rehearsalLocation.color), 1))
+
+
                 calendarEvents.push({
                     title: event.name,
                     start: startDate.toISOString(),
                     end: endDate.toISOString(),
                     isAllDay: false,
                     interactive: true,
-                    color: addAlpha(intToHexColor(event.rehearsalLocation.color), 0.8),
+                    color: event.rehearsalLocation.color.setAlpha(0.8).toHex(),
                     description: "Location: " + event.rehearsalLocation.name + "\n" + event.info,
                     id: event.id,
 
@@ -143,7 +143,7 @@ function App() {
                 Print
             </button>
             <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Activity/Shows/show/?activityId=${activityId}&showId=${showId}`
+                window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
             }}>
                 Back
             </button>

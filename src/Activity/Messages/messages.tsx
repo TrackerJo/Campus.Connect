@@ -18,8 +18,8 @@ import { useRef, useState } from 'react'
 
 
 import './messages.css'
-import { ActivityGC, Message } from '../../constants'
-import { getActivityGCMessagesStream, getActivityGCsStream, getUserData, sendActivityGCMessage } from '../../api/db'
+import { ActivityGC, GroupChatMember, Message, StudentData, TeacherData, TimeChatSeparator } from '../../constants'
+import { createActivityDirectChat, getActivity, getActivityGCMessagesStream, getActivityGCsStream, getUserData, sendActivityGCMessage } from '../../api/db'
 
 import MessageTile from '../../components/Message_Tile'
 import { DocumentData } from 'firebase/firestore'
@@ -39,12 +39,17 @@ function App() {
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
     const [selectedGroupChat, setSelectedGroupChat] = useState<ActivityGC | null>(null)
     const [messages, setMessages] = useState<Message[]>([])
-    const [userData, setUserData] = useState<DocumentData | null>(null)
+    const [messagesWithSeparators, setMessagesWithSeparators] = useState<(Message | TimeChatSeparator)[]>([])
+    const [userData, setUserData] = useState<StudentData | TeacherData | null>(null)
     const [isMobile, setIsMobile] = useState<boolean>(false)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const messagesRef = useRef<HTMLDivElement>(null)
     const createGroupChatDialogRef = useRef<HTMLDialogElement>(null)
     const broadcastMessageDialogRef = useRef<HTMLDialogElement>(null)
+    const [filteredGroupChats, setFilteredGroupChats] = useState<ActivityGC[]>([])
+    const [activityName, setActivityName] = useState<string>("")
+    const [checkedForGroupParams, setCheckedForGroupParams] = useState<boolean>(false)
 
 
 
@@ -73,28 +78,61 @@ function App() {
             }
         }
         window.addEventListener('resize', handleResize)
+       
         handleResize()
         return () => window.removeEventListener('resize', handleResize)
     },[])
 
+    function formatDate(date: Date): string {
+        const options: Intl.DateTimeFormatOptions = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        return date.toLocaleDateString('en-US', options);
+    }
+    function seperateMessagesByDate(messages: Message[]) {
+        const messagesWithSeparators: (Message | TimeChatSeparator)[] = []
+        let lastDate = new Date(0)
+        messages.forEach((message) => {
+            if (message.timeSent.toDateString() != lastDate.toDateString()) {
 
 
+                messagesWithSeparators.push({time: formatDate(message.timeSent)} as TimeChatSeparator)
+                lastDate = message.timeSent
+            }
+            messagesWithSeparators.push(message)
+        })
+        return messagesWithSeparators
+    }
 
     useEffect(() => {
+        setIsLoading(true)
+        isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
         if (activityId) {
             setActivityId(activityId)
+           getActivity(activityId).then((activity) => {
+                if (activity) {
+                    setActivityName(activity.name)
+                }
+            })
         }
-
+       
         //Get group chats
-        getActivityGCsStream(activityId!, setGroupChats)
+        getActivityGCsStream(activityId!, setGroupChats).then(() => {
 
 
-        getUserData().then((userData) => {
-            setUserData(userData)
-        })
+            getUserData().then((userData) => {
+                setUserData(userData)
+                
+                
+            })
+           
+        });
         
         const accountType = localStorage.getItem('accountType')
         if (accountType) {
@@ -102,6 +140,64 @@ function App() {
         }
 
     }, [])
+
+    useEffect(() => {
+        async function checkURLParams() {
+            if(checkedForGroupParams || !groupChats || groupChats.length == 0) {
+                return
+            }
+            setIsLoading(false)
+            const urlParams = new URLSearchParams(window.location.search)
+            const groupChatId = urlParams.get('groupChatId')
+            console.log(groupChatId)
+            if (groupChatId) {
+                const groupChat = groupChats.find((groupChat) => groupChat.id == groupChatId)
+                if (groupChat) {
+                    setSelectedGroupChat(groupChat)
+                }
+            }
+            const studentId = urlParams.get('studentId')
+            console.log(studentId)
+            if (studentId) {
+                const groupChat = groupChats.find((groupChat) => groupChat.id == studentId)
+                if (groupChat) {
+                    setSelectedGroupChat(groupChat)
+                } else {
+                    const creator: GroupChatMember = GroupChatMember.fromBlank(userData!.fullname, userData!.email, userData!.phoneNumber, userData!.FCMToken, userData!.uid)
+                    const recipiant = localStorage.getItem('viewingUser')
+                    if(recipiant) {
+                        const recipiantData = JSON.parse(recipiant)
+
+                        const recipiantMember: GroupChatMember = GroupChatMember.fromBlank(recipiantData.fullname, recipiantData.email, recipiantData.phoneNumber, recipiantData.FCMToken, recipiantData.uid)
+                        
+                        createActivityDirectChat(creator, recipiantMember, activityId).then((groupChat) => {
+                            console.log(groupChat?.toMap())
+                            setSelectedGroupChat(groupChat)
+                            localStorage.removeItem('viewingUser')
+                        })
+                    }
+
+
+                }
+            }
+            setCheckedForGroupParams(true)
+        }
+    checkURLParams()
+
+    },[groupChats])
+
+    function searchGroupChats(search: string) {
+        
+        const searchLower = search.toLowerCase()
+        const filteredGroupChats = groupChats.filter((groupChat) => {
+            return groupChat.name.toLowerCase().includes(searchLower)
+        })
+        setFilteredGroupChats(filteredGroupChats)
+    }
+
+    useEffect(() => {
+        setFilteredGroupChats(groupChats)
+    }, [groupChats])
 
 
 
@@ -112,12 +208,14 @@ function App() {
         }
 
         const messageObj = Message.fromBlank(message, userData!.uid, userData!.fullname,userData!.FCMToken,selectedGroupChat!.id, activityId,'', new Date(), [userData!.uid] )
-        await sendActivityGCMessage(activityId, selectedGroupChat!.id, messageObj)
+        await sendActivityGCMessage(activityId, selectedGroupChat!.id, messageObj, activityName)
         //Scroll to bottom
 
 
         //TODO
     }
+
+
 
 
 
@@ -132,8 +230,14 @@ function App() {
         <div className='center'>
             <div className='window'>
                 {((!isMobile) || (isMobile && !selectedGroupChat)) && <div className='left'>
+                    <div className='search-div'>
+                        <input type="text" className='search-input' placeholder='Enter group chat name...' onChange={(e) => {
+                            searchGroupChats(e.target.value)
+                        }}/>
+                    </div>
                     <div className='groupChats'>
-                        {groupChats.map((groupChat) => {
+                        {isLoading ? <div className='loader'></div> :  
+                        filteredGroupChats.map((groupChat) => {
                             return (
                                 <GroupChatDisplayTile groupChat={groupChat} onClick={() => {
                                     setSelectedGroupChat(groupChat)
@@ -141,18 +245,19 @@ function App() {
                             )
                         })}
                     </div>
-                    <div className='GCOptions'>
+                    <div className={'GCOptions ' + (accountType)}>
                         <button className='ActionBtn' onClick={() => {
                             createGroupChatDialogRef.current!.showModal()
                         }}>
                             Create Group Chat
                         </button>
+                        
 
-                        <button className='ActionBtn' onClick={() => {
+                        {accountType == "teacher" && <button className='ActionBtn' onClick={() => {
                             broadcastMessageDialogRef.current!.showModal()
                         }}>
                             Broadcast Message
-                        </button>
+                        </button>}
                     </div>
                    
                    
@@ -168,9 +273,16 @@ function App() {
                                 </div>
                                 <div className='messages' ref={messagesRef}>
                                     {
-                                        messages.map((message) => {
+                                        seperateMessagesByDate(messages).map((message) => {
+                                            if (Object.prototype.hasOwnProperty.call(message, 'time')) {
+                                                return (
+                                                    <div className='timeSeparator'>
+                                                        {(message as TimeChatSeparator).time}
+                                                    </div>
+                                                )
+                                            }
                                             return (
-                                                <MessageTile message={message} isSender={message.senderUid == localStorage.getItem('userId')} />
+                                                <MessageTile message={message as Message} isSender={(message as Message).senderUid == localStorage.getItem('userId')} />
                                             )
                                         })
                                     }
@@ -199,7 +311,7 @@ function App() {
         <CreateGroupChatDialog dialogRef={createGroupChatDialogRef} refresh={() => {
                 
             }}  close={() => { createGroupChatDialogRef.current!.close() } } activityId={activityId} />
-            <BroadcastMessageDialog dialogRef={broadcastMessageDialogRef} refresh={() => {
+            <BroadcastMessageDialog activityName={activityName} dialogRef={broadcastMessageDialogRef} refresh={() => {
                
             }} close={() => { broadcastMessageDialogRef.current!.close() } } activityId={activityId} userData={userData!} />
       

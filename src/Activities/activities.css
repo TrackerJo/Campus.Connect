@@ -19,6 +19,13 @@ body {
     gap: 1em;
 }
 
+.loader-center {
+    /* center */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
 .activity{
 
     display: flex;

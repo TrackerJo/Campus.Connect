@@ -1,6 +1,6 @@
 import "./Broadcast_Message_Dialog.css";
 
-import { Activity, ActivityGroup, ActivityMember, Actor, BroadcastMessageDialogProps, Message, TheaterActivity } from "../constants";
+import { Activity, ActivityGroup, ActivityMember, BroadcastMessageDialogProps, Message, TheaterActivity } from "../constants";
 import { useEffect, useRef, useState } from "react";
 import { getActivity, sendActivityGCMessage } from "../api/db";
 import AddUserDialog from "./Add_User_Dialog";
@@ -8,7 +8,7 @@ import AddFromPlayDialog from "./Add_From_Play_Dialog";
 import AddFromGroupDialog from "./Add_From_Group_Dialog";
 
 
-function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refresh }: BroadcastMessageDialogProps) {
+function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refresh, activityName }: BroadcastMessageDialogProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const addMemberDialogRef = useRef<HTMLDialogElement>(null)
     const addFromPlayRef = useRef<HTMLDialogElement>(null)
@@ -31,11 +31,8 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
             setActivity(activity)
             if (activity != null) {
                 if(activity instanceof TheaterActivity){
-                    const students = activity.students.map((student) => {
-                        return ActivityMember.fromBlank(student.name, student.userId, student.FCMToken)
-                    })
-
-                    setMembers([...activity.parents, ...students])
+                   
+                    setMembers([...activity.parents, ...activity.students])
                     setActivityGroups(activity.groups)
 
                 } else {
@@ -56,7 +53,7 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
                     <div className="broadcast-message-dialog-members">
                         {addedMembers.map((member, index) => {
                             return <div key={index} className="broadcast-message-dialog-member">
-                                <label htmlFor="">{ member.memberName}</label>
+                                <label htmlFor="">{ member.name}</label>
                                 <button className="ActionBtn" onClick={() => {
                                     setAddedMembers(addedMembers.filter((addedMember) => addedMember != member))
                                 }}>Remove</button>
@@ -93,8 +90,10 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
                         const messageObj = Message.fromBlank(inputRef.current!.value, userData!.uid, userData!.fullname,userData!.FCMToken,"", activityId,'', new Date(), [userData!.uid] )
                         for (let i = 0; i < addedMembers.length; i++) {
                             const currentMember = addedMembers[i];
-                            messageObj.gcId = currentMember.memberUid
-                            await sendActivityGCMessage(activityId, currentMember.memberUid, messageObj, currentMember)
+                            messageObj.gcId = currentMember.userId
+                            console.log("Sending message to " + currentMember.userId)
+                            console.log(messageObj.toMap())
+                            await sendActivityGCMessage(activityId, currentMember.userId, messageObj,activityName, currentMember)
                             
                         }
                         refresh()
@@ -107,17 +106,15 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
             </dialog>
             <AddUserDialog members={members} dialogRef={addMemberDialogRef} addedMembers={addedMembers} close={() => { 
                 addMemberDialogRef.current!.close()
-            }} addUser={(newMember: ActivityMember | Actor) => {
-                if(newMember instanceof Actor){
-                    newMember = ActivityMember.fromBlank(newMember.name, newMember.userId, newMember.FCMToken)
-                }
+            }} addUser={(newMember: ActivityMember | ActivityMember) => {
+                
                 const newMembers = [...addedMembers, newMember]
                 const addedMemberIds: string[] = [];
                 const newMembersNoDuplicates = newMembers.filter((member) => {
-                    if(addedMemberIds.includes(member.memberUid)){
+                    if(addedMemberIds.includes(member.userId)){
                         return false
                     }
-                    addedMemberIds.push(member.memberUid)
+                    addedMemberIds.push(member.userId)
                     return true
                 })
                 setAddedMembers(newMembersNoDuplicates)
@@ -129,10 +126,10 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
                 const newMembers = [...addedMembers, ...members]
                 const addedMemberIds: string[] = [];
                 const newMembersNoDuplicates = newMembers.filter((member) => {
-                    if(addedMemberIds.includes(member.memberUid)){
+                    if(addedMemberIds.includes(member.userId)){
                         return false
                     }
-                    addedMemberIds.push(member.memberUid)
+                    addedMemberIds.push(member.userId)
                     return true
                 })
                 setAddedMembers(newMembersNoDuplicates)
@@ -141,18 +138,16 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
 
             <AddFromPlayDialog dialogRef={addFromPlayRef} close={() => {
                 addFromPlayRef.current!.close()
-            }} addMembers={(actors: Actor[]) => {
+            }} addMembers={(actors: ActivityMember[]) => {
                 //Convert actors to members
-                const members = actors.map((actor) => {
-                    return ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken)
-                })
-                const newMembers = [...addedMembers, ...members]
+               
+                const newMembers = [...addedMembers, ...actors]
                 const addedMemberIds: string[] = [];
                 const newMembersNoDuplicates = newMembers.filter((member) => {
-                    if(addedMemberIds.includes(member.memberUid)){
+                    if(addedMemberIds.includes(member.userId)){
                         return false
                     }
-                    addedMemberIds.push(member.memberUid)
+                    addedMemberIds.push(member.userId)
                     return true
                 })
                 setAddedMembers(newMembersNoDuplicates)

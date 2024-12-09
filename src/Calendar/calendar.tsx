@@ -109,7 +109,7 @@ function App() {
                     isAllDay: false,
                     interactive: true,
                     description: event.info + (isTheaterEvent ? `\nLocation: ${event.rehearsalLocation.name}` : "") +  (partialConflict ? ` \n(Excused from ${partialConflictStartDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to ${partialConflictEndDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : hasConflict && !partialConflict ? " \n(Fully Excused)" : ''),
-                    color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' : isTheaterEvent ? addAlpha(intToHexColor(event.rehearsalLocation.color), 0.8) : 'blue',
+                    color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' : isTheaterEvent ? event.rehearsalLocation.color.setAlpha(0.8).toHex() : 'blue',
                     id: event.id!,
                     
                 })

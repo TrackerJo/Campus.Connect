@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { ActivityMember,Actor,AddUserDialogProps } from "../constants";
+import { ActivityMember,AddUserDialogProps } from "../constants";
 
 import "./Add_User_Dialog.css"
 
 function AddUserDialog({members, dialogRef, addUser, close, addedMembers}: AddUserDialogProps){
-    const [searchResults, setSearchResults] = useState<(ActivityMember | Actor)[]>([])
+    const [searchResults, setSearchResults] = useState<(ActivityMember | ActivityMember)[]>([])
     const [searchString, setSearchString] = useState<string>("")
 
 
@@ -13,10 +13,10 @@ function AddUserDialog({members, dialogRef, addUser, close, addedMembers}: AddUs
         // console.log(searchString)
         setSearchResults(members.filter((member) => {
         
-            const memberName = member instanceof ActivityMember ? member.memberName : member.name
-            const memberUid = member instanceof ActivityMember ? member.memberUid : member.userId
+            const memberName =  member.name
+            const memberUid =member.userId
             if(memberName == undefined) return false
-            const addedMembersUids = addedMembers.map((member) => member.memberUid)
+            const addedMembersUids = addedMembers.map((member) => member.userId)
 
             return memberName.toLowerCase().includes(searchString.toLowerCase()) && !addedMembersUids.includes(memberUid)
         }))
@@ -48,7 +48,7 @@ function AddUserDialog({members, dialogRef, addUser, close, addedMembers}: AddUs
                         setSearchResults([])
 
                     }}>
-                        <label htmlFor="">{member instanceof ActivityMember ? member.memberName : member.name}</label>
+                        <label htmlFor="">{ member.name}</label>
                         <button className="ActionBtn" onClick={() => {
                             console.log("Added user")
                             addUser(member)

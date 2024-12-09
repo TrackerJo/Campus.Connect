@@ -41,9 +41,12 @@ function App() {
                 setEvent(ActivityEvent.fromMap(event))
             } else if(event.type === 'activity-theater-event') {
                 setEvent(TheaterEvent.fromMap(event))
+                console.log(event)
+                console.log(TheaterEvent.fromMap(event))
             } else {
                 setEvent(Event.fromMap(event))
             }
+
         }
         const accountType = localStorage.getItem('accountType')
         if (accountType) {
@@ -76,13 +79,13 @@ function App() {
                                     <p>{event?.generalTarget}</p> :
                                     event?.targets.map((attendee) => {
                                         return <div className={"attendee"}>
-                                            <h1>{attendee.memberName}</h1>
+                                            <h1>{attendee.name}</h1>
                                         </div>
                                     })
                                 :
                                 event?.targets.map((attendee) => {
                                     return <div className={"attendee"}>
-                                        <h1>{attendee.memberName}</h1>
+                                        <h1>{attendee.name}</h1>
                                     </div>
                                 })
                     }

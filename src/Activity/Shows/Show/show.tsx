@@ -35,9 +35,11 @@ function App() {
     const [showId, setShowId] = useState<string>("")
     const [show, setShow] = useState<Show | null>()
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
+    const [loadingInfo, setLoadingInfo] = useState(true)
 
 
     useEffect(() => {
+        setLoadingInfo(true)
         isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
@@ -52,6 +54,7 @@ function App() {
         getActivityShow(activityId!, showId!).then((show) => {
             setShow(show)
             console.log(show)
+            setLoadingInfo(false)
 
            
         });
@@ -67,7 +70,7 @@ function App() {
 
     return (
         <>
-        <div className='title'>
+       { loadingInfo ? <div className='center'> <div className="loader"></div></div> : <> <div className='title'>
             <h1>
                {show?.name}
             </h1>
@@ -79,7 +82,7 @@ function App() {
                     //Save show to local storage
 
                     localStorage.setItem('show', JSON.stringify(show?.toMap()))
-                    window.location.href = `/Activity/Shows/CreateTemplate/?activityId=${activityId}&isEditing=true`
+                    window.location.href = `/Activity/Shows/CreateTemplate/?activityId=${activityId}&isEditing=true&showId=${showId}`
                 }}/> </> : <></>}
               
                 {accountType == "teacher" ? <> <DashboardTile title={"Assign Roles"} description={"Assign roles to characters"} onClick={() => {
@@ -128,7 +131,8 @@ function App() {
            
            
         </div>
-        
+        </>
+        }
         
         </>
     )

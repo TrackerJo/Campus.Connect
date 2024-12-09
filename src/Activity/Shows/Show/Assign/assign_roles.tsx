@@ -22,7 +22,7 @@ import './assign_roles.css'
 
 
 
-import { Act, Actor, Character, Dance, Ensemble, EnsembleSection, Show, ShowGroup, Song } from '../../../../constants'
+import { Act, ActivityMember, Character, Dance, Ensemble, EnsembleSection, Show, ShowGroup, Song } from '../../../../constants'
 import ActTile from '../../../../components/Act_Tile'
 import CharacterTile from '../../../../components/Character_Tile'
 import ShowGroupTile from '../../../../components/Show_Group_Tile'
@@ -45,8 +45,8 @@ function App() {
     const [characters, setCharacters] = useState<Character[]>([])
     const [showGroups, setShowGroups] = useState<ShowGroup[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    const [actors, setActors] = useState<Actor[]>([])
-    const [ensemble, setEnsemble] = useState<Actor[]>([])
+    const [actors, setActors] = useState<ActivityMember[]>([])
+    const [ensemble, setEnsemble] = useState<ActivityMember[]>([])
     const [settingUp, setSettingUp] = useState<boolean>(false)
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [hasShowGroup, setHasShowGroup] = useState<boolean>(false)
@@ -331,7 +331,7 @@ function App() {
             </button>
         </div>
 
-       {show?.hasEnsemble && !settingUp && <AssignActorDialog dialogRef={dialogRef as LegacyRef<HTMLDialogElement>} keepPastResult={false} actor={new Actor()} addedActors={ensemble} actors={actors} setActor={(actor) => {
+       {show?.hasEnsemble && !settingUp && <AssignActorDialog dialogRef={dialogRef as LegacyRef<HTMLDialogElement>} keepPastResult={false} actor={new ActivityMember()} addedActors={ensemble} actors={actors} setActor={(actor) => {
             const newActors = [...ensemble];
             newActors.push(actor)
             console.log("Setting actors")

@@ -1,16 +1,16 @@
 import {  useState } from "react";
-import {  AddRehearsalLocationDialogProps, hexToColor, TheaterLocation } from "../constants";
+import {  AddEventTypeDialogProps, EventType, hexToColor } from "../constants";
 
-import "./Add_Rehearsal_Location_Dialog.css"
+import "./Add_Event_Type_Dialog.css"
 
-function AddRehearsalLocationDialog({addRehearsalLocation, close, dialogRef}: AddRehearsalLocationDialogProps){
+function AddEventTypeDialog({addEventType, close, dialogRef, eventTypes}: AddEventTypeDialogProps){
     const [name, setName] = useState<string>("")
     const [color, setColor] = useState<string>("#000000")
 
     return (
         <dialog ref={dialogRef}>
-            <h2>Add Rehearsal Location</h2>
-            <div className="location-info">
+            <h2>Add Event Type</h2>
+            <div className="event-type-info">
                 <label htmlFor="">Name: </label>
                 <input type="text" value={name} onChange={(e) => {
                     setName(e.target.value)
@@ -22,10 +22,18 @@ function AddRehearsalLocationDialog({addRehearsalLocation, close, dialogRef}: Ad
                 } }/>
                 <br />
                 <button className="ActionBtn" onClick={() => {
-                    addRehearsalLocation(TheaterLocation.fromBlank(name, hexToColor(color)))
+                    if(name == ""){
+                        alert("Please fill out all fields")
+                        return
+                    }
+                    if(eventTypes.find((eventType) => eventType.name == name)){
+                        alert("Event type with that name already exists")
+                        return
+                    }
+                    addEventType(EventType.fromBlank(name, hexToColor(color)))
 
                 }}>
-                    Add Rehearsal Location
+                    Add Event Type
                 </button>
 
                 <button className="ActionBtn" onClick={() => {
@@ -43,4 +51,4 @@ function AddRehearsalLocationDialog({addRehearsalLocation, close, dialogRef}: Ad
     );
 }
 
-export default AddRehearsalLocationDialog;
+export default AddEventTypeDialog;

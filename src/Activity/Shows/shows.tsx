@@ -33,9 +33,11 @@ function App() {
     const [activityId, setActivityId] = useState<string>("")
     const [shows, setShows] = useState<Show[]>([])
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
+    const [loadingInfo, setLoadingInfo] = useState(true)
 
 
     useEffect(() => {
+        setLoadingInfo(true)
         isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
@@ -45,6 +47,7 @@ function App() {
             getActivityShows(activityId).then((shows) => {
                 setShows(shows)
                 console.log(shows)
+                setLoadingInfo(false)
             });
         }
         const accountType = localStorage.getItem('accountType')
@@ -67,7 +70,7 @@ function App() {
         </div>
         <div className='center'>
             <div className='tiles'>
-                {shows.map((show) => {
+                {loadingInfo ? <div className='loader-center'><div className='loader'></div></div> : shows.map((show) => {
                     return (
                        <DashboardTile key={show.name} title={show.name} description={"View show"} onClick={() => {
                             window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${show.id}`

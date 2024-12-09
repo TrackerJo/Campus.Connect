@@ -1,19 +1,19 @@
-import { addDoc, arrayRemove, arrayUnion, deleteDoc, DocumentData, FieldValue, getDocs, getFirestore, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, deleteDoc, DocumentData, getDocs, getFirestore, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { app } from "./init";
 import { collection, doc, getDoc } from "firebase/firestore"; 
 import {
-    Act,
+
     Activity,
     ActivityEvent,
     ActivityGC,
     ActivityMember,
-    Actor,
+
     ConflictForm,
     ConflictResponse,
     Event,
     EventType, hexToInt,
     Message,
-    MiniUser,
+
     Resource,
     Show,
     StudentData,
@@ -21,12 +21,15 @@ import {
     TheaterActivity,
     Location,
     TheaterEvent,
-    TheaterLocation
+    TheaterLocation,
+    ActivityTeacher,
+    GroupChatMember
 } from "../constants";
 import { getCurrentUserId, reauthenticateUser } from "./auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { Stream } from "stream";
-import { on } from "events";
+import { sendGroupChatMessage } from "./functions";
+
+
 const functions = getFunctions(app);
 const db = getFirestore(app);
 
@@ -134,7 +137,7 @@ export async function getActivityShow(activityId: string, showId: string): Promi
     return Show.fromMap(showSnap.data());
 }
 
-export async function getActivityActors(activityId: string): Promise<Actor[]> {
+export async function getActivityActors(activityId: string): Promise<ActivityMember[]> {
     const schoolId = localStorage.getItem("schoolId");
     if (!schoolId) return [];
     console.log("Getting actors for activity " + schoolId);
@@ -142,9 +145,9 @@ export async function getActivityActors(activityId: string): Promise<Actor[]> {
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     const activityDocSnap = await getDoc(activityDoc);
     if (!activityDocSnap.exists()) return [];
-    const actors: Actor[] = [];
-    activityDocSnap.data().students.forEach((actor: Actor) => {
-        actors.push(Actor.fromMap(actor));
+    const actors: ActivityMember[] = [];
+    activityDocSnap.data().students.forEach((actor: ActivityMember) => {
+        actors.push(ActivityMember.fromMap(actor));
     });
     return actors;
 }
@@ -243,7 +246,7 @@ export async function saveActivityShowConflictForm(activityId: string, showId: s
 
 }
 
-export async function getCurrentUserAsActor(): Promise<Actor | null> {
+export async function getCurrentUserAsActor(): Promise<ActivityMember | null> {
     const user = await getCurrentUserId();
     const schoolId = localStorage.getItem("schoolId");
     if (!schoolId) return null;
@@ -252,17 +255,18 @@ export async function getCurrentUserAsActor(): Promise<Actor | null> {
     const actorDoc = doc(studentsCol, user);
     const actorSnap = await getDoc(actorDoc);
     if (!actorSnap.exists()) return null;
-    return Actor.fromMap(actorSnap.data());
+    return ActivityMember.fromMap(actorSnap.data());
 
     
 }
 
 export async function submitActivityShowConflictForm(activityId: string, showId: string, conflictForm: ConflictResponse) {
     const schoolId = localStorage.getItem("schoolId");
-    
+
     if (!schoolId) return;
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+   
     const showDoc = doc(collection(activityDoc, "shows"), showId);
     const responseDoc = doc(showDoc, "conflictResponses", conflictForm.actor.userId);
     conflictForm.id = conflictForm.actor.userId;
@@ -273,7 +277,6 @@ export async function submitActivityShowConflictForm(activityId: string, showId:
 export async function getActvityShowConflictFormResponses(activityId: string, showId: string): Promise<ConflictResponse[]> {
     const schoolId = localStorage.getItem("schoolId");
     const accountType = localStorage.getItem("accountType");
-    const userId = localStorage.getItem("userId");
     if (!schoolId) return [];
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
@@ -281,7 +284,7 @@ export async function getActvityShowConflictFormResponses(activityId: string, sh
     const responsesCol = collection(showDoc, "conflictResponses");
     if(accountType == "student"){
         console.log("Getting conflict responses for student");
-        const userId = 
+
         console.log(getCurrentUserId());
         const responsesSnapshot = await getDocs(query(responsesCol, where("submitterId", "==", getCurrentUserId())));
         const responses: ConflictResponse[] = [];
@@ -326,7 +329,7 @@ export async function joinActivity(activityCode: string): Promise<Activity | The
 
    
     if(activityDoc.data().type == "theater") {
-        if(userSnap.data().gender == null && accountType == "student") {
+        if((userSnap.data().gender == null || userSnap.data().gender == "")  && accountType == "student") {
             console.log("needsGender");
     
             localStorage.setItem("needsGender", "true");
@@ -335,20 +338,20 @@ export async function joinActivity(activityCode: string): Promise<Activity | The
             localStorage.setItem("needsPhoneNumber", "true");
     
         }
-        if((userSnap.data().phoneNumber == "" || userSnap.data().gender == null) && accountType == "student") {
+        if((userSnap.data().phoneNumber == "" || (userSnap.data().gender == null || userSnap.data().gender == "")) && accountType == "student") {
             return null;
         }
         if(accountType == "student") {
             await updateDoc(activityDoc.ref, {
                 studentUids: [...activityDoc.data().studentUids, userId],
-                students: [...activityDoc.data().students, Actor.fromMap(userSnap.data()).toMap()]
+                students: [...activityDoc.data().students, ActivityMember.fromMap(userSnap.data()).toMap()]
                     
             });
             return TheaterActivity.fromMap(activityDoc.data());
         } else {
             console.log("Joining as teacher");
             console.log(userSnap.data());
-            const activityMember = ActivityMember.fromBlank(userSnap.data().fullname, userSnap.data().uid, userSnap.data().FCMToken);
+            const activityMember = ActivityTeacher.fromBlank(userSnap.data().fullname, userSnap.data().email, userSnap.data().phoneNumber, userSnap.data().uid, userSnap.data().FCMToken);
             console.log(activityMember.toMap());
             await updateDoc(activityDoc.ref, {
                 teacherUids: [...activityDoc.data().teacherUids, userId],
@@ -358,14 +361,14 @@ export async function joinActivity(activityCode: string): Promise<Activity | The
         }
     } else {
         if(accountType == "student") {
-            const activityMember = ActivityMember.fromBlank(userSnap.data().fullname, userSnap.data().uid, userSnap.data().FCMToken);
+            const activityMember = ActivityMember.fromBlank(userSnap.data().fullname, userSnap.data().gender, userSnap.data().email, userSnap.data().phoneNumber, userSnap.data().uid, userSnap.data().FCMToken);
             await updateDoc(activityDoc.ref, {
                 studentUids: [...activityDoc.data().studentUids, userId],
                 students: [...activityDoc.data().students, activityMember.toMap()]
             });
             return Activity.fromMap(activityDoc.data());
         } else {
-            const activityMember = ActivityMember.fromBlank(userSnap.data().fullname, userSnap.data().uid, userSnap.data().FCMToken);
+            const activityMember = ActivityTeacher.fromBlank(userSnap.data().fullname, userSnap.data().email, userSnap.data().phoneNumber, userSnap.data().uid, userSnap.data().FCMToken);
             await updateDoc(activityDoc.ref, {
                 teacherUids: [...activityDoc.data().teacherUids, userId],
                 teachers: [...activityDoc.data().teachers, activityMember.toMap()]
@@ -481,24 +484,20 @@ export async function getActivityGCsStream( activityId: string, updateGCs: (gcs:
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     if(accountType == "teacher"){
         //get teacher data
-        const teacherDoc = doc(collection(schoolDoc, "teachers"), userId);
-        const teacherSnap = await getDoc(teacherDoc);
-        if (!teacherSnap.exists()) return;
-        const teacherData = TeacherData.fromMap(teacherSnap.data());
 
         onSnapshot(collection(activityDoc, "groupChats"), async (docs) => {
             const gcs: ActivityGC[] = [];
             for (const doc of docs.docs) {
                 const gc = ActivityGC.fromMap(doc.data());
                 if(gc.generalTarget == "direct" || gc.generalTarget == "custom"){
-                    const userAsMember = ActivityMember.fromBlank(teacherData.fullname, teacherData.uid, teacherData.FCMToken);
-                    if(!gc.members.find((member) => member.memberUid == userId)){
+
+                    if(!gc.members.find((member) => member.userId == userId)){
                         continue;
                     }
                 }
                 if(gc.generalTarget == "direct"){
-                    const otherMember = gc.members.find((member) => member.memberUid != userId);
-                    gc.name = otherMember?.memberName || "Unknown";
+                    const otherMember = gc.members.find((member) => member.userId != userId);
+                    gc.name = otherMember?.name || "Unknown";
                 }
                 //Get last message
                 const messagesCol = collection(doc.ref, "messages");
@@ -529,21 +528,20 @@ export async function getActivityGCsStream( activityId: string, updateGCs: (gcs:
         //Get group chats where user is a target
         onSnapshot(collection(activityDoc, "groupChats"), async (docs) => {
             const gcs: ActivityGC[] = [];
-            const userAsMember = ActivityMember.fromBlank(studentData.fullname, studentData.uid, studentData.FCMToken);
             for (const doc of docs.docs) {
                 const gc = ActivityGC.fromMap(doc.data());
                 if(!(gc.generalTarget == "everyone" || gc.generalTarget == "students")){
                     if(gc.generalTarget == "parents"){
                         continue;
                     }
-                    if(!gc.members.find((member) => member.memberUid == userId)){
+                    if(!gc.members.find((member) => member.userId == userId)){
                         continue;
                     }
 
                 }
                 if(gc.generalTarget == "direct"){
-                    const otherMember = gc.members.find((member) => member.memberUid != userId);
-                    gc.name = otherMember?.memberName || "Unknown";
+                    const otherMember = gc.members.find((member) => member.userId != userId);
+                    gc.name = otherMember?.name || "Unknown";
                 }
                 //Get last message
                 const messagesCol = collection(doc.ref, "messages");
@@ -618,7 +616,7 @@ export async function getActivityGCMessagesStream(activityId: string, gcId: stri
 
 }
 
-export async function getUserData() {
+export async function getUserData(): Promise<StudentData | TeacherData | null> {
     const schoolId = localStorage.getItem("schoolId");
     const userId = localStorage.getItem("userId");
     const accountType = localStorage.getItem("accountType");
@@ -627,10 +625,14 @@ export async function getUserData() {
     const userDoc = doc(collection(schoolDoc, accountType == "student" ? "students" : "teachers"), userId);
     const userSnap = await getDoc(userDoc);
     if (!userSnap.exists()) return null;
-    return userSnap.data();
+    if (accountType == "student") {
+        return StudentData.fromMap(userSnap.data());
+    }
+    return TeacherData.fromMap(userSnap.data());
 }
 
-export async function sendActivityGCMessage(activityId: string, gcId: string,message: Message, recipientData?: ActivityMember) {
+export async function sendActivityGCMessage(activityId: string, gcId: string,message: Message,activityName: string, recipientData?: ActivityMember ) {
+    if(message.message == "") return;
     const schoolId = localStorage.getItem("schoolId");
     const userId = localStorage.getItem("userId");
     if (!schoolId || !userId) return;
@@ -643,14 +645,16 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
         if(recipientData == null){
             return;
         }
+        const userData = await getUserData();
+        if (!userData) return;
         //Create group chat
-        const gc = ActivityGC.fromBlank("", recipientData.memberUid, [
-            ActivityMember.fromBlank(message.senderName, message.senderUid, message.senderFCMToken),
+        const gc = ActivityGC.fromBlank("", recipientData.userId, [
+            GroupChatMember.fromBlank(userData.fullname, userData.email, userData.phoneNumber, userData.FCMToken, userData.uid),
             recipientData
             
         ], "direct", activityId, Date.now());
 
-        const ref = await setDoc(gcDoc, gc.toMap());
+        await setDoc(gcDoc, gc.toMap());
         //Create messages collection
         const messagesCol = collection(gcDoc, "messages");
         const messageRef = await addDoc(messagesCol, message.toMap());
@@ -658,8 +662,12 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
         await updateDoc(messageRef, {
             messageId: messageRef.id
         });
+        //Send email
+        sendGroupChatMessage(message, [GroupChatMember.fromMap(recipientData)], gc, activityName);
         return;
     }
+    //Get group chat
+    const gc = ActivityGC.fromMap(gcSnap.data());
 
     const messagesCol = collection(gcDoc, "messages");
     const ref = await addDoc(messagesCol, message.toMap());
@@ -667,6 +675,46 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
     await updateDoc(ref, {
         messageId: ref.id
     });
+
+    //Send email
+    if(gc.generalTarget != "direct" && gc.generalTarget != "custom" && gc.generalTarget != "group") {
+        const activity = await getActivity(activityId);
+        if (!activity) return;
+        if(gc.generalTarget == "everyone") {
+            let targets: GroupChatMember[] = activity.students.map((student) => GroupChatMember.fromMap(student));
+            targets = targets.concat(activity.teachers.map((teacher) => GroupChatMember.fromMap(teacher)));
+            targets = targets.concat(activity.parents.map((parent) => GroupChatMember.fromMap(parent)));
+            //Remove sender
+            targets = targets.filter((target) => target.userId != message.senderUid);
+            sendGroupChatMessage(message, targets, gc, activity.name);
+        } else if(gc.generalTarget == "students") {
+            let targets: GroupChatMember[] = activity.students.map((student) => GroupChatMember.fromMap(student));
+            //Remove sender
+            targets = targets.filter((target) => target.userId != message.senderUid);
+            sendGroupChatMessage(message, targets, gc, activity.name);
+        } else if(gc.generalTarget == "parents") {
+            let targets: GroupChatMember[] = activity.parents.map((parent) => GroupChatMember.fromMap(parent));
+            //Remove sender
+            targets = targets.filter((target) => target.userId != message.senderUid);
+            sendGroupChatMessage(message, targets, gc, activity.name);
+        }
+
+        return;
+
+    }
+    if(gc.generalTarget == "direct") {
+        const otherMember = gc.members.find((member) => member.userId != userId);
+        if (!otherMember) return;
+        sendGroupChatMessage(message, [otherMember], gc, activityName);
+        return;
+    }
+    if(gc.generalTarget == "custom") {
+        sendGroupChatMessage(message, gc.members.filter((member) => member.userId != userId), gc, activityName);
+        return;
+    }
+    
+
+
 
 }
 
@@ -676,6 +724,11 @@ export async function createActivityGroupChat(activityGC: ActivityGC) {
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), activityGC.activityId);
     const gcsCol = collection(activityDoc, "groupChats");
+    //Get userData
+    const userData = await getUserData();   
+    if (!userData) return;
+    const userAsMember = GroupChatMember.fromBlank(userData.fullname, userData.email, userData.phoneNumber, userData.FCMToken, userData.uid);
+    activityGC.members.push(userAsMember);
     const ref = await addDoc(gcsCol, activityGC.toMap());
     activityGC.id = ref.id;
     await updateDoc(ref, {
@@ -731,10 +784,15 @@ export async function createUser(type: "student" | "teacher", user: StudentData 
     await setDoc(doc(usersCol, user.uid), user.toMap());
 
     //Add user to school
-    const miniUser = MiniUser.fromBlank(user.fullname, user.FCMToken, user.uid);
+    let activityUser;
+    if(user instanceof StudentData) {
+        activityUser = ActivityMember.fromBlank(user.fullname, user.gender, user.email, user.phoneNumber, user.FCMToken, user.uid);
+    } else {
+        activityUser = ActivityTeacher.fromBlank(user.fullname, user.email, user.phoneNumber, user.FCMToken, user.uid);
+    }
     await updateDoc(schoolDoc, {
         [type + "Uids"]: arrayUnion(user.uid),
-        [type + "s"]: arrayUnion(miniUser.toMap())
+        [type + "s"]: arrayUnion(activityUser.toMap())
     });
 }
 
@@ -791,7 +849,7 @@ export async function createActivity(activityName: string, activityType: "theate
     const defaultLocations: Location[] = [defaultLocation];
     const teacherData = await getUserData();
     if (!teacherData) return null;
-    const teacher = ActivityMember.fromBlank(teacherData.fullname, teacherData.uid, teacherData.FCMToken);
+    const teacher = ActivityTeacher.fromBlank(teacherData.fullname, teacherData.email, teacherData.phoneNumber, teacherData.FCMToken, teacherData.uid);
     let activity: Activity | TheaterActivity;
     if (activityType == "theater") {
         activity = TheaterActivity.fromBlank(activityName, "", joinCode,[],[],[],[teacher],defaultLocations, defaultTheaterEventTypes, defaultLocation, defautTheaterLocations, "type", Date.now());
@@ -831,3 +889,97 @@ export async function createActivity(activityName: string, activityType: "theate
     return activity;
 }
 
+export async function getStudent(studentId: string): Promise<StudentData | null> {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return null;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const studentDoc = doc(collection(schoolDoc, "students"), studentId);
+    const studentSnap = await getDoc(studentDoc);
+    if (!studentSnap.exists()) return null;
+    return StudentData.fromMap(studentSnap.data());
+}
+
+export async function fixTeachers() {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const teachersCol = collection(schoolDoc, "teachers");
+    const teachersSnap = await getDocs(teachersCol);
+    for(const doc of teachersSnap.docs) {
+        const teacherData = TeacherData.fromMap(doc.data());
+        const schoolData = await getSchool(schoolId);
+        if (!schoolData) return;
+        const teacher = ActivityTeacher.fromBlank(teacherData.fullname, teacherData.email, teacherData.phoneNumber, teacherData.FCMToken, teacherData.uid);
+        let teachers = schoolData.teachers as DocumentData[];
+        teachers = teachers.filter((teacher) => teacher.uid != teacherData.uid);
+        teachers.push(teacher.toMap());
+        await updateDoc(schoolDoc, {
+            teachers: teachers
+        });
+        const activitiesCol = collection(schoolDoc, "activities");
+        const activitiesSnap = await getDocs(query(activitiesCol, where("teacherUids", "array-contains", teacherData.uid)));
+        activitiesSnap.forEach(async (doc) => {
+            const activityData = doc.data();
+            let teachers = activityData.teachers as DocumentData[];
+            teachers = teachers.filter((teacher) => teacher.uid != teacherData.uid);
+            teachers.push(teacher.toMap());
+            await updateDoc(doc.ref, {
+                teachers: teachers
+            });
+        });
+    };
+}
+
+export async function createActivityDirectChat(currentUser: GroupChatMember, recipient: GroupChatMember, activityId: string): Promise<ActivityGC | null> {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return null;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const gcsCol = collection(activityDoc, "groupChats");
+
+    const gc = ActivityGC.fromBlank("", recipient.userId, [currentUser, recipient], "direct", activityId, Date.now());
+
+     await setDoc(doc(gcsCol, recipient.userId), gc.toMap());
+    gc.name = recipient.name;
+    return gc;
+}
+
+export async function getSavedLocations(): Promise<Location[]> {
+    const schoolData = await getSchool( localStorage.getItem("schoolId") || "");
+
+    if (!schoolData) return [];
+    const savedLocations: Location[] = [];
+    schoolData.savedLocations.forEach((location: Location) => {
+        savedLocations.push(Location.fromMap(location));
+    });
+    return savedLocations;
+}
+
+export async function addLocationToActivity(activityId: string, location: Location) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    await updateDoc(activityDoc, {
+        locations: arrayUnion(location.toMap())
+    });
+}
+
+export async function addLocationToSavedLocations(location: Location) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    await updateDoc(schoolDoc, {
+        savedLocations: arrayUnion(location.toMap())
+    });
+}
+
+export async function addEventTypeToActivity(activityId: string, eventType: EventType) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    await updateDoc(activityDoc, {
+        eventTypes: arrayUnion(eventType.toMap())
+    });
+}

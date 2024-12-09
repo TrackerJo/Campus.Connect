@@ -50,8 +50,8 @@ function App() {
             setAccountType(accountType as "student" | "teacher")
         }
         setTimeout(() => {
-            // print()
-            // window.close()
+            print()
+            window.close()
         }, 500)
     }, [])
 
@@ -81,13 +81,13 @@ function App() {
                                     <p>{event?.generalTarget}</p> :
                                     event?.targets.map((attendee) => {
                                         return <div className={"attendee"}>
-                                            <h1>{attendee.memberName}</h1>
+                                            <h1>{attendee.name}</h1>
                                         </div>
                                     })
                                 :
                                 event?.targets.map((attendee) => {
                                     return <div className={"attendee"}>
-                                        <h1>{attendee.memberName}</h1>
+                                        <h1>{attendee.name}</h1>
                                     </div>
                                 })
                     }

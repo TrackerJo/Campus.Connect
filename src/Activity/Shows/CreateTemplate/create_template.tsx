@@ -249,6 +249,13 @@ function App() {
             </button>
 }
             <button className='ActionBtn' onClick={() => {
+                const urlParams = new URLSearchParams(window.location.search)
+                const showId = urlParams.get('showId')
+                if(isEditing) {
+                    window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
+                    return
+                }
+
                 window.location.href = `/Activity/Shows/Add/?activityId=${activityId}`
             }}>
                 Back

@@ -1,6 +1,6 @@
 import "./Create_Group_Chat_Dialog.css";
 
-import { Activity, ActivityGC, ActivityGroup, ActivityMember, Actor, CreateGroupChatDialogProps, TheaterActivity } from "../constants";
+import { Activity, ActivityGC, ActivityGroup, ActivityMember, CreateGroupChatDialogProps, TheaterActivity } from "../constants";
 import { useEffect, useRef, useState } from "react";
 import { createActivityGroupChat, getActivity } from "../api/db";
 import AddUserDialog from "./Add_User_Dialog";
@@ -31,11 +31,9 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
             setActivity(activity)
             if (activity != null) {
                 if(activity instanceof TheaterActivity){
-                    const students = activity.students.map((student) => {
-                        return ActivityMember.fromBlank(student.name, student.userId, student.FCMToken)
-                    })
+                   
 
-                    setMembers([...activity.parents, ...students])
+                    setMembers([...activity.parents, ...activity.students])
                     setActivityGroups(activity.groups)
 
                 } else {
@@ -56,7 +54,7 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
                     <div className="create-group-chat-dialog-members">
                         {addedMembers.map((member, index) => {
                             return <div key={index} className="create-group-chat-dialog-member">
-                                <label htmlFor="">{ member.memberName}</label>
+                                <label htmlFor="">{ member.name}</label>
                                 <button className="ActionBtn" onClick={() => {
                                     setAddedMembers(addedMembers.filter((addedMember) => addedMember != member))
                                 }}>Remove</button>
@@ -90,6 +88,7 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
                             alert("Please add at least one member to the group chat")
                             return
                         }
+                        
                         const activityGroup = ActivityGC.fromBlank(inputRef.current!.value, "", addedMembers, "custom", activityId, Date.now())
                         await createActivityGroupChat(activityGroup)
                         refresh()
@@ -102,17 +101,15 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
             </dialog>
             <AddUserDialog members={members} dialogRef={addMemberDialogRef} addedMembers={addedMembers} close={() => { 
                 addMemberDialogRef.current!.close()
-            }} addUser={(newMember: ActivityMember | Actor) => {
-                if(newMember instanceof Actor){
-                    newMember = ActivityMember.fromBlank(newMember.name, newMember.userId, newMember.FCMToken)
-                }
+            }} addUser={(newMember: ActivityMember | ActivityMember) => {
+                
                 const newMembers = [...addedMembers, newMember]
                 const addedMemberIds: string[] = [];
                 const newMembersNoDuplicates = newMembers.filter((member) => {
-                    if(addedMemberIds.includes(member.memberUid)){
+                    if(addedMemberIds.includes(member.name)){
                         return false
                     }
-                    addedMemberIds.push(member.memberUid)
+                    addedMemberIds.push(member.name)
                     return true
                 })
                 setAddedMembers(newMembersNoDuplicates)
@@ -124,10 +121,10 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
                 const newMembers = [...addedMembers, ...members]
                 const addedMemberIds: string[] = [];
                 const newMembersNoDuplicates = newMembers.filter((member) => {
-                    if(addedMemberIds.includes(member.memberUid)){
+                    if(addedMemberIds.includes(member.name)){
                         return false
                     }
-                    addedMemberIds.push(member.memberUid)
+                    addedMemberIds.push(member.name)
                     return true
                 })
                 setAddedMembers(newMembersNoDuplicates)
@@ -136,18 +133,16 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
 
             <AddFromPlayDialog dialogRef={addFromPlayRef} close={() => {
                 addFromPlayRef.current!.close()
-            }} addMembers={(actors: Actor[]) => {
+            }} addMembers={(actors: ActivityMember[]) => {
                 //Convert actors to members
-                const members = actors.map((actor) => {
-                    return ActivityMember.fromBlank(actor.name, actor.userId, actor.FCMToken)
-                })
-                const newMembers = [...addedMembers, ...members]
+               
+                const newMembers = [...addedMembers, ...actors]
                 const addedMemberIds: string[] = [];
                 const newMembersNoDuplicates = newMembers.filter((member) => {
-                    if(addedMemberIds.includes(member.memberUid)){
+                    if(addedMemberIds.includes(member.name)){
                         return false
                     }
-                    addedMemberIds.push(member.memberUid)
+                    addedMemberIds.push(member.name)
                     return true
                 })
                 setAddedMembers(newMembersNoDuplicates)

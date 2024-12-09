@@ -2,7 +2,7 @@ import { EventClickArg } from "@fullcalendar/core/index.js";
 import { EventImpl } from "@fullcalendar/core/internal";
 import { DateClickArg } from "@fullcalendar/interaction/index.js";
 
-import { DocumentData, GeoPoint, Timestamp } from "firebase/firestore";
+import { DocumentData, GeoPoint } from "firebase/firestore";
 import { LegacyRef } from "react";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -95,7 +95,7 @@ export type CharacterTileProps = {
     isCreate: boolean;
     isAssign: boolean;
     characters: Character[];
-    actors: Actor[];
+    actors: ActivityMember[];
 
     
 };
@@ -122,12 +122,12 @@ export type ConflictDateFormTileProps = {
 
 export type ConflictDisplayTileProps = {
     conflictResponseDate: ConflictResponseDate;
-    actor: Actor;
+    actor: ActivityMember;
 };
 
 export type DateConflict = {
     conflictResponseDate: ConflictResponseDate;
-    actor: Actor;
+    actor: ActivityMember;
 }
 
 export type EnsembleSectionProps = {
@@ -137,7 +137,7 @@ export type EnsembleSectionProps = {
     isCreate: boolean;
     isAssign: boolean;
     isCustom: boolean;
-    actors: Actor[];
+    actors: ActivityMember[];
     isGroupChatCreate: boolean;
     onAddEnsemble: () => void;
 
@@ -145,7 +145,7 @@ export type EnsembleSectionProps = {
 };
 
 export type ActorTileProps = {
-    actor: Actor;
+    actor: ActivityMember;
     canDelete: boolean;
     onDelete: () => void;
 }
@@ -167,7 +167,7 @@ export type ShowGroupTileProps = {
     showGroups: ShowGroup[];
     hasEnsemble: boolean;
     characters: Character[];
-    actors: Actor[];
+    actors: ActivityMember[];
 
     
 };
@@ -227,11 +227,11 @@ export type DanceDisplayTileProps = {
 
 
 export type AssignActorDialogProps = {
-    actor: Actor;
-    setActor: (actor: Actor) => void;
-    actors: Actor[];
+    actor: ActivityMember;
+    setActor: (actor: ActivityMember) => void;
+    actors: ActivityMember[];
     dialogRef: LegacyRef<HTMLDialogElement>;
-    addedActors: Actor[];
+    addedActors: ActivityMember[];
     close: () => void;
     keepPastResult: boolean;
 }
@@ -247,6 +247,7 @@ export type AddConflictDialogProps = {
 
 export type JoinActivityDialogProps = {
     dialogRef: LegacyRef<HTMLDialogElement>;
+    activityJoinCode: string;
     close: () => void;
 }
 
@@ -278,6 +279,20 @@ export type AddRehearsalLocationDialogProps = {
 
 }
 
+export type AddLocationDialogProps = {
+    addLocation: (location: Location) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;    
+    savedLocations: Location[];
+}
+
+export type AddEventTypeDialogProps = {
+    addEventType: (eventType: EventType) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;   
+    eventTypes: EventType[]; 
+}
+
 export type GroupChatDisplayTileProps = {
     groupChat: ActivityGC;
     onClick: () => void;
@@ -300,18 +315,18 @@ export type CreateGroupChatDialogProps = {
 }
 
 export type AddUserDialogProps = {
-    members: (ActivityMember | Actor)[];
+    members: (ActivityMember | ActivityMember)[];
     addedMembers: (ActivityMember)[];
     close: () => void;
     dialogRef: LegacyRef<HTMLDialogElement>;
-    addUser: (users: (ActivityMember | Actor)) => void;
+    addUser: (users: (ActivityMember | ActivityMember)) => void;
 }
 
 export type AddFromPlayDialogProps = {
     activityId: string;
     dialogRef: LegacyRef<HTMLDialogElement>;
     close: () => void;
-    addMembers: (members: Actor[]) => void;
+    addMembers: (members: ActivityMember[]) => void;
     setName: (name: string) => void;
 }
 
@@ -328,6 +343,7 @@ export type BroadcastMessageDialogProps = {
     activityId: string;
     userData: DocumentData;
     refresh: () => void;
+    activityName: string;
 }
 
 export type AddResourceDialogProps = { 
@@ -349,6 +365,28 @@ export type AddAdditionalDayDialogProps = {
     addDay: (date: ConflictDate) => void;
 }
 
+export type StudentListTileProps = {
+    students: (ActivityMember)[];
+    activityId: string;
+
+}
+
+export type StudentDisplayTileProps = {
+    student: ActivityMember;
+    activityId: string;
+}
+
+export type StudentInfoDialogProps = {
+    student: ActivityMember ;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    activityId: string;
+}
+
+export type TimeChatSeparator = {
+    time: string;
+}
+
 export class Activity {
     name: string;
     type: "activity" | "theater";
@@ -357,7 +395,7 @@ export class Activity {
     students: ActivityMember[];
     parents: ActivityMember[];
     groups: ActivityGroup[];
-    teachers: ActivityMember[];
+    teachers: ActivityTeacher[];
     locations: Location[];
     eventTypes: EventType[];
     defaultLocation: Location;
@@ -380,7 +418,7 @@ export class Activity {
         this.lastUpdated = 0;
     }
 
-    public static fromBlank(name: string, id: string, joinCode: string, students: ActivityMember[], parents: ActivityMember[], groups: ActivityGroup[], teachers: ActivityMember[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, showBy: string, lastUpdated: number, type: "activity" | "theater"): Activity {
+    public static fromBlank(name: string, id: string, joinCode: string, students: ActivityMember[], parents: ActivityMember[], groups: ActivityGroup[], teachers: ActivityTeacher[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, showBy: string, lastUpdated: number, type: "activity" | "theater"): Activity {
         const activity = new Activity();
         activity.name = name;
         activity.id = id;
@@ -412,9 +450,9 @@ export class Activity {
         "joinCode": this.joinCode,
         "teachers": this.teachers.map((e) => e.toMap()),
         "locations": this.locations.map((e) => e.toMap()),
-        "teacherUids": this.teachers.map((e) => e.memberUid),
-        "studentUids": this.students.map((e) => e.memberUid),
-        "parentUids": this.parents.map((e) => e.memberUid),
+        "teacherUids": this.teachers.map((e) => e.userId),
+        "studentUids": this.students.map((e) => e.userId),
+        "parentUids": this.parents.map((e) => e.userId),
         "defaultLocation": this.defaultLocation.toMap(),
         "showBy": this.showBy,
         "eventTypes": this.eventTypes.map((e) => e.toMap()),
@@ -453,9 +491,9 @@ export class Activity {
         }
         activity.locations = formattedLocations;
         const teachers = map.teachers;
-        const formattedTeachers: ActivityMember[] =  [];
+        const formattedTeachers: ActivityTeacher[] =  [];
         for (const teacher of teachers) {
-            formattedTeachers.push(ActivityMember.fromMap(teacher));
+            formattedTeachers.push(ActivityTeacher.fromMap(teacher));
         }
         activity.teachers = formattedTeachers;
         activity.showBy = map.showBy;
@@ -476,10 +514,10 @@ export class TheaterActivity {
     type = "theater" as const;
     id: string;
     joinCode: string;
-    students: Actor[];
+    students: ActivityMember[];
     parents: ActivityMember[];
     groups: ActivityGroup[];
-    teachers: ActivityMember[];
+    teachers: ActivityTeacher[];
     locations: Location[];
     eventTypes: EventType[];
     defaultLocation: Location;
@@ -504,7 +542,7 @@ export class TheaterActivity {
         this.lastUpdated = 0;
     }
 
-    public static fromBlank(name: string, id: string, joinCode: string, students: Actor[], parents: ActivityMember[], groups: ActivityGroup[], teachers: ActivityMember[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, rehearsalLocations: TheaterLocation[],showBy: string, lastUpdated: number): TheaterActivity {
+    public static fromBlank(name: string, id: string, joinCode: string, students: ActivityMember[], parents: ActivityMember[], groups: ActivityGroup[], teachers: ActivityTeacher[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, rehearsalLocations: TheaterLocation[],showBy: string, lastUpdated: number): TheaterActivity {
         const activityTheater = new TheaterActivity();
         activityTheater.name = name;
         activityTheater.id = id;
@@ -535,9 +573,9 @@ export class TheaterActivity {
         "groups": this.groups.map((e) => e.toMap()),
         "joinCode": this.joinCode,
         "teachers": this.teachers.map((e) => e.toMap()),
-        "teacherUids": this.teachers.map((e) => e.memberUid),
+        "teacherUids": this.teachers.map((e) => e.userId),
         "studentUids": this.students.map((e) => e.userId),
-        "parentUids": this.parents.map((e) => e.memberUid),
+        "parentUids": this.parents.map((e) => e.userId),
         "locations": this.locations.map((e) => e.toMap()),
         "defaultLocation": this.defaultLocation.toMap(),
         "showBy": this.showBy,
@@ -554,9 +592,9 @@ export class TheaterActivity {
         activity.type = map.type;
         activity.joinCode = map.joinCode;
         const students = map.students;
-        const formattedStudents: Actor[] =  [];
+        const formattedStudents: ActivityMember[] =  [];
         for (const student of students) {
-            formattedStudents.push(Actor.fromMap(student));
+            formattedStudents.push(ActivityMember.fromMap(student));
         }
         activity.students = formattedStudents;
         const parents = map.parents;
@@ -584,9 +622,9 @@ export class TheaterActivity {
         }
         activity.rehearsalLocations = formattedRehersalLocations
         const teachers = map.teachers;
-        const formattedTeachers: ActivityMember[] =  [];
+        const formattedTeachers: ActivityTeacher[] =  [];
         for (const teacher of teachers) {
-            formattedTeachers.push(ActivityMember.fromMap(teacher));
+            formattedTeachers.push(ActivityTeacher.fromMap(teacher));
         }
         activity.teachers = formattedTeachers;
         activity.showBy = map.showBy;
@@ -604,14 +642,14 @@ export class TheaterActivity {
 
 export class TheaterLocation {
     name: string;
-    color: number;
+    color: Color;
 
     constructor() {
         this.name = "";
-        this.color = 0;
+        this.color = Color.fromBlank(0, 0, 0, 0);
     }
 
-    public static fromBlank(name: string, color: number): TheaterLocation {
+    public static fromBlank(name: string, color: Color): TheaterLocation {
         const theaterLocation = new TheaterLocation();
         theaterLocation.name = name;
         theaterLocation.color = color;
@@ -621,14 +659,14 @@ export class TheaterLocation {
     toMap(): object {
         return {
         "name": this.name,
-        "color": this.color,
+        "color": this.color.toMap(),
         };
     }
 
     public static fromMap(map: DocumentData): TheaterLocation {
         const theaterLocation = new TheaterLocation();
         theaterLocation.name = map.name;
-        theaterLocation.color = map.color;
+        theaterLocation.color = Color.fromMap(map.color);
         return theaterLocation;
     }
 }
@@ -673,15 +711,15 @@ export class Location {
 export class ActivityGroup {
    groupName: string;
     groupMembers: ActivityMember[];
-    groupColor: number;
+    groupColor: Color;
 
     constructor() {
         this.groupName = "";
         this.groupMembers = [];
-        this.groupColor = 0;
+        this.groupColor = Color.fromBlank(0, 0, 0, 0);
     }
 
-    public static fromBlank(groupName: string, groupMembers: ActivityMember[], groupColor: number): ActivityGroup {
+    public static fromBlank(groupName: string, groupMembers: ActivityMember[], groupColor: Color): ActivityGroup {
         const group = new ActivityGroup();
         group.groupName = groupName;
         group.groupMembers = groupMembers;
@@ -693,7 +731,7 @@ export class ActivityGroup {
         return {
         "groupName": this.groupName,
         "groupMembers": this.groupMembers.map((e) => e.toMap()),
-        "groupColor": this.groupColor,
+        "groupColor": this.groupColor.toMap(),
         };
     }
 
@@ -706,57 +744,23 @@ export class ActivityGroup {
             formattedGroupMembers.push(ActivityMember.fromMap(groupMember));
         }
         group.groupMembers = formattedGroupMembers;
-        group.groupColor = map.groupColor;
+        group.groupColor = Color.fromMap(map.groupColor);
         return group;
     }
 }
 
-export class ActivityMember {
-    memberName: string; 
-    memberUid: string;
-    memberFCMToken: string;
 
-    constructor() {
-        this.memberName = "";
-        this.memberUid = "";
-        this.memberFCMToken = "";
-    }
-
-    public static fromBlank(memberName: string, memberUid: string, memberFCMToken: string): ActivityMember {
-        const member = new ActivityMember();
-        member.memberName = memberName;
-        member.memberUid = memberUid;
-        member.memberFCMToken = memberFCMToken;
-        return member;
-    }
-
-    toMap(): object {
-        return {
-        "memberName": this.memberName,
-        "memberUid": this.memberUid,
-        "memberFCMToken": this.memberFCMToken,
-        };
-    }
-
-    public static fromMap(map: DocumentData): ActivityMember {
-        const member = new ActivityMember();
-        member.memberName = map.memberName;
-        member.memberUid = map.memberUid;
-        member.memberFCMToken = map.memberFCMToken;
-        return member;
-    }
-}
 
 export class EventType {
     name: string;
-    color: number;
+    color: Color;
   
     constructor() {
         this.name = "";
-        this.color = 0;
+        this.color = Color.fromBlank(0, 0, 0, 0);
     }
 
-    public static fromBlank(name: string, color: number): EventType {
+    public static fromBlank(name: string, color: Color): EventType {
         const eventType = new EventType();
         eventType.name = name;
         eventType.color = color;
@@ -766,14 +770,14 @@ export class EventType {
     toMap(): object {
         return {
         "name": this.name,
-        "color": this.color,
+        "color": this.color.toMap(),
         };
     }
 
     public static fromMap(map: DocumentData): EventType {
         const eventType = new EventType();
         eventType.name = map.name;
-        eventType.color = map.color;
+        eventType.color = Color.fromMap(map.color);
         return eventType;
     }
 }
@@ -1024,7 +1028,7 @@ export class ActivityEvent {
         "schoolEventId": this.schoolEventId,
         "activityId": this.activityId,
         "lastUpdated": this.lastUpdated,
-        "targetUids": this.targets.map((e) => e.memberUid),
+        "targetUids": this.targets.map((e) => e.userId),
         "conflicts": this.conflicts.map((e) => e.toMap()),
         };
     }
@@ -1133,7 +1137,7 @@ class ActivityConflict {
 export class ActivityGC {
     name: string;
     id: string;
-    members: ActivityMember[];
+    members: GroupChatMember[];
     generalTarget: string;
     activityId: string;
     lastMessage?: Message;
@@ -1150,7 +1154,7 @@ export class ActivityGC {
     }
 
 
-    public static fromBlank(name: string, id: string, members: ActivityMember[], generalTarget: string, activityId: string, lastUpdated: number): ActivityGC {
+    public static fromBlank(name: string, id: string, members: GroupChatMember[], generalTarget: string, activityId: string, lastUpdated: number): ActivityGC {
         const activityGC = new ActivityGC();
         activityGC.name = name;
         activityGC.id = id;
@@ -1177,9 +1181,9 @@ export class ActivityGC {
         activityGC.name = map.name;
         activityGC.id = map.id;
         const members = map.members;
-        const formattedMembers: ActivityMember[] =  [];
+        const formattedMembers: GroupChatMember[] =  [];
         for (const member of members) {
-            formattedMembers.push(ActivityMember.fromMap(member));
+            formattedMembers.push(GroupChatMember.fromMap(member));
         }
         activityGC.members = formattedMembers;
         activityGC.generalTarget = map.generalTarget;
@@ -1350,7 +1354,7 @@ export class TheaterEvent {
         "showName": this.showName,
         "characters": this.characters.map((e) => e.toMap()),
         "targets": this.targets.map((e) => e.toMap()),
-        "targetUids": this.targets.map((e) => e.memberUid),
+        "targetUids": this.targets.map((e) => e.userId),
         "id": this.id,
         "theaterEventType": this.theaterEventType,
         "activityEventType": this.activityEventType.toMap(),
@@ -1744,7 +1748,59 @@ export class Song {
         return song;
     }
 }
-export class Actor {
+
+export class GroupChatMember {
+    name: string;
+    email: string;
+    phone: string;
+    FCMToken: string;
+    userId: string;
+
+
+    constructor() {
+        this.name = "";
+        this.email = "";
+        this.phone = "";
+        this.FCMToken = "";
+        this.userId = "";
+    }
+
+    public static fromBlank(name: string, email: string, phone: string, FCMToken: string, userId: string): GroupChatMember {
+        const actor = new GroupChatMember();
+        actor.name = name;
+
+        actor.email = email;
+        actor.phone = phone;
+        actor.FCMToken = FCMToken;
+        actor.userId = userId;
+
+        return actor;
+    }
+
+    toMap(): object {
+        return {
+        "fullname": this.name,
+        "email": this.email,
+        "phoneNumber": this.phone,
+        "FCMToken": this.FCMToken,
+        "uid": this.userId,
+
+        };
+    }
+
+    public static fromMap(map: DocumentData): GroupChatMember {
+        const actor = new GroupChatMember();
+        actor.name = map.fullname;
+        actor.email = map.email;
+        actor.phone = map.phoneNumber;
+        actor.FCMToken = map.FCMToken;
+        actor.userId = map.uid;
+
+        return actor;
+    }
+}
+
+export class ActivityMember {
     name: string;
     gender: "male" | "female";
     email: string;
@@ -1763,8 +1819,8 @@ export class Actor {
         this.userId = "";
     }
 
-    public static fromBlank(name: string, gender: "male" | "female", email: string, phone: string, FCMToken: string, userId: string): Actor {
-        const actor = new Actor();
+    public static fromBlank(name: string, gender: "male" | "female", email: string, phone: string, FCMToken: string, userId: string): ActivityMember {
+        const actor = new ActivityMember();
         actor.name = name;
         actor.gender = gender;
         actor.email = email;
@@ -1787,10 +1843,67 @@ export class Actor {
         };
     }
 
-    public static fromMap(map: DocumentData): Actor {
-        const actor = new Actor();
-        actor.name = map.fullname;
+    public static fromMap(map: DocumentData): ActivityMember {
+        const actor = new ActivityMember();
+        actor.name = map.fullname ?? map.name;
         actor.gender = map.gender;
+        actor.email = map.email;
+        actor.phone = map.phoneNumber ?? map.phone;
+        actor.FCMToken = map.FCMToken;
+        actor.userId = map.uid ?? map.userId;
+
+        return actor;
+    }
+
+
+
+
+
+
+}
+
+export class ActivityTeacher {
+    name: string;
+    email: string;
+    phone: string;
+    FCMToken: string;
+    userId: string;
+
+
+    constructor() {
+        this.name = "";
+        this.email = "";
+        this.phone = "";
+        this.FCMToken = "";
+
+        this.userId = "";
+    }
+
+    public static fromBlank(name: string,  email: string, phone: string, FCMToken: string, userId: string): ActivityTeacher {
+        const actor = new ActivityTeacher();
+        actor.name = name;
+        actor.email = email;
+        actor.phone = phone;
+        actor.FCMToken = FCMToken;
+        actor.userId = userId;
+
+        return actor;
+    }
+
+    toMap(): object {
+        return {
+        "fullname": this.name,
+        "email": this.email,
+        "phoneNumber": this.phone,
+        "FCMToken": this.FCMToken,
+        "uid": this.userId,
+
+        };
+    }
+
+    public static fromMap(map: DocumentData): ActivityTeacher {
+        const actor = new ActivityTeacher();
+        actor.name = map.fullname;
         actor.email = map.email;
         actor.phone = map.phoneNumber;
         actor.FCMToken = map.FCMToken;
@@ -1808,7 +1921,7 @@ export class Actor {
 
 export class Character {
     name: string;
-    actor: Actor | null;
+    actor: ActivityMember | null;
     characterId: number;
     lastUpdated: number;
     type: string;
@@ -1816,13 +1929,13 @@ export class Character {
 
     constructor() {
         this.name = "";
-        this.actor = new Actor();
+        this.actor = new ActivityMember();
         this.lastUpdated = 0;
         this.characterId = 0;
         this.type = "Character";
     }
 
-    public static fromBlank(name: string, actor: Actor | null, characterId: number, lastUpdated: number): Character {
+    public static fromBlank(name: string, actor: ActivityMember | null, characterId: number, lastUpdated: number): Character {
         const character = new Character();
         character.name = name;
         character.actor = actor;
@@ -1846,7 +1959,7 @@ export class Character {
 
 
         character.name = map.name;
-        character.actor = map.actor != "null" && !isEmpty(map.actor) ? Actor.fromMap(map.actor) : null;
+        character.actor = map.actor != "null" && !isEmpty(map.actor) ? ActivityMember.fromMap(map.actor) : null;
         character.lastUpdated = map.lastUpdated;
         character.characterId = map.characterId;
         return character;
@@ -1863,7 +1976,7 @@ function isEmpty(obj) {
     return true
   }
 export class Ensemble{
-    actors: Actor[];
+    actors: ActivityMember[];
     lastUpdated: number;
 
     constructor() {
@@ -1871,7 +1984,7 @@ export class Ensemble{
         this.lastUpdated = 0;
     }
 
-    public static fromBlank(actors: Actor[], lastUpdated: number): Ensemble {
+    public static fromBlank(actors: ActivityMember[], lastUpdated: number): Ensemble {
         const ensemble = new Ensemble();
         ensemble.actors = actors;
         ensemble.lastUpdated = lastUpdated;
@@ -1888,9 +2001,9 @@ export class Ensemble{
     public static fromMap(map: DocumentData): Ensemble {
         const ensemble = new Ensemble();
         const actors = map.actors;
-        const formattedActors: Actor[] =  [];
+        const formattedActors: ActivityMember[] =  [];
         for (const actor of actors) {
-            formattedActors.push(Actor.fromMap(actor));
+            formattedActors.push(ActivityMember.fromMap(actor));
         }
         ensemble.actors = formattedActors;
         ensemble.lastUpdated = map.lastUpdated;
@@ -1923,7 +2036,7 @@ export class EnsembleSection {
     includeMale: boolean;
     includeFemale: boolean;
     includeCustom: boolean;
-    customActors: Actor[];
+    customActors: ActivityMember[];
     lastUpdated: number;
     type: string;
 
@@ -1937,7 +2050,7 @@ export class EnsembleSection {
         this.type = "EnsembleSection";
     }
 
-    public static fromBlank(includeAll: boolean, includeMale: boolean, includeFemale: boolean, includeCustom: boolean, customActors: Actor[],lastUpdated: number): EnsembleSection {
+    public static fromBlank(includeAll: boolean, includeMale: boolean, includeFemale: boolean, includeCustom: boolean, customActors: ActivityMember[],lastUpdated: number): EnsembleSection {
         const ensembleSection = new EnsembleSection();
         ensembleSection.includeAll = includeAll;
         ensembleSection.includeMale = includeMale;
@@ -1968,10 +2081,10 @@ export class EnsembleSection {
         ensembleSection.includeFemale = map.includeFemale;
         ensembleSection.includeCustom = map.includeCustom;
         const customActors = map.customActors;
-        const formattedCustomActors: Actor[] =  [];
+        const formattedCustomActors: ActivityMember[] =  [];
 
         for (const customActor of customActors) {
-            formattedCustomActors.push(Actor.fromMap(customActor));
+            formattedCustomActors.push(ActivityMember.fromMap(customActor));
         }
         ensembleSection.customActors = formattedCustomActors;
 
@@ -2193,7 +2306,7 @@ export class ConflictResponseDate {
 export class ConflictResponse {
     dates: ConflictResponseDate[];
     id: string;
-    actor: Actor;
+    actor: ActivityMember;
     lastUpdated: number;
     activityId: string;
     showId: string;
@@ -2201,13 +2314,13 @@ export class ConflictResponse {
     constructor() {
         this.dates = [];
         this.id = "";
-        this.actor = new Actor();
+        this.actor = new ActivityMember();
         this.lastUpdated = 0;
         this.activityId = "";
         this.showId = "";
     }
 
-    public static fromBlank(dates: ConflictResponseDate[], id: string, actor: Actor, activityId: string, showId: string, lastUpdated: number): ConflictResponse {
+    public static fromBlank(dates: ConflictResponseDate[], id: string, actor: ActivityMember, activityId: string, showId: string, lastUpdated: number): ConflictResponse {
         const conflictResponse = new ConflictResponse();
         conflictResponse.dates = dates;
         conflictResponse.id = id;
@@ -2239,7 +2352,7 @@ export class ConflictResponse {
         }
         conflictResponse.dates = formattedDates;
         conflictResponse.id = map.id;
-        conflictResponse.actor = Actor.fromMap(map.actor);
+        conflictResponse.actor = ActivityMember.fromMap(map.actor);
         conflictResponse.showId = map.showId;
         conflictResponse.activityId = map.activityId;
         conflictResponse.lastUpdated = map.lastUpdated;
@@ -2339,6 +2452,7 @@ export class StudentData {
     FCMToken: string;
     phoneNumber: string;
     driverStatus: string;
+    gender: "male" | "female";
   
     searchKey: string;
     fullname: string;
@@ -2360,11 +2474,12 @@ export class StudentData {
         this.searchKey = "";
         this.fullname = "";
         this.email = "";
+        this.gender = "male";
         this.distanceToSchoolMembers = {};
         this.homeLocation = new Location();
     }
 
-    public static fromBlank(uid: string, schoolId: string, rideShareStatus: string, distanceToSchool: number, FCMToken: string, accountType: string, phoneNumber: string, driverStatus: string, searchKey: string, fullname: string, email: string, distanceToSchoolMembers: {[key: string]: number}, homeLocation: Location): StudentData {
+    public static fromBlank(uid: string, schoolId: string, rideShareStatus: string, distanceToSchool: number, FCMToken: string, accountType: string, phoneNumber: string, gender: "male" | "female", driverStatus: string, searchKey: string, fullname: string, email: string, distanceToSchoolMembers: {[key: string]: number}, homeLocation: Location): StudentData {
         const studentData = new StudentData();
         studentData.uid = uid;
         studentData.schoolId = schoolId;
@@ -2379,6 +2494,7 @@ export class StudentData {
         studentData.email = email;
         studentData.distanceToSchoolMembers = distanceToSchoolMembers;
         studentData.homeLocation = homeLocation;
+        studentData.gender = gender;
         return studentData;
     }
 
@@ -2397,6 +2513,7 @@ export class StudentData {
         "email": this.email,
         "distanceToSchoolMembers": this.distanceToSchoolMembers,
         "homeLocation": this.homeLocation.toMap(),
+        "gender": this.gender,
         };
     }
 
@@ -2415,16 +2532,19 @@ export class StudentData {
         studentData.email = map.email;
         studentData.distanceToSchoolMembers = map.distanceToSchoolMembers;
         studentData.homeLocation = Location.fromMap(map.homeLocation);
+        studentData.gender = map.gender ?? "";
         return studentData;
     }
   }
+
+
   
 export class TeacherData {
     uid: string;
     schoolId: string;
   
     FCMToken: string;
-  
+    phoneNumber: string;
     searchKey: string;
     fullname: string;
     email: string;
@@ -2439,9 +2559,10 @@ export class TeacherData {
         this.searchKey = "";
         this.fullname = "";
         this.email = "";
+        this.phoneNumber = "";
     }
 
-    public static fromBlank(uid: string, schoolId: string, FCMToken: string, accountType: string, searchKey: string, fullname: string, email: string): TeacherData {
+    public static fromBlank(uid: string, schoolId: string, phoneNumber: string,FCMToken: string, accountType: string, searchKey: string, fullname: string, email: string): TeacherData {
         const teacherData = new TeacherData();
         teacherData.uid = uid;
         teacherData.schoolId = schoolId;
@@ -2450,6 +2571,7 @@ export class TeacherData {
         teacherData.searchKey = searchKey;
         teacherData.fullname = fullname;
         teacherData.email = email;
+        teacherData.phoneNumber = phoneNumber;
         return teacherData;
     }
 
@@ -2462,6 +2584,7 @@ export class TeacherData {
         "searchKey": this.searchKey,
         "fullname": this.fullname,
         "email": this.email,
+        "phoneNumber": this.phoneNumber,
         };
     }
 
@@ -2474,6 +2597,7 @@ export class TeacherData {
         teacherData.searchKey = map.searchKey;
         teacherData.fullname = map.fullname;
         teacherData.email = map.email;
+        teacherData.phoneNumber = map.phoneNumber;
         return teacherData;
     }
   }
@@ -2514,24 +2638,123 @@ export class TeacherData {
     }
   }
 
-export function intToHexColor(value: number) {
-    let hexString;
-    
-    if (value > 0xFFFFFF) {
-        // Handle ARGB (32-bit with alpha)
-        let alpha = ((value >> 24) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
-        let red = ((value >> 16) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
-        let green = ((value >> 8) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
-        let blue = (value & 0xFF).toString(16).padStart(2, '0').toUpperCase();
-        hexString = `#${alpha}${red}${green}${blue}`;
-    } else {
-        // Handle RGB (24-bit without alpha)
-        hexString = value.toString(16).toUpperCase().padStart(6, '0');
-        hexString = `#${hexString}`;
+  export class Color {
+    red: number;
+    green: number;
+    blue: number;
+    alpha: number;
+
+    constructor() {
+        this.red = 0;
+        this.green = 0;
+        this.blue = 0;
+        this.alpha = 0;
     }
 
-    return hexString;
-}
+    public static fromBlank(red: number, green: number, blue: number, alpha: number): Color {
+        const color = new Color();
+        color.red = red;
+        color.green = green;
+        color.blue = blue;
+        color.alpha = alpha;
+        return color;
+    }
+
+    public setAlpha(alpha: number): Color {
+        this.alpha = alpha;
+        return this;
+    }
+
+    toMap(): object {
+        return {
+        "red": this.red,
+        "green": this.green,
+        "blue": this.blue,
+        "alpha": this.alpha,
+        };
+    }
+
+    toHex(): string {
+        
+            // Ensure all values are within the valid range (0–255)
+            if (
+              this.red < 0 || this.red > 255 ||
+              this.green < 0 || this.green > 255 ||
+              this.blue < 0 || this.blue > 255 ||
+              this.alpha < 0 || this.alpha > 255
+            ) {
+              throw new RangeError("RGBA values must be in the range 0–255.");
+            }
+          
+            // Convert each value to a 2-digit hexadecimal and concatenate
+            const redHex = this.red.toString(16).padStart(2, "0");
+            const greenHex = this.green.toString(16).padStart(2, "0");
+            const blueHex = this.blue.toString(16).padStart(2, "0");
+            const alphaHex = this.alpha.toString(16).padStart(2, "0");
+          
+            return `#${alphaHex}${redHex}${greenHex}${blueHex}`;
+          }
+
+    public static fromMap(map: DocumentData): Color {
+        const color = new Color();
+        color.red = map.red;
+        color.green = map.green;
+        color.blue = map.blue;
+        color.alpha = map.alpha;
+        return color;
+    }
+
+     toRBGAString(): string {
+        return `rgba(${this.red}, ${this.green}, ${this.blue}, ${this.alpha})`;
+    }
+  }
+
+// export function intToHexColor(value: number) {
+//     let hexString;
+    
+//     if (value > 0xFFFFFF) {
+//         // Handle ARGB (32-bit with alpha)
+//         let alpha = ((value >> 24) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+//         let red = ((value >> 16) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+//         let green = ((value >> 8) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+//         let blue = (value & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+//         hexString = `#${alpha}${red}${green}${blue}`;
+//     } else {
+//         // Handle RGB (24-bit without alpha)
+//         hexString = value.toString(16).toUpperCase().padStart(6, '0');
+//         hexString = `#${hexString}`;
+//     }
+
+//     return hexString;
+// }
+
+
+export function intToHexColor(value: number): string {
+    let radix = 16;
+    if (radix < 2 || radix > 36) {
+      throw new RangeError("Radix argument must be between 2 and 36.");
+    }
+  
+    // Handle 0 case
+    if (value === 0) return "0";
+  
+    const isNegative = value < 0;
+    let absValue = Math.abs(value);
+    let result = "";
+  
+    // Convert the number to the desired radix
+    while (absValue > 0) {
+      const digit = absValue % radix;
+      result = (digit < 10 ? digit.toString() : String.fromCharCode(87 + digit)) + result;
+      absValue = Math.floor(absValue / radix);
+    }
+  
+    // Add negative sign for negative numbers
+    console.log(result);
+    return isNegative ? `-${result}` : "#" + result;
+  }
+  
+  
 
 export function addAlpha(color, opacity) {
     // coerce values so it is between 0 and 1.
@@ -2550,3 +2773,45 @@ export function hexToInt(hex: string) {
 
     return intValue;
 }
+
+function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } {
+    // Remove the leading '#' if present
+    if (hex.startsWith("#")) {
+      hex = hex.slice(1);
+    }
+  
+    // Handle shorthand hex (#RGB or #ARGB) by expanding it
+    if (hex.length === 3 || hex.length === 4) {
+      hex = hex
+        .split("")
+        .map((char) => char + char)
+        .join("");
+    }
+  
+    // Parse the color components based on length
+    let r = 0, g = 0, b = 0, a = 255; // Default alpha to 255 (fully opaque)
+    if (hex.length === 6) {
+      // #RRGGBB format
+      r = parseInt(hex.slice(0, 2), 16);
+      g = parseInt(hex.slice(2, 4), 16);
+      b = parseInt(hex.slice(4, 6), 16);
+    } else if (hex.length === 8) {
+      // #AARRGGBB format
+      a = parseInt(hex.slice(0, 2), 16);
+      r = parseInt(hex.slice(2, 4), 16);
+      g = parseInt(hex.slice(4, 6), 16);
+      b = parseInt(hex.slice(6, 8), 16);
+    } else {
+      throw new Error("Invalid hex color format.");
+    }
+  
+    return { r, g, b, a };
+  }
+  
+  export function hexToColor(hex: string): Color {
+    const { r, g, b, a } = hexToRGBA(hex);
+    return Color.fromBlank(r, g, b, a);
+  }
+
+  
+  

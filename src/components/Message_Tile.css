@@ -21,7 +21,7 @@
     max-width: calc(100% - 67px);
     overflow-wrap: break-word;
     border-radius: 3px;
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+   
     transition: all 0.3s ease;
     padding: 0.5em;
     font-weight: 600;
@@ -36,6 +36,7 @@
 
 .isSender {
     background-color: #FF6B35;
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
 
 
 }
@@ -44,6 +45,7 @@
 .notSender {
 /* background color opposite of isSender */
     background-color: #4169E1;
+    box-shadow: 0 0 10px rgba(65, 105, 225, 0.5);
 
 }
 
@@ -59,6 +61,14 @@
     text-align: end;
 }
 
+.isSender .message-text {
+  text-align: end;
+}
+
+
+.notSender .message-text {
+  text-align: start;
+}
 .message-body {
     display: flex;
     flex-direction: row;

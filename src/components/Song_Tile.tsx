@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Character, EnsembleSection, FullCast, Scene, ShowGroup, Song, SongTileProps } from "../constants"
+import { Character, EnsembleSection, FullCast, ShowGroup, Song, SongTileProps } from "../constants"
 import CharacterTile from "./Character_Tile"
 import EnsembleSectionTile from "./Ensemble_Section_Tile"
 import "./Song_Tile.css"

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Actor, AssignActorDialogProps } from "../constants";
+import { ActivityMember, AssignActorDialogProps } from "../constants";
 
 import "./Assign_Actor_Dialog.css"
 
 function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, close, keepPastResult}: AssignActorDialogProps){
-    const [searchResults, setSearchResults] = useState<Actor[]>([])
+    const [searchResults, setSearchResults] = useState<ActivityMember[]>([])
     const [searchString, setSearchString] = useState<string>("")
 
     useEffect(() => {

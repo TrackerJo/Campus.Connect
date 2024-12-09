@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import {   CreateActivityDialogProps } from "../constants";
 
 import "./Create_Activity_Dialog.css"

@@ -27,7 +27,7 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                     </>
                     :
                     //Dropdown for selecting existing characters
-                    <select name="show groups" id="showGroups" onChange={(val) => {
+                    <select name="show groups" id="showGroups" value={showGroup.name} onChange={(val) => {
                         if(val.target.value == "null") return
                         setShowGroup(showGroups.find((e) => e.name == val.target.value)!)
                     }}>

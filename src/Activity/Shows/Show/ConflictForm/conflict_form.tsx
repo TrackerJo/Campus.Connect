@@ -1,4 +1,4 @@
-import {  LegacyRef, StrictMode, useEffect } from 'react'
+import {   StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import '../../../../index.css'
@@ -18,15 +18,15 @@ import { useRef, useState } from 'react'
 
 
 import './conflict_form.css'
-import { ActivityMember, Actor, ConflictDate, ConflictForm, ConflictResponse, ConflictResponseDate, EventDate, Show } from '../../../../constants'
+import { ActivityMember, ConflictDate, ConflictForm, ConflictResponse, ConflictResponseDate, EventDate, Show } from '../../../../constants'
 import ConflictDateTile from '../../../../components/Conflict_Date_Tile'
-import { deleteActivityShowConflictResponse, getActvityShowConflictFormResponses, getCurrentUserAsActor, saveActivityShowConflictForm, submitActivityShowConflictForm } from '../../../../api/db'
+import { deleteActivityShowConflictResponse, getActivity, getActivityShow, getActvityShowConflictFormResponses, getCurrentUserAsActor, saveActivityShowConflictForm, submitActivityShowConflictForm } from '../../../../api/db'
 import ConflictDateFormTile from '../../../../components/Conflict_Date_Form_Tile'
 import AddRecurringConflictDialog from '../../../../components/Add_Recurring_Conflict_Dialog'
 import SimpleConflictResponseDisplayTile from '../../../../components/Simple_Conflict_Response_Date_Display_Tile'
 import AddUserDialog from '../../../../components/Add_User_Dialog'
 import AddAdditionalDayDialog from '../../../../components/Add_Additional_Day_Dialog'
-import { isLoggedIn } from '../../../../api/auth'
+import { getCurrentUserId, isLoggedIn } from '../../../../api/auth'
 
 
 
@@ -54,8 +54,8 @@ function App() {
     const [excludeWeekends, setExcludeWeekends] = useState<boolean>(true)
     const [formDeadline, setFormDeadline] = useState<Date | null>(null)
     const [addingConflictResponse, setAddingConflictResponse] = useState<boolean>(false)
-    const [selectedActor, setSelectedActor] = useState<Actor>()
-    const [members, setMembers] = useState<Actor[]>([])
+    const [selectedActor, setSelectedActor] = useState<ActivityMember>()
+    const [members, setMembers] = useState<ActivityMember[]>([])
     const [additionalDates, setAdditionalDates] = useState<ConflictDate[]>([])
 
     const addActorDialogRef = useRef<HTMLDialogElement>(null)
@@ -66,26 +66,33 @@ function App() {
     
 
     useEffect(() => {
+        async function getInfo() {
         isLoggedIn(() => {})
         //Get from url params
         const urlParams = new URLSearchParams(window.location.search)
         const activityId = urlParams.get('activityId')
+        let activity = null;
         if (activityId) {
             setActivityId(activityId)
+            activity = await getActivity(activityId)
+
+            
         }
         const showId = urlParams.get('showId')
         if (showId) {
             setShowId(showId)
         }
         //Get Show from local storage
-        const show = localStorage.getItem('show-' + showId)
-        if (show) {
-            setShow(Show.fromMap(JSON.parse(show)))
-            let allMembers =[...Show.fromMap(JSON.parse(show)).characters.map((character) => {
+        let show;
+        const showJSON = localStorage.getItem(`show-${showId}`);
+        if (showJSON) {
+            show = Show.fromMap(JSON.parse(showJSON))
+            setShow(show)
+            let allMembers =[...show.characters.map((character) => {
                 return character.actor!
             })]
-            if(Show.fromMap(JSON.parse(show)).ensemble) {
-                allMembers = [...allMembers, ...Show.fromMap(JSON.parse(show)).ensemble!.actors]
+            if(show.ensemble) {
+                allMembers = [...allMembers, ...show.ensemble!.actors]
             }
             //Remove duplicates
             allMembers = allMembers.filter((actor, index, self) =>
@@ -95,24 +102,47 @@ function App() {
             )
             setMembers(allMembers)
             
-            console.log(Show.fromMap(JSON.parse(show)))
+            console.log(show)
             getActvityShowConflictFormResponses(activityId!, showId!).then((responses) => {
                 setFormResponses(responses)
                 console.log(responses)
             })
+        } else { 
+            show = (await getActivityShow(activityId!, showId!))!
         }
+
         const accountType = localStorage.getItem('accountType')
         if (accountType) {
             setAccountType(accountType as "student" | "teacher")
-            if(accountType == "student" && show  && Show.fromMap(JSON.parse(show)).conflictForm) {
+            console.log(accountType)
+            if(accountType == "teacher" && activity) {
+               if(activity.teachers.findIndex((teacher) => {
+                   return teacher.memberUid == getCurrentUserId()
+               }) == -1) {
+                        
+                     window.location.href = `/Activities/?activityJoinCode=${activity.joinCode}&redirect=${window.location.pathname + window.location.search.replace(/&/g, '~')}`
+                     return
+                  
+               }
+            } else if(accountType == "student" && activity) {
+                if(activity.students.findIndex((member) => {
+                    return (member as ActivityMember).userId == getCurrentUserId()
+                }) == -1) {
+                    window.location.href = `/Activities/?activityJoinCode=${activity.joinCode}&redirect=${window.location.pathname + window.location.search.replace(/&/g, '~')}`
+                    return
+                }
+            }
+            if(accountType == "student" && show  && show.conflictForm) {
                 const conflictResponseDates: ConflictResponseDate[] = []
-                Show.fromMap(JSON.parse(show)).conflictForm!.dates.map((conflictDate) => {
+                show.conflictForm!.dates.map((conflictDate) => {
                     conflictResponseDates.push(ConflictResponseDate.fromBlank(conflictDate.date.date,null,null, false,""))
                 })
                 setConflictResponseDates(conflictResponseDates)
             }
 
         }
+    }
+    getInfo()
        
 
     }, [])
@@ -326,6 +356,11 @@ function App() {
                 <button className='ActionBtn' onClick={() => {
                     addActorDialogRef.current?.showModal()
                 }}>Add Conflict Response</button>
+                <button className='ActionBtn' onClick={ async () => {
+                    const link = window.location.href
+                    await navigator.clipboard.writeText(link)
+                    alert("Link copied to clipboard")
+                }}>Share Conflict Form</button>
                 </>
                 : (formResponses.length == 0 && show?.formStatus == "open") || addingConflictResponse ?
                 <>
@@ -456,8 +491,8 @@ function App() {
         }}/>
         <AddUserDialog dialogRef={addActorDialogRef} close={() => {
             addActorDialogRef.current!.close()
-        }} members={members} addedMembers={[]} addUser={(newMember: ActivityMember | Actor) => {
-            if(newMember instanceof Actor){
+        }} members={members} addedMembers={[]} addUser={(newMember: ActivityMember | ActivityMember) => {
+            if(newMember instanceof ActivityMember){
                 setSelectedActor(newMember)
             }
             addActorDialogRef.current!.close()

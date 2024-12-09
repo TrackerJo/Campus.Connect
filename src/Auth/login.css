@@ -99,3 +99,8 @@ body {
     }
     
   }
+
+  .skip-text-button {
+    color: #FF6B35;
+    cursor: pointer;
+  }

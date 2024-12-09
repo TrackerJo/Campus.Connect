@@ -50,7 +50,7 @@ export async function isLoggedIn(setIsLoggedIn: (isLoggedIn: boolean) => void){
          } else {
               setIsLoggedIn(false);
               //Set the url to the login page
-              window.location.href = "/Auth/?redirect=" + window.location.pathname;
+              window.location.href = "/Auth/?redirect=" + window.location.pathname + window.location.search.replace(/&/g, '~');
          }
     });
    
@@ -69,5 +69,5 @@ export async function reauthenticateUser(email: string, password: string){
 }
 
 export function getCurrentUserId(){
-    return localStorage.getItem("userId");
+    return auth.currentUser?.uid ?? localStorage.getItem("userId"); 
 }

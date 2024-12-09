@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {Actor,AddFromPlayDialogProps, Character, EnsembleSection, FullCast, Show, ShowGroup } from "../constants";
+import {ActivityMember,AddFromPlayDialogProps, Character, EnsembleSection, FullCast, Show, ShowGroup } from "../constants";
 
 import "./Add_From_Play_Dialog.css"
 import { getActivityShows } from "../api/db";
@@ -48,7 +48,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                     selectedShow && <>
                     <br />
                     <button className="ActionBtn" onClick={() => {
-                        const actors: Actor[] = []
+                        const actors: ActivityMember[] = []
                         const actorsUIDs: string[] = []
 
                         for(const actor of selectedShow!.ensemble!.actors){
@@ -73,7 +73,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                         setEnsembleSection(newEnsembleSection)
                     }}
                     onAddEnsemble={() => {
-                        const actors: Actor[] = []
+                        const actors: ActivityMember[] = []
                         const actorsUIDs: string[] = []
 
 
@@ -117,7 +117,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                         selectedShow?.showGroups.map((showGroup, index) => {
                             return<ShowGroupDisplayTile key={index} showGroup={showGroup} canDelete={false} onDelete={() => {}} canClick={true} showCharacters={false} onClick={() => {
                                 setName(showGroup.name)
-                                const actors: Actor[] = []
+                                const actors: ActivityMember[] = []
                                 const actorsUIDs: string[] = []
 
                                 for(const character of showGroup.characters){
@@ -220,7 +220,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                                 setName(scene.name + " - " + row.name)
 
 
-                                const actors: Actor[] = []
+                                const actors: ActivityMember[] = []
                                 const actorsUIDs: string[] = []
                                 console.log(scene)
                                 for(const character of scene.characters){
@@ -337,7 +337,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                                 setName(song.name)
 
 
-                                const actors: Actor[] = []
+                                const actors: ActivityMember[] = []
                                 const actorsUIDs: string[] = []
                                 for(const character of song.characters){
                                     if(character instanceof Character){
@@ -453,7 +453,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                                 setName(dance.name)
 
 
-                                const actors: Actor[] = []
+                                const actors: ActivityMember[] = []
                                 const actorsUIDs: string[] = []
                                 for(const character of dance.characters){
                                     if(character instanceof Character){

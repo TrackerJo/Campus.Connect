@@ -44,6 +44,8 @@ function App() {
     const [homeState, setHomeState] = useState('')
     const [homeZip, setHomeZip] = useState('')
 
+    const [skippedHomeAddress, setSkippedHomeAddress] = useState(false)
+
     const statesAbb = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
     const statesFull = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"]
 
@@ -106,7 +108,7 @@ function App() {
                 const urlParams = new URLSearchParams(window.location.search)
                 const redirect = urlParams.get('redirect')
                 if(redirect){
-                    window.location.href = redirect
+                    window.location.href = redirect.replace(/~/g, "&")
                 } else {
                     window.location.href = '/'
                 }
@@ -124,6 +126,9 @@ function App() {
         <input type='text' placeholder='Email' onChange={(e) => {
             setEmail(e.target.value)
         }}/>
+        <input type='text' placeholder='Phone Number' onChange={(e) => {
+            setPhoneNumber(e.target.value)
+        }}/>
         <input type='password' placeholder='Password' onChange={(e) => {
             setPassword(e.target.value)
         }}/>
@@ -134,6 +139,50 @@ function App() {
             <div className='loader'></div>
         </div> : <button className='actionBtn' onClick={async() => {
             setIsLoggingIn(true)
+            if(fullName == ""){
+                alert("Please enter your full name")
+                return
+            }
+            if(email == ""){
+                alert("Please enter your email")
+                return
+            }
+            //Use regex to validate email
+            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/
+            if(!emailRegex.test(email)){
+                alert("Invalid email")
+                return
+            }
+            if(phoneNumber == ""){
+                alert("Please enter your phone number, if you don't have one, type none")
+                return
+            }
+            setPhoneNumber(phoneNumber.replace(/-/g, ""))
+            setPhoneNumber(phoneNumber.replace(/ /g, ""))
+            setPhoneNumber(phoneNumber.replace(/\(/g, ""))
+            setPhoneNumber(phoneNumber.replace(/\)/g, ""))
+
+            //check if phone number is valid
+            const phoneRegex = /^\d{10}$/
+            if(phoneNumber != "none" && !phoneRegex.test(phoneNumber)){
+                alert("Invalid phone number (Only include numbers or type none)")
+                return
+            }
+
+            if(password == ""){
+                alert("Please enter a password")
+                return
+            }
+
+            if(password.length < 6){
+                alert("Password must be at least 6 characters")
+                return
+            }
+            if(schoolCode == ""){
+                alert("Please enter your school code")
+                return
+            }
+
 
             const school: DocumentData | undefined = schools.find((school: DocumentData) => school.schoolTeacherCode == schoolCode)
             if(!school){
@@ -142,7 +191,7 @@ function App() {
             }
             localStorage.setItem("schoolId", school.schoolId)
 
-            const teacher = TeacherData.fromBlank("", school.schoolId, "","teacher", fullName.toLowerCase(), fullName, email)
+            const teacher = TeacherData.fromBlank("", school.schoolId,phoneNumber.replace("none", ""), "","teacher", fullName.toLowerCase().trim(), fullName.trim(), email.trim())
             const registerResult = await register(email, password)
             if(!registerResult){
                 alert("Error creating account")
@@ -154,7 +203,7 @@ function App() {
             const urlParams = new URLSearchParams(window.location.search)
             const redirect = urlParams.get('redirect')
             if(redirect){
-                window.location.href = redirect
+                window.location.href = redirect.replace(/~/g, "&")
             } else {
                 window.location.href = '/'
             } 
@@ -164,7 +213,170 @@ function App() {
 
         </> : createAccountStage == "LoginInfo" ? <>
         <h1>Create Account</h1>
-        <input type='text' placeholder='Full Name' onChange={(e) => {
+        {createAccountUserInfo()}
+        
+        <button  onClick={() => {
+            if(fullName == ""){
+                alert("Please enter your full name")
+                return
+            }
+            if(email == ""){
+                alert("Please enter your email")
+                return
+            }
+            //Use regex to validate email
+            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/
+            if(!emailRegex.test(email)){
+                alert("Invalid email")
+                return
+            }
+            if(phoneNumber == ""){
+                alert("Please enter your phone number, if you don't have one, type none")
+                return
+            }
+            setPhoneNumber(phoneNumber.replace(/-/g, ""))
+            setPhoneNumber(phoneNumber.replace(/ /g, ""))
+            setPhoneNumber(phoneNumber.replace(/\(/g, ""))
+            setPhoneNumber(phoneNumber.replace(/\)/g, ""))
+            //check if phone number is valid
+            const phoneRegex = /^\d{10}$/
+            if(phoneNumber != "none" && !phoneRegex.test(phoneNumber)){
+                alert("Invalid phone number (Only include numbers or type none)")
+                return
+            }
+
+            if(password == ""){
+                alert("Please enter a password")
+                return
+            }
+
+            if(password.length < 6){
+                alert("Password must be at least 6 characters")
+                return
+            }
+            if(sex == ""){
+                alert("Please select your sex")
+                return
+            }
+            setCreateAccountStage('HomeAddress')
+        }}>
+            Next
+        </button>
+        </> : createAccountStage == "HomeAddress" ? <>
+        <h1>Create Account</h1>
+        {createAccountHomeAddress()}
+
+        <button onClick={() => {
+            
+            setCreateAccountStage('SchoolCode')
+        }}>
+            Next
+        </button>
+        <label className='skip-text-button' onClick={() => {
+            setSkippedHomeAddress(true)
+            setCreateAccountStage('SchoolCode')
+        }}>Skip</label>
+        </> : <>
+        <h1>Create Account</h1>
+        {createAccountSchoolCode()}
+        
+        {isLoggingIn ? <div className={"center"}>
+            <div className='loader'></div>
+        </div> : <button onClick={async () => {
+            setIsLoggingIn(true)
+            let school: DocumentData | undefined = undefined
+            if (schoolCode != "") {
+                school = schools.find((school: DocumentData) => school.schoolCode == schoolCode)
+            } else {
+                school = schools.find((school: DocumentData) => school.schoolDomain == schoolEmail.split('@')[1])
+            }
+            if (school == undefined) {
+                if (schoolCode != "") {
+                    alert("Invalid School Code")
+                } else {
+                    alert("Invalid School Email")
+                }
+                setIsLoggingIn(false)
+                return
+            }
+            let location = {lat: 0, lon: 0}
+            let fullHomeAddress = ""
+            let distanceToSchool = 0
+            if(!skippedHomeAddress){
+
+                 fullHomeAddress = homeAddress + ", " + homeCity + ", " + homeState + ", " + homeZip
+                 location = await getLatLongFromAddress(fullHomeAddress)
+                 distanceToSchool = getDistanceFromLatLong(location.lat, location.lon, school.location.location.latitude, school.location.location.longitude)
+            }
+
+            if (!location && !skippedHomeAddress) {
+                alert("Invalid Address")
+                return
+            }
+            localStorage.setItem("schoolId", school.schoolId)
+            const uid = await register(email, password)
+            if (!uid) {
+                alert("Error creating account")
+                return
+            }
+            const homeLocation = Location.fromBlank("home", fullHomeAddress, new GeoPoint(location.lat, location.lon))
+
+            const student = StudentData.fromBlank(uid as string, school.schoolId, "unknown", distanceToSchool, "", "student", phoneNumber.replace("none", ""),sex ,"unknown", fullName.toLowerCase().trim(), fullName.trim(), email.trim(), {}, homeLocation)
+            await createUser("student", student)
+            localStorage.setItem("accountType", "student")
+            //get url params
+            const urlParams = new URLSearchParams(window.location.search)
+            const redirect = urlParams.get('redirect')
+            if (redirect) {
+                window.location.href = redirect.replace(/~/g, "&")
+            } else {
+                window.location.href = '/'
+            }
+            setIsLoggingIn(false)
+        }}>
+            Create Account
+        </button>}
+
+       
+
+            </>
+
+            }
+        </div>
+    </div>
+
+
+    </>
+  )
+
+
+    function createAccountHomeAddress() {
+        return (<>
+            <input type='text' placeholder='Home Address' value={homeAddress} onChange={(e) => {
+                setHomeAddress(e.target.value)
+            }}/>
+            <input type='text' placeholder='City' value={homeCity} onChange={(e) => {
+                setHomeCity(e.target.value)
+            }}/>
+            <select value={homeState} onChange={(e) => {
+                setHomeState(e.target.value)
+            }}>
+                <option value="null" selected>Select your State</option>
+                {statesAbb.map((state, index) => {
+                    return <option value={state}>{statesFull[index]}</option>
+                })}
+            </select>
+            <input type='text' placeholder='Zip Code' value={homeZip} onChange={(e) => {
+                setHomeZip(e.target.value)
+            }}/>
+            </>
+        )
+
+    }
+    function createAccountUserInfo() {
+        return (
+            <>
+            <input type='text' placeholder='Full Name' onChange={(e) => {
             setFullName(e.target.value)
         }}/>
         <input type='text' placeholder='Email' onChange={(e) => {
@@ -179,107 +391,28 @@ function App() {
         <select onChange={(e) => {
             setSex(e.target.value)
         }}>
-            <option value="null" selected>Select your Sex</option>
+            <option value="" selected>Select your Sex</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
-        </select>
-        <button  onClick={() => {
-            setCreateAccountStage('SchoolCode')
-        }}>
-            Next
-        </button>
-        </> : createAccountStage == "SchoolCode" ? <>
-        <h1>Create Account</h1>
+        </select></>
+        )
 
-        <input type='text' placeholder='School Code' value={schoolCode} onChange={(e) => {
-            setSchoolCode(e.target.value)
-        } }/>
-
-        <p>Or</p>
-
-        <input type='text' placeholder='School Email' value={schoolEmail} onChange={(e) => {
-            setSchoolEmail(e.target.value)
-        } }/>
-
-        <button onClick={() => {
-            setCreateAccountStage('HomeAddress')
-        }}>
-            Next
-        </button>
-        </> : <>
-        <h1>Create Account</h1>
-        <input type='text' placeholder='Home Address' onChange={(e) => {
-            setHomeAddress(e.target.value)
-        }}/>
-        <input type='text' placeholder='City' onChange={(e) => {
-            setHomeCity(e.target.value)
-        }}/>
-        <select onChange={(e) => {
-            setHomeState(e.target.value)
-        }}>
-            <option value="null" selected>Select your State</option>
-            {statesAbb.map((state, index) => {
-                return <option value={state}>{statesFull[index]}</option>
-            })}
-        </select>
-        <input type='text' placeholder='Zip Code' onChange={(e) => {
-            setHomeZip(e.target.value)
-        }}/>
-        {isLoggingIn ? <div className={"center"}>
-            <div className='loader'></div>
-        </div> : <button onClick={async () => {
-            setIsLoggingIn(true)
-            let school: DocumentData | undefined = undefined
-            if (schoolCode != "") {
-                school = schools.find((school: DocumentData) => school.schoolCode == schoolCode)
-            } else {
-                school = schools.find((school: DocumentData) => school.schoolDomain == schoolEmail.split('@')[1])
-            }
-            if (school == undefined) {
-                alert("Invalid School Code")
-                return
-            }
-            const fullHomeAddress = homeAddress + ", " + homeCity + ", " + homeState + ", " + homeZip
-            const location = await getLatLongFromAddress(fullHomeAddress)
-            const distanceToSchool = getDistanceFromLatLong(location.lat, location.lon, school.location.location.latitude, school.location.location.longitude)
-
-            if (!location) {
-                alert("Invalid Address")
-                return
-            }
-            localStorage.setItem("schoolId", school.schoolId)
-            const uid = await register(email, password)
-            if (!uid) {
-                alert("Error creating account")
-                return
-            }
-            const homeLocation = Location.fromBlank("home", fullHomeAddress, new GeoPoint(location.lat, location.lon))
-
-            const student = StudentData.fromBlank(uid as string, school.schoolId, "unknown", distanceToSchool, "", "student", phoneNumber, "unknown", fullName.toLowerCase(), fullName, email, {}, homeLocation)
-            await createUser("student", student)
-            localStorage.setItem("accountType", "student")
-            //get url params
-            const urlParams = new URLSearchParams(window.location.search)
-            const redirect = urlParams.get('redirect')
-            if (redirect) {
-                // window.location.href = redirect
-            } else {
-                // window.location.href = '/'
-            }
-            setIsLoggingIn(false)
-        }}>
-            Create Account
-        </button>}
-
-            </>
-
-            }
-        </div>
-    </div>
-
-
-    </>
-  )
+    }
+    function createAccountSchoolCode() {
+        return (
+            <>
+            <input type='text' placeholder='School Code' value={schoolCode} onChange={(e) => {
+                setSchoolCode(e.target.value)
+            } }/>
+    
+            <p>Or</p>
+    
+            <input type='text' placeholder='School Email' value={schoolEmail} onChange={(e) => {
+                setSchoolEmail(e.target.value)
+            } }/></>
+        )
+    
+    }
 }
 
 export default App
