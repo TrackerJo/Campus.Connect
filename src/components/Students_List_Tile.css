@@ -49,3 +49,13 @@
     margin: 10px;
     background-color: #1e1e1e
 }
+
+@media screen and (max-width: 728px) {
+    .StudentListTile {
+      width: 80vw;
+
+    }
+
+   
+    
+  }

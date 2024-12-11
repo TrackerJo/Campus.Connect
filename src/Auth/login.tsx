@@ -291,10 +291,12 @@ function App() {
                 school = schools.find((school: DocumentData) => school.schoolDomain == schoolEmail.split('@')[1])
             }
             if (school == undefined) {
-                if (schoolCode != "") {
-                    alert("Invalid School Code")
-                } else {
+                if (schoolCode != "" && schoolEmail != "") {
+                    alert("Invalid School Code or a School Email")
+                } else if (schoolEmail != "") {
                     alert("Invalid School Email")
+                } else {
+                    alert("Invalid School Code")
                 }
                 setIsLoggingIn(false)
                 return
@@ -314,6 +316,7 @@ function App() {
                 return
             }
             localStorage.setItem("schoolId", school.schoolId)
+            console.log("Creating account")
             const uid = await register(email, password)
             if (!uid) {
                 alert("Error creating account")
@@ -321,7 +324,7 @@ function App() {
             }
             const homeLocation = Location.fromBlank("home", fullHomeAddress, new GeoPoint(location.lat, location.lon))
 
-            const student = StudentData.fromBlank(uid as string, school.schoolId, "unknown", distanceToSchool, "", "student", phoneNumber.replace("none", ""),sex ,"unknown", fullName.toLowerCase().trim(), fullName.trim(), email.trim(), {}, homeLocation)
+            const student = StudentData.fromBlank(uid as string, school.schoolId, "unknown", distanceToSchool, "", "student", phoneNumber.replace("none", ""),sex as "male" | "female" ,"unknown", fullName.toLowerCase().trim(), fullName.trim(), email.trim(), {}, homeLocation)
             await createUser("student", student)
             localStorage.setItem("accountType", "student")
             //get url params

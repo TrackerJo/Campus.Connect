@@ -18,7 +18,12 @@ function JoinActivityDialog({dialogRef, close, activityJoinCode}: JoinActivityDi
         console.log("Joining activity")
         localStorage.setItem('needsPhoneNumber', "false")
         localStorage.setItem('needsGender', "false")
+        localStorage.setItem('alreadyJoined', "false")
         const activity = await joinActivity(activityCode)
+        if(localStorage.getItem('alreadyJoined') == "true"){
+            alert("You have already joined this activity")
+            return
+        }
         setNeedsPhoneNumber(localStorage.getItem('needsPhoneNumber') == "true")
         setNeedsGender(localStorage.getItem('needsGender') == "true")
         if(localStorage.getItem('needsPhoneNumber') == "true" || localStorage.getItem('needsGender') == "true"){
@@ -93,7 +98,12 @@ function JoinActivityDialog({dialogRef, close, activityJoinCode}: JoinActivityDi
                         await updateUserGender(gender)
                         localStorage.setItem('needsGender', "false")
                     }
+                    localStorage.setItem('alreadyJoined', "false")
                     const activity = await joinActivity(activityCode)
+                    if(localStorage.getItem('alreadyJoined') == "true"){
+                        alert("You have already joined this activity")
+                        return
+                    }
                     if(!activity){
                         alert("Invalid activity code")
                         return

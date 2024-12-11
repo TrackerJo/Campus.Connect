@@ -326,6 +326,13 @@ export async function joinActivity(activityCode: string): Promise<Activity | The
     const userSnap = await getDoc(userDoc);
     console.log(userSnap.data());
     if (!userSnap.exists()) return null;
+    //Check if user has already joined
+    if (activityDoc.data().studentUids.includes(userId) || activityDoc.data().teacherUids.includes(userId)) {
+        localStorage.setItem("alreadyJoined", "true");
+        return null;
+    } else {
+        localStorage.setItem("alreadyJoined", "false");
+    }
 
    
     if(activityDoc.data().type == "theater") {
