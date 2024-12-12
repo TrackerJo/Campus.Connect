@@ -27,7 +27,7 @@ import ActTile from '../../../components/Act_Tile'
 import CharacterTile from '../../../components/Character_Tile'
 import ShowGroupTile from '../../../components/Show_Group_Tile'
 import SongTile from '../../../components/Song_Tile'
-import {addShowTemplate, createShow, editShow} from '../../../api/db'
+import {addShowTemplate, createShow, editShow, editShowTemplate} from '../../../api/db'
 import DanceTile from '../../../components/Dance_Tile'
 import { isLoggedIn } from '../../../api/auth'
 
@@ -48,6 +48,7 @@ function App() {
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const [showId, setShowId] = useState<string>("")
+    const [templateId, setTemplateId] = useState<string>("")
 
 
 
@@ -63,6 +64,7 @@ function App() {
         if (isEditing) {
             setIsEditing(true)
             const show = Show.fromMap(JSON.parse(localStorage.getItem('show')!))
+            setTemplateId(show.templateId)
             setShowName(show.name)
             setHasEnsemble(show.hasEnsemble)
             setCharacters(show.characters)
@@ -154,7 +156,7 @@ function App() {
                     },100)
                 }}>Add Show Group</button>
             <h2>Create Layout</h2>
-            <div className='layout'>
+            <div className='layout' id='create-layout'>
                 {layout.map((act, index) => {
                     return <ActTile key={index} hasEnsemble={hasEnsemble} act={act} characters={characters} showGroups={showGroups} isAssign={false} setAct={(newAct) => {
                        setLayout((prev) => {
@@ -167,19 +169,22 @@ function App() {
                     }}/>
                 })}
                 {/* <br /> */}
-                <button className='ActionBtn' onClick={() => {
+               
+            </div>
+            <button className='ActionBtn' onClick={() => {
                     //Randomly generate act id
                     const actId =  Date.now()
                     setLayout([...layout, Act.fromBlank("Act " + (layout.length + 1), [], actId, 0)])
                     //Scroll into view
                     setTimeout(() => {
-                        const element = document.getElementById("act-tile-" + actId)!;
-                        element.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                        const element = document.getElementById("create-layout")!;
+                        element.scrollTop = element.scrollHeight;
+                        const element2 = document.getElementById("act-tile-" + actId)!;
+                        element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
                 }}>Add Act</button>
-            </div>
             <h2>Create Songs</h2>
-            <div className='songs'>
+            <div className='songs' id='create-songs'>
                 {songs.map((song, index) => {
                     return <SongTile key={index} song={song} hasEnsemble={hasEnsemble} characters={characters} showGroups={showGroups} isAssign={false} setSong={(newSong) => {
                         setSongs((prev) => {
@@ -192,19 +197,22 @@ function App() {
                     }} isCreate={false}/>
                 })}
                 
-                <button className='ActionBtn' onClick={() => {
+                
+
+            </div>
+            <button className='ActionBtn' onClick={() => {
                     const songId =Date.now()
                     setSongs([...songs, Song.fromBlank("Song " + (songs.length + 1),[],songId ,0)])
                     //Scroll into view
                     setTimeout(() => {
-                        const element = document.getElementById("song-tile-" + songId)!;
-                        element.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                        const element = document.getElementById("create-songs")!;
+                        element.scrollTop = element.scrollHeight;
+                        const element2 = document.getElementById("song-tile-" + songId)!;
+                        element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
                 }}>Add Song</button>
-
-            </div>
             <h2>Create Dances</h2>
-            <div className='dances'>
+            <div className='dances' id='create-dances'>
                 {dances.map((dance, index) => {
                     return <DanceTile key={index} dance={dance} hasEnsemble={hasEnsemble} characters={characters} showGroups={showGroups} isAssign={false} setDance={(newDance) => {
                         setDances((prev) => {
@@ -217,27 +225,32 @@ function App() {
                     }} isCreate={false}/>
                 })}
                 
-                <button className='ActionBtn' onClick={() => {
+               
+
+            </div>
+            <button className='ActionBtn' onClick={() => {
                     const danceId =Date.now()
                     setDances([...dances, Dance.fromBlank("Dance " + (dances.length + 1),[],danceId ,0)])
                     //Scroll into view
                     setTimeout(() => {
-                        const element = document.getElementById("dance-tile-" + danceId)!;
-                        element.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                        const element = document.getElementById("create-dances")!;
+                        element.scrollTop = element.scrollHeight;
+                        const element2 = document.getElementById("dance-tile-" + danceId)!;
+                        element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
                 }}>Add Dance</button>
-
-            </div>
            {isLoading ? <div className="loader"></div> : <button className='ActionBtn' onClick={async () => {
                 //Create show template\
                 setIsLoading(true)
-                const show = Show.fromBlank(showName, showId,activityId,layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", Date.now() )
+                const show = Show.fromBlank(showName, showId,activityId,templateId,layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", Date.now() )
                 console.log(show.toMap())
                let id = showId
                 if(!isEditing) {
-                    await addShowTemplate(show)
+                    const templateId = await addShowTemplate(show)
+                    show.templateId = templateId
                     id = await createShow(show)
                 } else {
+                    await editShowTemplate(show)
                     await editShow(show)
                     localStorage.removeItem('show')
                 }

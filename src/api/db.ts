@@ -23,9 +23,12 @@ import {
     TheaterEvent,
     TheaterLocation,
     ActivityTeacher,
-    GroupChatMember
+    GroupChatMember,
+    Character,
+    ShowGroup,
+    EnsembleSection
 } from "../constants";
-import { getCurrentUserId, reauthenticateUser } from "./auth";
+import { getCurrentUserId } from "./auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { sendGroupChatMessage } from "./functions";
 
@@ -115,14 +118,81 @@ export async function editShow(show: Show): Promise<void> {
     await updateDoc(showDoc, show.toMap());
 }
 
-export async function addShowTemplate(showTemplate: Show) {
-    await reauthenticateUser("cmurphy@gmail.com", "123456");
+export async function addShowTemplate(showTemplate: Show): Promise<string> {
     const collectionRef = collection(db, "showTemplates");
     const ref = await addDoc(collectionRef, showTemplate.toMap());
     showTemplate.id = ref.id;
     await updateDoc(ref, {
         id: ref.id
     });
+    return ref.id;
+}
+
+export async function editShowTemplate(showTemplate: Show): Promise<void> {
+    //Remove all the actors from the show
+    if(showTemplate.ensemble){
+        showTemplate.ensemble.actors = [];
+    }
+
+    for(const acts of showTemplate.layout){
+        for(const scene of acts.scenes){
+            for(const character of scene.characters){
+                if(character instanceof Character){
+                    character.actor = null;
+                } else if (character instanceof ShowGroup) {
+                    for(const char of character.characters){
+                        if(char instanceof Character){
+                            char.actor = null;
+                        } else if (char instanceof EnsembleSection) {
+                            char.customActors = [];
+                        }
+                    }
+                } else if (character instanceof EnsembleSection) {
+                    character.customActors = [];
+                }
+            }
+        }
+    }
+
+    for(const songs of showTemplate.songs){
+        for(const character of songs.characters){
+                if(character instanceof Character){
+                    character.actor = null;
+                } else if (character instanceof ShowGroup) {
+                    for(const char of character.characters){
+                        if(char instanceof Character){
+                            char.actor = null;
+                        } else if (char instanceof EnsembleSection) {
+                            char.customActors = [];
+                        }
+                    }
+                } else if (character instanceof EnsembleSection) {
+                    character.customActors = [];
+                }
+        }
+    }
+
+    for(const dances of showTemplate.dances){
+        for(const character of dances.characters){
+                if(character instanceof Character){
+                    character.actor = null;
+                } else if (character instanceof ShowGroup) {
+                    for(const char of character.characters){
+                        if(char instanceof Character){
+                            char.actor = null;
+                        } else if (char instanceof EnsembleSection) {
+                            char.customActors = [];
+                        }
+                    }
+                } else if (character instanceof EnsembleSection) {
+                    character.customActors = [];
+                }
+        }
+    }
+
+
+    const showTemplateDoc = doc(collection(db, "showTemplates"), showTemplate.templateId);
+    await updateDoc(showTemplateDoc, showTemplate.toMap());
 }
 
 export async function getActivityShow(activityId: string, showId: string): Promise<Show | null> {

@@ -1420,6 +1420,7 @@ export class Show {
     conflictForm: ConflictForm | null;
     formStatus: "open" | "closed";
     resources: Resource[];
+    templateId: string;
 
     constructor() {
         this.name = "";
@@ -1437,9 +1438,10 @@ export class Show {
         this.conflictForm = new ConflictForm();
         this.formStatus = "open";
         this.resources = [];
+        this.templateId = "";
     }
 
-    public static fromBlank(name: string, id: string, activityId: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,resources: Resource[],formStatus: "open" | "closed", lastUpdated: number): Show {
+    public static fromBlank(name: string, id: string, activityId: string, templateId: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,resources: Resource[],formStatus: "open" | "closed", lastUpdated: number): Show {
         const show = new Show();
         show.name = name;
         show.id = id;
@@ -1456,6 +1458,7 @@ export class Show {
         show.conflictForm = conflictForm;
         show.resources = resources;
         show.formStatus = formStatus;
+        show.templateId = templateId;
         return show;
     }
 
@@ -1476,6 +1479,7 @@ export class Show {
         "resources": this.resources.map((e) => e.toMap()),
         "formStatus": this.formStatus,
         "lastUpdated": this.lastUpdated,
+        "templateId": this.templateId,
         };
     }
 
@@ -1526,6 +1530,7 @@ export class Show {
         }
         show.resources = formattedResources;
         show.formStatus = map.formStatus;
+        show.templateId = map.templateId;
         return show;
     }
 

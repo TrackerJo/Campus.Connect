@@ -258,12 +258,12 @@ function App() {
                 alert("Please select your sex")
                 return
             }
-            setCreateAccountStage('HomeAddress')
+            setCreateAccountStage('SchoolCode')
         }}>
             Next
         </button>
         </> : createAccountStage == "HomeAddress" ? <>
-        <h1>Create Account</h1>
+        {/* <h1>Create Account</h1>
         {createAccountHomeAddress()}
 
         <button onClick={() => {
@@ -275,7 +275,7 @@ function App() {
         <label className='skip-text-button' onClick={() => {
             setSkippedHomeAddress(true)
             setCreateAccountStage('SchoolCode')
-        }}>Skip</label>
+        }}>Skip</label> */}
         </> : <>
         <h1>Create Account</h1>
         {createAccountSchoolCode()}
@@ -304,17 +304,17 @@ function App() {
             let location = {lat: 0, lon: 0}
             let fullHomeAddress = ""
             let distanceToSchool = 0
-            if(!skippedHomeAddress){
+            // if(!skippedHomeAddress){
 
-                 fullHomeAddress = homeAddress + ", " + homeCity + ", " + homeState + ", " + homeZip
-                 location = await getLatLongFromAddress(fullHomeAddress)
-                 distanceToSchool = getDistanceFromLatLong(location.lat, location.lon, school.location.location.latitude, school.location.location.longitude)
-            }
+            //      fullHomeAddress = homeAddress + ", " + homeCity + ", " + homeState + ", " + homeZip
+            //      location = await getLatLongFromAddress(fullHomeAddress)
+            //      distanceToSchool = getDistanceFromLatLong(location.lat, location.lon, school.location.location.latitude, school.location.location.longitude)
+            // }
 
-            if (!location && !skippedHomeAddress) {
-                alert("Invalid Address")
-                return
-            }
+            // if (!location && !skippedHomeAddress) {
+            //     alert("Invalid Address")
+            //     return
+            // }
             localStorage.setItem("schoolId", school.schoolId)
             console.log("Creating account")
             const uid = await register(email, password)
