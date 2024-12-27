@@ -242,9 +242,11 @@ function App() {
             setShowId(showId)
         }
         //Get Show from local storage
-        // const show = localStorage.getItem('show-' + showId)
+        const showJSON = localStorage.getItem('show-' + showId)
+        if(showJSON){
+            const show = Show.fromMap(JSON.parse(showJSON))
         setLoadingShow(true)
-        getActivityShow(activityId!, showId!).then((show) => {
+        
             if(show == null){
                 window.location.href = '/Activity/Shows/Show/?activityId=' + activityId
                 return
@@ -268,7 +270,7 @@ function App() {
             setEnsemble(show.ensemble!.actors)
         }
         setLoadingShow(false)
-    })
+    }
 
        
 

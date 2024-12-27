@@ -86,8 +86,9 @@ function App() {
                     isAllDay: false,
                     interactive: true,
                     color: event.rehearsalLocation.color.setAlpha(0.8).toHex(),
-                    description: "Location: " + event.rehearsalLocation.name + "\n" + event.info,
+                    description:  event.info,
                     id: event.id,
+                    location: event.rehearsalLocation.name
 
                 })
             }

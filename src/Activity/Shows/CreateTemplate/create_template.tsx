@@ -50,6 +50,7 @@ function App() {
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const [showId, setShowId] = useState<string>("")
     const [templateId, setTemplateId] = useState<string>("")
+    const [ensemble, setEnsemble] = useState<Ensemble | null>(null)
 
 
 
@@ -74,6 +75,7 @@ function App() {
             setSongs(show.songs)
             setDances(show.dances)
             setShowId(show.id)
+            setEnsemble(show.ensemble)
 
 
         }
@@ -243,10 +245,11 @@ function App() {
            {isLoading ? <div className="loader"></div> : <button className='ActionBtn' onClick={async () => {
                 //Create show template\
                 setIsLoading(true)
-                const show = Show.fromBlank(showName, showId,activityId,templateId,layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", false,Date.now() )
+                const show = Show.fromBlank(showName, showId,activityId,templateId,layout, characters ,hasEnsemble ? Ensemble.fromBlank(ensemble?.actors ?? [], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", false,Date.now() )
                 console.log(show.toMap())
                let id = showId
                 if(!isEditing) {
+
                     const templateId = await addShowTemplate(show)
                     show.templateId = templateId
                     id = await createShow(show)

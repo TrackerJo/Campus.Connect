@@ -54,7 +54,13 @@ function App() {
 
 
     const groupedEvents = events.reduce((acc: { [key: string]: TheaterEvent[] }, event) => {
-        const date = event.date.date.toLocaleDateString()
+        const date = event.date.date.toLocaleDateString('en-US', {
+            weekday: 'long', 
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        })
+
         if (!acc[date]) {
             acc[date] = []
         }

@@ -154,8 +154,9 @@ function App() {
                     isAllDay: false,
                     interactive: true,
                     color: event.rehearsalLocation.color.setAlpha(0.8).toHex(),
-                    description: "Location: " + event.rehearsalLocation.name + "\n" + event.info,
+                    description: event.info,
                     id: event.id,
+                    location: event.rehearsalLocation.name
                     
                 })
             }
@@ -206,9 +207,9 @@ function App() {
         <div  className='center'>
             <h1 className='title'>Create Schedule</h1>
            
-            {creationState == "date" ? <> <h2 className='title'>Select a Date</h2>
-                <div className='date-div'>
-                    <div>
+            {creationState == "date" ? <> <h2 className='mode'>Select a Date</h2>
+                <div className='container'>
+                    <div className='box left'>
                         <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
                         {show?.hasEnsemble && <>
                             <label htmlFor="">Ignore Ensemble Conflicts</label>
@@ -373,6 +374,14 @@ function App() {
                         }))
                         setCreationState("type")
                     }}/>
+                    <div className='box right'>
+                        <h2>How To Schedule Events</h2>
+                        <ul>
+                            <li>Click a time slot to start creating an event</li>
+                            <li>Right click a time slot to view conflicts for that day</li>
+                            <li>Right click a current event to view/edit the event or delete the event</li>
+                        </ul>
+                    </div>
                 </div>
                 <button className={"ActionBtn"} onClick={() => {
                     localStorage.setItem('events', JSON.stringify(theaterEvents))
@@ -387,7 +396,7 @@ function App() {
                     Back
                 </button>
             </> : creationState == "type" ? <>
-                <h2 className='title'>Select a Rehersal Type</h2>
+                <h2 className='mode'>Select a Rehersal Type</h2>
                 {!isMobile && <div className='conflicts-div'>
                     <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
                     <label htmlFor="">Ignore Ensemble Conflicts</label>
@@ -432,7 +441,7 @@ function App() {
 
                 }} className='ActionBtn'>Custom</button>
 
-                <h2 className='title'>Show Layout</h2>
+                <h2 className='mode'>Show Layout</h2>
                 <div className='layout'>
                     {
                         show?.layout.map((row, index) => {
@@ -542,7 +551,7 @@ function App() {
                         })
                     }
                 </div>
-                <h2 className='title'>Songs</h2>
+                <h2 className='mode'>Songs</h2>
                 <div className='songs'>
                     {
                         show?.songs.map((song, index) => {
@@ -652,7 +661,7 @@ function App() {
                         })
                     }
                 </div>
-                <h2 className='title'>Dances</h2>
+                <h2 className='mode'>Dances</h2>
                 <div className='dances'>
                     {
                         show?.dances.map((dance, index) => {
@@ -889,7 +898,7 @@ function App() {
                         }
                     </div>
                 </div>}
-                <h2 className='title'>Enter Rehersal Information</h2>
+                <h2 className='mode'>Enter Rehersal Information</h2>
                 <label htmlFor="Name">Name: </label>
                 <input type="text" value={name} onChange={(val) => {
                     setName(val.target.value)
@@ -900,6 +909,37 @@ function App() {
                     setDescription(val.target.value)
                 }}/>
                 <br />
+                <label htmlFor="">Date: </label>
+                <input type="date" value={selectedDate?.toISOString().split('T')[0]} onChange={(val) => {
+                    const date = new Date(val.target.value)
+                    date.setHours(0, 0, 0, 0)
+                    date.setDate(date.getDate() + 1)
+                    setSelectedDate(date)
+                    //change start time date and end time date
+                    const newStartTime = new Date(date)
+                    newStartTime.setHours(startTime!.getHours(), startTime!.getMinutes(), 0, 0)
+                    setStartTime(newStartTime)
+                    setStartTimeString(newStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
+                    const newEndTime = new Date(date)
+                    newEndTime.setHours(endTime!.getHours(), endTime!.getMinutes(), 0, 0)
+                    setEndTime(newEndTime)
+                    setEndTimeString(newEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
+
+
+
+                    setViewingDateForConflicts(date)
+
+                                  const newConflicts: DateConflict[] = []
+                                  for (const conflict of conflicts) {
+
+                                      if (conflict.conflictResponseDate.date.getTime() == date.getTime()) {
+                                          newConflicts.push(conflict)
+                                      }
+                                  }
+                                  setCurrentConflicts(newConflicts)
+                }}/>
+                <br />
+
                 <label htmlFor="StartTime">Start Time: </label>
                 <input type="time" value={startTimeString} onChange={handleStartTimeChange}/>    
                 <br />
@@ -979,10 +1019,12 @@ function App() {
                                             }))
                                         }} removeEnsembleSection={() => {
                                             setCharacters(characters.filter((_c, i) => i !== index))
+                                            setAddedEnsemble(false);
                                         }} isCreate={false} isAssign={false} actors={activity!.students } />
                                     }
                                     return <EnsembleSectionDisplayTile key={index} ensembleSection={character} canDelete={true} onDelete={() => {
                                         setCharacters(characters.filter((_c, i) => i !== index))
+
                                     }} isMini={false}/>
                                 }
                                 if(character instanceof ShowGroup){
@@ -1051,7 +1093,7 @@ function App() {
                     console.log(startTime)
                     console.log(endTime)
                     const eventDate: EventDate = EventDate.fromBlank(selectedDate!, startTime!, endTime!)
-                    console.log(eventDate)
+                    console.log(eventDate.toMap())
                     const targets: ActivityMember[] = []
                     if(addFullCast){
                         characters.push(new FullCast())
@@ -1185,8 +1227,9 @@ function App() {
                             end: endDate.toISOString(),
                             isAllDay: false,
                             interactive: true,
-                            description: "Location: " + newEvent.rehearsalLocation.name + "\n" + newEvent.info,
+                            description:  newEvent.info,
                             color: newEvent.rehearsalLocation.color.setAlpha(0.8).toHex(),
+                            location: newEvent.rehearsalLocation.name,
                             id: newEvent.id,
                         }
                         const newCalendarEvents = calendarEvents.filter((e) => e.id != newEvent.id)
@@ -1210,7 +1253,8 @@ function App() {
                         interactive: true,
                         color: newEvent.rehearsalLocation.color.setAlpha(0.8).toHex(),
                         id: newEvent.id,
-                        description: "Location: " + newEvent.rehearsalLocation.name + "\n" + newEvent.info,
+                        location: newEvent.rehearsalLocation.name,
+                        description: newEvent.info,
                       
 
                     }

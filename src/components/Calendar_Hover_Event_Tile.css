@@ -1,7 +1,7 @@
 .calendar-hover-event-tile {
     position: absolute;
     width: 200px;
-    height: 75px;
+    height: 80px;
     background-color: #FF6B35;
     display: flex;
     justify-content: center;
@@ -15,6 +15,7 @@
     font-weight: bold;
     cursor: pointer;
     z-index: 1;
+    padding-top: 5px;
 }
 
 .event-time {
@@ -32,6 +33,13 @@
 }
 
 .event-description {
+    font-size: 12px;
+
+    font-weight: normal;
+    padding: 10px;
+}
+
+.event-location {
     font-size: 12px;
 
     font-weight: normal;

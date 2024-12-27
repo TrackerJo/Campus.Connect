@@ -27,6 +27,7 @@ export type CalendarEvent = {
     interactive: boolean;
     color: string;
     description: string;
+    location: string;
 
 
 }
@@ -1522,6 +1523,8 @@ export class Show {
         for (const character of characters) {
             formattedCharacters.push(Character.fromMap(character));
         }
+        //Sort Characters by name
+        formattedCharacters.sort((a, b) => a.name.localeCompare(b.name));
         show.characters = formattedCharacters;
         show.ensemble = map.ensemble != "null" &&  map.ensemble ? Ensemble.fromMap(map.ensemble) : null;
         const showGroups = map.showGroups;
@@ -1529,18 +1532,24 @@ export class Show {
         for (const showGroup of showGroups) {
             formattedShowGroups.push(ShowGroup.fromMap(showGroup));
         }
+        //Sort show groups by name
+        formattedShowGroups.sort((a, b) => a.name.localeCompare(b.name));
         show.showGroups = formattedShowGroups;
         const songs = map.songs;
         const formattedSongs: Song[] =  [];
         for (const song of songs) {
             formattedSongs.push(Song.fromMap(song));
         }
+        //Sort songs by name
+        formattedSongs.sort((a, b) => a.name.localeCompare(b.name));
         show.songs = formattedSongs;
         const dances = map.dances;
         const formattedDances: Dance[] =  [];
         for (const dance of dances) {
             formattedDances.push(Dance.fromMap(dance));
         }
+        //Sort dances by name
+        formattedDances.sort((a, b) => a.name.localeCompare(b.name));
         show.dances = formattedDances
         show.canCreateSchedule = map.canCreateSchedule;
         show.lastUpdated = map.lastUpdated;
@@ -2034,6 +2043,8 @@ export class Ensemble{
         for (const actor of actors) {
             formattedActors.push(ActivityMember.fromMap(actor));
         }
+        //sort actors by name
+        formattedActors.sort((a, b) => a.name.localeCompare(b.name));
         ensemble.actors = formattedActors;
         ensemble.lastUpdated = map.lastUpdated;
         return ensemble;

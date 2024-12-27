@@ -31,7 +31,7 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
   }
 
     return (
-        <div className='calendar' onContextMenu={
+        <div className='calendar box middle' onContextMenu={
           (event) => {
             if(!canOpenContextMenu){
               return

@@ -65,7 +65,12 @@ function App() {
                     {event?.name}
                 </h1>
 
-                <h3>{event?.date.date.toDateString()}</h3>
+                <h3>{ event?.date.date.toLocaleDateString('en-US', {
+            weekday: 'long', 
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        })}</h3>
                 <h3>{event?.date.from.toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit'
