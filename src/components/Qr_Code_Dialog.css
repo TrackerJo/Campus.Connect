@@ -1,0 +1,58 @@
+.XMark {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    cursor: pointer;
+    color: #fff;
+    font-size: 20px;
+
+    border-radius: 0 0 0 5px;
+    width: 20px;
+}
+
+@media only screen and (max-width: 768px) {
+    /* For mobile phones: */
+    .QRDialogDiv {
+      width: 60vw !important;
+      /* height: 57vh  !important; */
+    }
+}
+
+
+  .QRDialogDiv {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    height: fit-content;
+    align-items: center;
+    width: 20vw;
+    
+    color: white;
+  }
+
+   input{
+    /* margin: 15px; */
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid white;
+    background-color: transparent;
+    color: white;
+    
+  
+  
+  }
+  
+  ::placeholder {
+    color: white;
+    opacity: 1; /* Firefox */
+  }
+  
+  ::-ms-input-placeholder { /* Edge 12 -18 */
+    color: white;
+  }
+  
+  input:focus{
+    outline: none;
+  }

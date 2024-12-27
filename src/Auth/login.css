@@ -16,7 +16,7 @@ body {
   
     flex-direction: column;
   
-    height: 500px;
+    height: 550px;
     width: 500px;
     background-color: rgb(255, 255, 255);
     border-radius: 5%;
@@ -95,7 +95,7 @@ body {
   @media screen and (max-width: 768px) {
     .Login{
      width: 80vw;
-      height: 75vh;
+      height: 80vh;
     }
     
   }

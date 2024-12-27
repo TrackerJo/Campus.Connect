@@ -13,7 +13,7 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
                     <label htmlFor="Ensemble">Ensemble</label>
                 </div>
                 
-                {!isGroupChatCreate && <div>
+                {!isGroupChatCreate && !isAssign && <div>
                     <img src={TrashIcon} alt="" className="TrashIcon" onClick={() => {
                         removeEnsembleSection()
                     }}/>

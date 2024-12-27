@@ -88,6 +88,20 @@ export type ActDisplayTileProps = {
     onClick: (scene: Scene) => void;
 };
 
+export type ConfirmCreateScheduleDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    confirmed: () => void;
+}
+
+export type CreateCustomUserDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    created: () => void;
+    activityId: string;
+}
+
+
 export type CharacterTileProps = {
     character: Character;
     setCharacter: (character: Character) => void;
@@ -368,6 +382,7 @@ export type AddAdditionalDayDialogProps = {
 export type StudentListTileProps = {
     students: (ActivityMember)[];
     activityId: string;
+    isTeacher: boolean;
 
 }
 
@@ -385,6 +400,12 @@ export type StudentInfoDialogProps = {
 
 export type TimeChatSeparator = {
     time: string;
+}
+
+export type QRCodeDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    link: string;
 }
 
 export class Activity {
@@ -848,13 +869,11 @@ export class EventDate {
             eventDate.date = new Date(map.date);
 
         } else {
-            console.log(typeof map.date);
-            console.log(map.date);
+
+
             eventDate.date = map.date.toDate();
         }
-        console.log(map.date);
-        console.log(map.from);
-        console.log(map.to);
+
         
         eventDate.from = this._parseTime(map.from);
         eventDate.to = this._parseTime(map.to);
@@ -1421,6 +1440,7 @@ export class Show {
     formStatus: "open" | "closed";
     resources: Resource[];
     templateId: string;
+    isCreatingSchedule: boolean;
 
     constructor() {
         this.name = "";
@@ -1431,6 +1451,7 @@ export class Show {
         this.ensemble = new Ensemble();
         this.showGroups = [];
         this.lastUpdated = 0;
+        this.isCreatingSchedule = false;
         this.songs = [];
         this.dances = [];
         this.canCreateSchedule = false;
@@ -1441,7 +1462,7 @@ export class Show {
         this.templateId = "";
     }
 
-    public static fromBlank(name: string, id: string, activityId: string, templateId: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,resources: Resource[],formStatus: "open" | "closed", lastUpdated: number): Show {
+    public static fromBlank(name: string, id: string, activityId: string, templateId: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,resources: Resource[],formStatus: "open" | "closed", isCreatingSchedule: boolean,lastUpdated: number): Show {
         const show = new Show();
         show.name = name;
         show.id = id;
@@ -1459,6 +1480,7 @@ export class Show {
         show.resources = resources;
         show.formStatus = formStatus;
         show.templateId = templateId;
+        show.isCreatingSchedule = isCreatingSchedule;
         return show;
     }
 
@@ -1477,6 +1499,7 @@ export class Show {
         "hasEnsemble": this.hasEnsemble,
         "conflictForm": this.conflictForm ? this.conflictForm.toMap() : "null",
         "resources": this.resources.map((e) => e.toMap()),
+        "isCreatingSchedule": this.isCreatingSchedule,
         "formStatus": this.formStatus,
         "lastUpdated": this.lastUpdated,
         "templateId": this.templateId,
@@ -1531,6 +1554,7 @@ export class Show {
         show.resources = formattedResources;
         show.formStatus = map.formStatus;
         show.templateId = map.templateId;
+        show.isCreatingSchedule = map.isCreatingSchedule ?? false;
         return show;
     }
 
@@ -1720,8 +1744,8 @@ export class Song {
     toMap(): object {
         //print all types of characters
         for (const character of this.characters) {
-            console.log(character);
-            console.log(character instanceof Character);
+
+
         }
         return {
         "name": this.name,
@@ -2755,7 +2779,7 @@ export function intToHexColor(value: number): string {
     }
   
     // Add negative sign for negative numbers
-    console.log(result);
+
     return isNegative ? `-${result}` : "#" + result;
   }
   

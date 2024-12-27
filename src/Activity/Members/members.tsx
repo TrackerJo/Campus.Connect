@@ -75,7 +75,7 @@ function App() {
         </div>
         <div className='center'>
           
-           <StudentListTile  activityId={activityId} students={activity ? SortStudentList(activity.students) : []} />
+           <StudentListTile  activityId={activityId} students={activity ? SortStudentList(activity.students) : []} isTeacher={accountType == "teacher"}/>
                     
             <br />
             <br />

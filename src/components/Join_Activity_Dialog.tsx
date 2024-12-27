@@ -3,6 +3,7 @@ import {   JoinActivityDialogProps } from "../constants";
 
 import "./Join_Activity_Dialog.css"
 import { joinActivity, updateUserGender, updateUserPhoneNumber } from "../api/db";
+import { isLoggedIn } from "../api/auth";
 
 function JoinActivityDialog({dialogRef, close, activityJoinCode}: JoinActivityDialogProps){
     const [activityCode, setActivityCode] = useState<string>("")
@@ -15,6 +16,7 @@ function JoinActivityDialog({dialogRef, close, activityJoinCode}: JoinActivityDi
 
 
     async function handleJoinActivity(activityCode: string) { 
+        isLoggedIn(() => {})
         console.log("Joining activity")
         localStorage.setItem('needsPhoneNumber', "false")
         localStorage.setItem('needsGender', "false")

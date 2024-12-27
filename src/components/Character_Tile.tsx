@@ -52,9 +52,9 @@ function CharacterTile({character, setCharacter, isCreate, removeCharacter, isAs
                     
 
                 <div>
-                <img src={TrashIcon} alt="" className="TrashIcon" onClick={() => {
+                {!isAssign &&<img src={TrashIcon} alt="" className="TrashIcon" onClick={() => {
                     removeCharacter()
-                }}/>
+                }}/>}
             </div>
                 
             </div>

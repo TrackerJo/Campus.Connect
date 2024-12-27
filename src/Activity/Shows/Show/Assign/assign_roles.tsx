@@ -27,7 +27,7 @@ import ActTile from '../../../../components/Act_Tile'
 import CharacterTile from '../../../../components/Character_Tile'
 import ShowGroupTile from '../../../../components/Show_Group_Tile'
 
-import {getActivityActors, setActivityShow } from '../../../../api/db'
+import {editShowEventsCharacters, getActivityActors, getActivityShow, setActivityShow } from '../../../../api/db'
 
 import ActorTile from '../../../../components/Actor_Tile'
 import AssignActorDialog from '../../../../components/Assign_Actor_Dialog'
@@ -50,6 +50,7 @@ function App() {
     const [settingUp, setSettingUp] = useState<boolean>(false)
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [hasShowGroup, setHasShowGroup] = useState<boolean>(false)
+    const [loadingShow, setLoadingShow] = useState<boolean>(true)
 
 
     async function assginRoles(){
@@ -74,9 +75,14 @@ function App() {
             
         }
         for (let i = 0; i < show.showGroups.length; i++) {
+            console.log("UPDATING SHOW GROUPS")
             const showGroup = show.showGroups[i];
+            console.log("Show Group: " + showGroup.name)
             const newShowGroup = showGroups.find((sg) => sg.name == showGroup.name)
+            console.log("New Show Group: " + newShowGroup?.name)
+            
             if(newShowGroup){
+                showGroup.characters = newShowGroup.characters
                 //Update characters in show group
                 for (let j = 0; j < showGroup.characters.length; j++) {
                     const character = showGroup.characters[j];
@@ -192,9 +198,19 @@ function App() {
             }
             
         }
+
         
         show.canCreateSchedule = canCreateSchedule
         show.ensemble = Ensemble.fromBlank(ensemble, Date.now())
+        if(show.isCreatingSchedule){
+            if(!canCreateSchedule){
+                alert("Cannot update show because not all characters have been assigned actors")
+                setIsLoading(false)
+                return
+            }
+            await editShowEventsCharacters( show);
+
+        }
         setShow(show)
         console.log(show.toMap())
         console.log("Can create schedule")
@@ -226,24 +242,34 @@ function App() {
             setShowId(showId)
         }
         //Get Show from local storage
-        const show = localStorage.getItem('show-' + showId)
-        if (show) {
-            console.log(JSON.parse(show))
-            setShow(Show.fromMap(JSON.parse(show)))
-            console.log(Show.fromMap(JSON.parse(show)))
-
-            setCharacters(Show.fromMap(JSON.parse(show)).characters)
-            setShowGroups(Show.fromMap(JSON.parse(show)).showGroups)
-            const showGroups = Show.fromMap(JSON.parse(show)).showGroups
-            let showGroupHasEnsemble = false
-            for (let i = 0; i < showGroups.length; i++) {
-                const showGroup = showGroups[i];
-                if(showGroup.characters.map((c) => c instanceof EnsembleSection).includes(true)){
-                    showGroupHasEnsemble = true
-                }
+        // const show = localStorage.getItem('show-' + showId)
+        setLoadingShow(true)
+        getActivityShow(activityId!, showId!).then((show) => {
+            if(show == null){
+                window.location.href = '/Activity/Shows/Show/?activityId=' + activityId
+                return
             }
-            setHasShowGroup(showGroupHasEnsemble)
+        
+        setShow(show)
+        console.log(show)
+
+        setCharacters(show.characters)
+        setShowGroups(show.showGroups)
+        const showGroups = show.showGroups
+        let showGroupHasEnsemble = false
+        for (let i = 0; i < showGroups.length; i++) {
+            const showGroup = showGroups[i];
+            if(showGroup.characters.map((c) => c instanceof EnsembleSection).includes(true)){
+                showGroupHasEnsemble = true
+            }
         }
+        setHasShowGroup(showGroupHasEnsemble)
+        if(show?.hasEnsemble){
+            setEnsemble(show.ensemble!.actors)
+        }
+        setLoadingShow(false)
+    })
+
        
 
     }, [])
@@ -251,7 +277,7 @@ function App() {
 
 
     return (
-        <>
+       <> {loadingShow ? <div className='centerLoader'><div className='loader'></div></div>  :  <>
         <div className='title'>
             <h1>
                 Assign Roles
@@ -278,6 +304,8 @@ function App() {
             <h2>Assign Show Groups</h2>
             <div className='showGroups' id='create-showGroups'>
                 {showGroups.map((showGroup, index) => {
+
+
                     //dont show if show group has no ensemble
                     if(!showGroup.characters.map((c) => c instanceof EnsembleSection).includes(true)){
                         return null
@@ -286,6 +314,12 @@ function App() {
                         setShowGroups((prev) => {
                             const newShowGroups = [...prev]
                             newShowGroups[index] = newShowGroup
+                            console.log("NEW SHOW GROUPS")
+                            for (let i = 0; i < newShowGroups.length; i++) {
+                                const showG = newShowGroups[i];
+                                console.log(showG.toMap())
+                                
+                            }
                             return newShowGroups
                         })
                     }} removeShowGroup={() => {
@@ -336,11 +370,12 @@ function App() {
             newActors.push(actor)
             console.log("Setting actors")
             setEnsemble(newActors)
-            dialogRef.current?.close()
+
        }} close={() => {
             dialogRef.current?.close()
        }}/>}
         
+        </>}
         </>
     )
 }

@@ -30,6 +30,7 @@ import SongTile from '../../../components/Song_Tile'
 import {addShowTemplate, createShow, editShow, editShowTemplate} from '../../../api/db'
 import DanceTile from '../../../components/Dance_Tile'
 import { isLoggedIn } from '../../../api/auth'
+import { json } from 'stream/consumers'
 
 
 
@@ -242,7 +243,7 @@ function App() {
            {isLoading ? <div className="loader"></div> : <button className='ActionBtn' onClick={async () => {
                 //Create show template\
                 setIsLoading(true)
-                const show = Show.fromBlank(showName, showId,activityId,templateId,layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", Date.now() )
+                const show = Show.fromBlank(showName, showId,activityId,templateId,layout, characters ,hasEnsemble ? Ensemble.fromBlank([], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", false,Date.now() )
                 console.log(show.toMap())
                let id = showId
                 if(!isEditing) {
@@ -250,9 +251,12 @@ function App() {
                     show.templateId = templateId
                     id = await createShow(show)
                 } else {
-                    await editShowTemplate(show)
+                    //Make a copy of show
+                    const fromMap = Show.fromMap(show.toMap())
+                    // await editShowTemplate(fromMap)
                     await editShow(show)
                     localStorage.removeItem('show')
+                    localStorage.setItem('show', JSON.stringify(show?.toMap()))
                 }
 
                 window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${id}`

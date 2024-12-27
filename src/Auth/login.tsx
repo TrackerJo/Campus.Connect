@@ -49,10 +49,55 @@ function App() {
     const statesAbb = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
     const statesFull = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"]
 
+    async function createStudentAccount(school: DocumentData) {
+        const location = {lat: 0, lon: 0}
+        const fullHomeAddress = ""
+        const distanceToSchool = 0
+        // if(!skippedHomeAddress){
+
+        //      fullHomeAddress = homeAddress + ", " + homeCity + ", " + homeState + ", " + homeZip
+        //      location = await getLatLongFromAddress(fullHomeAddress)
+        //      distanceToSchool = getDistanceFromLatLong(location.lat, location.lon, school.location.location.latitude, school.location.location.longitude)
+        // }
+
+        // if (!location && !skippedHomeAddress) {
+        //     alert("Invalid Address")
+        //     return
+        // }
+        localStorage.setItem("schoolId", school.schoolId)
+        console.log(localStorage.getItem("schoolId"))
+        console.log("Creating account")
+        const uid = await register(email, password)
+        console.log(uid)
+        if (!uid) {
+            alert("Error creating account")
+            return
+        }
+        const homeLocation = Location.fromBlank("home", fullHomeAddress, new GeoPoint(location.lat, location.lon))
+
+        const student = StudentData.fromBlank(uid as string, school.schoolId, "unknown", distanceToSchool, "", "student", phoneNumber.replace("none", ""),sex as "male" | "female" ,"unknown", fullName.toLowerCase().trim(), fullName.trim(), email.trim(), {}, homeLocation)
+        await createUser("student", student)
+        localStorage.setItem("accountType", "student")
+        //get url params
+        const urlParams = new URLSearchParams(window.location.search)
+        const redirect = urlParams.get('redirect')
+        if (redirect) {
+            window.location.href = redirect.replace(/~/g, "&")
+        } else {
+            window.location.href = '/'
+        }
+        setIsLoggingIn(false)
+    }
+
     useEffect(() => {
         async function fetechSchools() {
             const fetechSchools = await getSchools();
             setSchools(fetechSchools)
+            const schooldId = localStorage.getItem("schoolId")
+            if(schooldId){
+                setSelectedSchool(schooldId)
+                return
+            }
             setSelectedSchool(fetechSchools[0].schoolId)
         }
         fetechSchools()
@@ -84,12 +129,13 @@ function App() {
             <input type='password' placeholder='Password' onChange={(e) => {
                 setPassword(e.target.value)
             }}/>
+            <label htmlFor="">Select your School</label>
 
             <select onChange={
                 (e) => {
                     setSelectedSchool(e.target.value)
                 }
-            }>
+            } value={selectedSchool}>
                 {schools.map((school) => {
                     return <option value={school.schoolId}>{school.schoolName}</option>
                 })}
@@ -215,6 +261,9 @@ function App() {
         <h1>Create Account</h1>
         {createAccountUserInfo()}
         
+        {isLoggingIn ? <div className={"center"}>
+            <div className='loader'></div>
+        </div> :
         <button  onClick={() => {
             if(fullName == ""){
                 alert("Please enter your full name")
@@ -258,10 +307,16 @@ function App() {
                 alert("Please select your sex")
                 return
             }
+            const school = schools.find((school: DocumentData) => school.schoolDomain == email.split('@')[1])
+            if(school != undefined){
+                setIsLoggingIn(true)
+                createStudentAccount(school)
+                return
+            }
             setCreateAccountStage('SchoolCode')
         }}>
             Next
-        </button>
+        </button>}
         </> : createAccountStage == "HomeAddress" ? <>
         {/* <h1>Create Account</h1>
         {createAccountHomeAddress()}
@@ -301,41 +356,7 @@ function App() {
                 setIsLoggingIn(false)
                 return
             }
-            let location = {lat: 0, lon: 0}
-            let fullHomeAddress = ""
-            let distanceToSchool = 0
-            // if(!skippedHomeAddress){
-
-            //      fullHomeAddress = homeAddress + ", " + homeCity + ", " + homeState + ", " + homeZip
-            //      location = await getLatLongFromAddress(fullHomeAddress)
-            //      distanceToSchool = getDistanceFromLatLong(location.lat, location.lon, school.location.location.latitude, school.location.location.longitude)
-            // }
-
-            // if (!location && !skippedHomeAddress) {
-            //     alert("Invalid Address")
-            //     return
-            // }
-            localStorage.setItem("schoolId", school.schoolId)
-            console.log("Creating account")
-            const uid = await register(email, password)
-            if (!uid) {
-                alert("Error creating account")
-                return
-            }
-            const homeLocation = Location.fromBlank("home", fullHomeAddress, new GeoPoint(location.lat, location.lon))
-
-            const student = StudentData.fromBlank(uid as string, school.schoolId, "unknown", distanceToSchool, "", "student", phoneNumber.replace("none", ""),sex as "male" | "female" ,"unknown", fullName.toLowerCase().trim(), fullName.trim(), email.trim(), {}, homeLocation)
-            await createUser("student", student)
-            localStorage.setItem("accountType", "student")
-            //get url params
-            const urlParams = new URLSearchParams(window.location.search)
-            const redirect = urlParams.get('redirect')
-            if (redirect) {
-                window.location.href = redirect.replace(/~/g, "&")
-            } else {
-                window.location.href = '/'
-            }
-            setIsLoggingIn(false)
+            
         }}>
             Create Account
         </button>}
@@ -379,6 +400,7 @@ function App() {
     function createAccountUserInfo() {
         return (
             <>
+            <label htmlFor="">Please enter your full name!</label>
             <input type='text' placeholder='Full Name' onChange={(e) => {
             setFullName(e.target.value)
         }}/>

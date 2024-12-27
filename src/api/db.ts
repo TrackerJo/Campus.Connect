@@ -26,7 +26,8 @@ import {
     GroupChatMember,
     Character,
     ShowGroup,
-    EnsembleSection
+    EnsembleSection,
+    FullCast
 } from "../constants";
 import { getCurrentUserId } from "./auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -129,9 +130,26 @@ export async function addShowTemplate(showTemplate: Show): Promise<string> {
 }
 
 export async function editShowTemplate(showTemplate: Show): Promise<void> {
+
     //Remove all the actors from the show
     if(showTemplate.ensemble){
         showTemplate.ensemble.actors = [];
+    }
+
+    for(const character of showTemplate.characters){
+        if(character instanceof Character){
+            character.actor = null;
+        } 
+    }
+
+    for(const showGroup of showTemplate.showGroups){
+        for(const character of showGroup.characters){
+            if(character instanceof Character){
+                character.actor = null;
+            } else if (character instanceof EnsembleSection) {
+                character.customActors = [];
+            }
+        }
     }
 
     for(const acts of showTemplate.layout){
@@ -855,7 +873,10 @@ export async function getSchoolUsingCode(type: "student" | "teacher", code: stri
 
 export async function createUser(type: "student" | "teacher", user: StudentData | TeacherData) {
     const schoolId = localStorage.getItem("schoolId");
+
     if (!schoolId) return;
+
+
     const schoolDoc = doc(db, "schools", schoolId);
     const usersCol = collection(schoolDoc, type + "s");
     await setDoc(doc(usersCol, user.uid), user.toMap());
@@ -1059,4 +1080,195 @@ export async function addEventTypeToActivity(activityId: string, eventType: Even
     await updateDoc(activityDoc, {
         eventTypes: arrayUnion(eventType.toMap())
     });
+}
+
+export async function setActivityShowCreatingSchedule(activityId: string, showId: string) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const showDoc = doc(collection(activityDoc, "shows"), showId);
+    await updateDoc(showDoc, {
+        isCreatingSchedule: true
+    });
+}
+
+export async function createCustomUser(user: StudentData, activityId: string) {
+    const schoolId = localStorage.getItem("schoolId");
+
+    if (!schoolId) return;
+
+
+    const schoolDoc = doc(db, "schools", schoolId);
+    const usersCol = collection(schoolDoc, "students");
+    await setDoc(doc(usersCol, user.uid), user.toMap());
+
+    //Add user to school
+    const activityUser = ActivityMember.fromBlank(user.fullname, user.gender, user.email, user.phoneNumber, user.FCMToken, user.uid);
+
+    await updateDoc(schoolDoc, {
+        ["studentUids"]: arrayUnion(user.uid),
+        ["students"]: arrayUnion(activityUser.toMap())
+    });
+
+    const userId = activityUser.userId;
+
+    if (!schoolId || !userId) return null;
+
+    const activityQuery = doc(collection(schoolDoc, "activities"), activityId);
+    const activityDoc = await getDoc(activityQuery);
+    if (!activityDoc.exists()) return null;
+
+
+   
+    if(activityDoc.data().type == "theater") {
+       
+
+            await updateDoc(activityDoc.ref, {
+                studentUids: [...activityDoc.data().studentUids, userId],
+                students: [...activityDoc.data().students, activityUser.toMap()]
+                    
+            });
+            return TheaterActivity.fromMap(activityDoc.data());
+       
+    } else {
+
+
+            await updateDoc(activityDoc.ref, {
+                studentUids: [...activityDoc.data().studentUids, userId],
+                students: [...activityDoc.data().students, activityUser.toMap()]
+            });
+            return Activity.fromMap(activityDoc.data());
+       
+    }
+}
+
+export async function editShowEventsCharacters(show: Show) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), show.activityId);
+    const eventsQuery = query(collection(activityDoc, "events"), where("showId", "==", show.id));
+    const eventsSnap = await getDocs(eventsQuery);
+    for (const doc of eventsSnap.docs) {
+        const event = TheaterEvent.fromMap(doc.data());
+        for (let i = 0; i < event.characters.length; i++) {
+            const character = event.characters[i];
+            if(character instanceof Character){
+                event.characters[i] = show.characters.find((c) => c.name == character.name)!;
+            } else if(character instanceof ShowGroup){
+                event.characters[i] = show.showGroups.find((g) => g.name == character.name)!;
+            }
+            
+        }
+        const targets: ActivityMember[] = [];
+  
+        for(const character of event.characters){
+            if(character instanceof FullCast){
+                for(const actor of show!.ensemble!.actors){
+                    targets.push(actor)
+                }
+                for(const character of show!.characters){
+                    if(targets.find((e) => e.userId == character.actor!.userId) != undefined){
+                        continue
+                    }
+                    targets.push(character.actor!)
+                }
+                break
+            } 
+            if(character instanceof Character){
+                if(targets.find((e) => e.userId == character.actor!.userId) != undefined){
+                    continue
+                }
+                targets.push(character.actor!)
+            }
+            if(character instanceof EnsembleSection){
+                if(character.includeAll){
+                
+                    for(const actor of show!.ensemble!.actors){
+                        if(targets.find((e) => e.userId == actor.userId) != undefined){
+                            continue
+                        }
+                        targets.push(actor)
+                    }
+                } else if(character.includeMale){
+                    for(const actor of show!.ensemble!.actors){
+                        if(actor.gender == "male"){
+                            if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                continue
+                            }
+                            targets.push(actor)
+                        } 
+                    }
+                } else if(character.includeFemale){
+                    for(const actor of show!.ensemble!.actors){
+                        if(actor.gender == "female"){
+                            if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                continue
+                            }
+                            targets.push(actor)
+                        }
+                    }
+                } else if(character.includeCustom){
+                    for(const actor of character.customActors){
+                        if(targets.find((e) => e.userId == actor.userId) != undefined){
+                            continue
+                        }
+                        targets.push(actor)
+                    }
+                }
+
+            }
+            if(character instanceof ShowGroup){
+                for(const showCharacter of character.characters){
+                    if(showCharacter instanceof Character){
+                        if(targets.find((e) => e.userId == showCharacter.actor!.userId) != undefined){
+                            continue
+                        }
+                        targets.push(showCharacter.actor!)
+                    }
+                    if(showCharacter instanceof EnsembleSection){
+                        if(showCharacter.includeAll){
+                            for(const actor of show!.ensemble!.actors){
+                                if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                    continue
+                                }
+                                targets.push(actor)
+                            }
+                        } else if(showCharacter.includeMale){
+                            for(const actor of show!.ensemble!.actors){
+                                if(actor.gender == "male"){
+                                    if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                        continue
+                                    }
+                                    targets.push(actor)
+                                }
+                            }
+                        } else if(showCharacter.includeFemale){
+                            for(const actor of show!.ensemble!.actors){
+                                if(actor.gender == "female"){
+                                    if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                        continue
+                                    }
+                                    targets.push(actor)
+                                }
+                            }
+                        } else if(showCharacter.includeCustom){
+                            for(const actor of showCharacter.customActors){
+                                if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                    continue
+                                }
+                                targets.push(actor)
+                            }
+                        }
+                    }
+                }
+
+            }
+
+        }
+        event.targets = targets;
+        event.lastUpdated = Date.now();
+        await updateDoc(doc.ref, event.toMap());
+    }
 }

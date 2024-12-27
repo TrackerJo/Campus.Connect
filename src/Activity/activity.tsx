@@ -25,6 +25,8 @@ import DashboardTile from '../components/Dashboard_Tile'
 import { isLoggedIn } from '../api/auth'
 
 import LinkIcon from '../assets/link.png'
+import QRCodeIcon from '../assets/qrcode.png'
+import QRCodeDialog from '../components/Qr_Code_Dialog'
 
 
 
@@ -35,6 +37,7 @@ function App() {
     const [activity, setActivity] = useState<Activity | null | TheaterActivity>(null)
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
     const [loadingInfo, setLoadingInfo] = useState(true)
+    const qrCodeDialogRef = useRef<HTMLDialogElement>(null)
 
     useEffect(() => {
         setLoadingInfo(true)
@@ -75,6 +78,10 @@ function App() {
                     await navigator.clipboard.writeText(`${window.location.origin}/Activities/?activityJoinCode=${activity?.joinCode}`)
                     alert("Copied join link to clipboard")
                 }}/>
+                <img src={QRCodeIcon} alt="show qr code" title="Show QR Code" onClick={() => {
+                    qrCodeDialogRef.current?.showModal()
+                }} />
+
             </div>  
             
         </div>
@@ -114,8 +121,12 @@ function App() {
                 Back
             </button>
         </div>
+        <QRCodeDialog dialogRef={qrCodeDialogRef} link={`${window.location.origin}/Activities/?activityJoinCode=${activity?.joinCode}`} close={() => {
+            qrCodeDialogRef.current?.close()
+        }} />
       </>
         }
+        
         </>
     )
 }

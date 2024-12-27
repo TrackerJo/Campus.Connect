@@ -1054,6 +1054,7 @@ function App() {
                     console.log(eventDate)
                     const targets: ActivityMember[] = []
                     if(addFullCast){
+                        characters.push(new FullCast())
                         for(const actor of show!.ensemble!.actors){
                             targets.push(actor)
                         }

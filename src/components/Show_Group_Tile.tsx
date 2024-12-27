@@ -39,9 +39,9 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                     }
                 </div>
                 <div>
-                    <img src={TrashIcon} alt="" className="TrashIcon" onClick={() => {
+                    {!isAssign && <img src={TrashIcon} alt="" className="TrashIcon" onClick={() => {
                         removeShowGroup()
-                    }}/>
+                    }}/>}
                 </div>
             </div>
            { (isCreate || isAssign) && <br />}
@@ -64,12 +64,17 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                         }}/>
                     else if(character instanceof EnsembleSection)
                         return <EnsembleSectionTile key={index} isGroupChatCreate={false} onAddEnsemble={() => {}} ensembleSection={character} isAssign={isAssign} actors={actors} isCustom={false} isCreate={true} setEnsembleSection={(newEnsembleSection) => {
-                            setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.map((c, i) => {
+                            console.log("NEW ENSEMBLE SECTION")
+                            console.log(newEnsembleSection.toMap())
+                            const newShowGroup = ShowGroup.fromBlank(showGroup.name, showGroup.characters.map((c, i) => {
                                 if (i === index) {
                                     return newEnsembleSection
                                 }
                                 return c
-                            }), showGroup.showGroupId,showGroup.lastUpdated))
+                            }), showGroup.showGroupId,showGroup.lastUpdated);
+                            console.log("NEW SHOW GROUP")
+                            console.log(newShowGroup.toMap())
+                            setShowGroup(newShowGroup)
                     
 
                             

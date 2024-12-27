@@ -1,10 +1,12 @@
-import {  useEffect, useState } from "react"
+import {  createRef, useEffect, useState } from "react"
 import { ActivityMember, StudentListTileProps } from "../constants";
 import "./Students_List_Tile.css"
 import StudentDisplayTile from "./Student_Display_Tile";
+import CreateCustomUserDialog from "./Create_Custom_User_Dialog";
 
-function StudentListTile({students, activityId}: StudentListTileProps){
+function StudentListTile({students, activityId, isTeacher}: StudentListTileProps){
     const [id, setId] = useState(0)
+    const createCustomDialogRef = createRef<HTMLDialogElement>()
 
     const [filteredStudents, setFilteredStudents] = useState<(ActivityMember)[]>(students)
 
@@ -26,6 +28,7 @@ function StudentListTile({students, activityId}: StudentListTileProps){
     }, [students])
 
     return (
+        <>
         <div className={"StudentListTile"}>
             <div className="header">
                 <div className="StudentListNameDiv">
@@ -47,7 +50,19 @@ function StudentListTile({students, activityId}: StudentListTileProps){
                     })}
                 </div>
             </div>
+            {isTeacher && <button className="ActionBtn" onClick={() => {
+                createCustomDialogRef.current?.showModal()
+            }}>Add Student</button>}
         </div>
+        <CreateCustomUserDialog close={() => {
+            createCustomDialogRef.current?.close()
+        }} created={() => {
+            createCustomDialogRef.current?.close()
+            //reload the page
+            window.location.reload()
+        }} dialogRef={createCustomDialogRef}  activityId={activityId}/>
+
+        </>
     )
 }
 

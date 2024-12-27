@@ -38,7 +38,18 @@ function App() {
 
     useEffect(() => {
         setLoadingInfo(true)
-        isLoggedIn(() => {})
+        isLoggedIn((loggedIn) => {
+            if(loggedIn){
+                const urlParams = new URLSearchParams(window.location.search)
+
+                const activityJoinCode = urlParams.get('activityJoinCode')
+                if (activityJoinCode) {
+                    setActivityJoinCode(activityJoinCode)
+                    joinActivityDialogRef.current!.showModal()
+                }
+            }
+            
+        })
         async function fetchActivities() {
             const fetchedActivities = await getActivities()
             
@@ -54,13 +65,7 @@ function App() {
             setAccountType(accountType as "student" | "teacher")
         }
 
-        const urlParams = new URLSearchParams(window.location.search)
-
-        const activityJoinCode = urlParams.get('activityJoinCode')
-        if (activityJoinCode) {
-            setActivityJoinCode(activityJoinCode)
-            joinActivityDialogRef.current!.showModal()
-        }
+        
     }, [])
 
 

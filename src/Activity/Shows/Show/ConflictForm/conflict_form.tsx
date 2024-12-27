@@ -88,18 +88,38 @@ function App() {
         if (showJSON) {
             show = Show.fromMap(JSON.parse(showJSON))
             setShow(show)
-            let allMembers =[...show.characters.map((character) => {
-                return character.actor!
-            })]
+            let allMembers = [];
+            for (const character of show.characters) {
+                if(character.actor) {
+                    allMembers.push(character.actor)
+                }
+            }
             if(show.ensemble) {
                 allMembers = [...allMembers, ...show.ensemble!.actors]
             }
             //Remove duplicates
-            allMembers = allMembers.filter((actor, index, self) =>
-                index === self.findIndex((t) => (
-                    t.userId === actor.userId
+            allMembers = allMembers.filter((actor, index, self) => {
+                return index === self.findIndex((t) => (
+                    t!.userId === actor.userId
                 ))
-            )
+            })
+        //     let allMembers =[...show.characters.map((character) => {
+        //         if(character.actor) {
+        //             return character.actor
+        //         }
+        //     })]
+        //     if(show.ensemble) {
+        //         allMembers = [...allMembers, ...show.ensemble!.actors]
+        //     }
+        //     //Remove duplicates
+        //     allMembers = allMembers.filter((actor, index, self) => {
+        //         if(actor == null) {
+        //             return false
+        //         }
+        //         return index === self.findIndex((t) => (
+        //             t!.userId === actor.userId
+        //         ))
+        // })
             setMembers(allMembers)
             
             console.log(show)
@@ -117,7 +137,7 @@ function App() {
             console.log(accountType)
             if(accountType == "teacher" && activity) {
                if(activity.teachers.findIndex((teacher) => {
-                   return teacher.memberUid == getCurrentUserId()
+                   return teacher.userId == getCurrentUserId()
                }) == -1) {
                         
                      window.location.href = `/Activities/?activityJoinCode=${activity.joinCode}&redirect=${window.location.pathname + window.location.search.replace(/&/g, '~')}`

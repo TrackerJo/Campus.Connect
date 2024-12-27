@@ -25,7 +25,7 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
             console.log(actor.name)
             if(actor.name == undefined) return false
 
-            return actor.name.toLowerCase().includes(searchString.toLowerCase()) && !addedActors.includes(actor)
+            return actor.name.toLowerCase().includes(searchString.toLowerCase()) && !addedActors.some((addedActor) => addedActor.name == actor.name)
         }))
         
 
@@ -52,7 +52,7 @@ function AssignActorDialog({actor, setActor, actors, dialogRef, addedActors, clo
                 {searchResults.map((actor, index) => {
                     return <div key={index} className="ActorResult" onClick={() => {
                         setSearchString("")
-                        setSearchResults([])
+                        search("")
 
                     }}>
                         <label htmlFor="">{actor.name}</label>

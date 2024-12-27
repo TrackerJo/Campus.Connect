@@ -40,6 +40,11 @@
 @media screen and (max-width: 728px) {
     .StudentInfoDialogInner {
         width: 70vw;
+        height: 60vh;
     }
     
+    .ActionBtn{
+
+        height:5em;
+    }
 }
