@@ -93,7 +93,7 @@ function App() {
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
                     window.location.href = `/Activity/Shows/Show/Assign/?activityId=${activityId}&showId=${showId}`
                 } }/></> : <></>}
-                { show?.canCreateSchedule && <DashboardTile title={"Create/Edit Schedule"} description={"Create/Edit the rehersal schedule"} onClick={() => {
+                { accountType == "teacher" && show?.canCreateSchedule && <DashboardTile title={"Create/Edit Schedule"} description={"Create/Edit the rehersal schedule"} onClick={() => {
                     //Save show to local storage
                     if(show?.isCreatingSchedule){
                          localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))

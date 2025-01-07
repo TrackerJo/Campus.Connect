@@ -1272,3 +1272,34 @@ export async function editShowEventsCharacters(show: Show) {
         await updateDoc(doc.ref, event.toMap());
     }
 }
+
+// export async function fixEventDates(){
+//     const schoolId = localStorage.getItem("schoolId");
+//     if (!schoolId) return;
+//     const schoolDoc = doc(db, "schools", schoolId);
+
+//     const activitiesSnap = await getDocs(collection(schoolDoc, "activities"));
+//     for(const doc of activitiesSnap.docs){
+//         const eventsSnap = await getDocs(collection(doc.ref, "events"));
+
+
+//         for(const eventDoc of eventsSnap.docs){
+//             const event = eventDoc.data();
+//             const eventDate = event.date.date;
+//             console.log(eventDate);
+//             if( typeof eventDate === 'string' && eventDate.includes("-")){
+//                 continue;
+//             }
+//             //Convert date to string mm-dd-yyyy
+//             const date = eventDate.toDate();
+//             const month = date.getMonth() + 1;
+//             const day = date.getDate();
+//             const year = date.getFullYear();
+//             const dateString = `${month}-${day}-${year}`;
+//             event.date.date = dateString;
+//             await updateDoc(eventDoc.ref, event);
+
+
+//         }
+//     }
+// }

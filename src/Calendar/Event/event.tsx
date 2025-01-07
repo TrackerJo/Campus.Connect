@@ -18,9 +18,9 @@ import { useRef, useState } from 'react'
 
 
 import './event.css'
-import { ActivityEvent, addAlpha, CalendarEvent, ConflictResponse, Event, intToHexColor, TheaterEvent } from '../../constants.ts'
-import { getAllUserEvents, getUserConflictFormResponse } from '../../api/db.ts'
-import Calendar from '../../components/Calendar.tsx'
+import { ActivityEvent,  Event, TheaterEvent } from '../../constants.ts'
+
+
 import { isLoggedIn } from '../../api/auth.ts'
 
 
@@ -71,9 +71,9 @@ function App() {
                     year: 'numeric'
         })}</h3>
                 <h3>{event?.date.from.toLocaleTimeString([], {
-                    hour: '2-digit',
+                    hour: 'numeric',
                     minute: '2-digit'
-                })} - {event?.date.to.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</h3>
+                })} - {event?.date.to.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}</h3>
                 <h3>Location: {event instanceof TheaterEvent ? event?.rehearsalLocation.name : event?.location.name}</h3>
                 <p>{event?.info}</p>
                 <h4>Attendees:</h4>

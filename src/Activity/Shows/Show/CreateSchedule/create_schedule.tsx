@@ -242,7 +242,7 @@ function App() {
                             }
                         </div>
                     </div>
-                    <Calendar canOpenContextMenu={true} events={calendarEvents}
+                    <Calendar isCreating={true} canOpenContextMenu={true} events={calendarEvents}
                               editEvent={(event) => {
                                   const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
 
@@ -278,7 +278,7 @@ function App() {
                                   const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
 
                                   if (theaterEvent) {
-                                      localStorage.setItem('event', JSON.stringify(theaterEvent))
+                                      localStorage.setItem('event', JSON.stringify(theaterEvent.toMap()))
                                       localStorage.setItem('back', '/Activity/Shows/Show/CreateSchedule/?activityId=' + activityId + '&showId=' + showId)
                                       window.location.href = "/Calendar/Event/"
                                   }
@@ -343,37 +343,37 @@ function App() {
                               }} eventClick={(args) => {
 
 
-                        setSelectedDate(args.event.start)
-                        const checkDate = new Date(args.event.start!)
-                        checkDate.setHours(0, 0, 0, 0)
-                        setViewingDateForConflicts(checkDate)
+                                setSelectedDate(args.event.start)
+                                const checkDate = new Date(args.event.start!)
+                                checkDate.setHours(0, 0, 0, 0)
+                                setViewingDateForConflicts(checkDate)
 
-                        const newConflicts: DateConflict[] = []
-                        for (const conflict of conflicts) {
+                                const newConflicts: DateConflict[] = []
+                                for (const conflict of conflicts) {
 
-                            if (conflict.conflictResponseDate.date.getTime() == checkDate.getTime()) {
-                                newConflicts.push(conflict)
-                            }
-                        }
-                        setCurrentConflicts(newConflicts)
-                        setStartTime(new Date(args.event.start!))
-                        setStartTimeString(args.event.start!.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false
-                        }))
-                        //copy the date and add an hour
-                        const newEndTime = new Date(args.event.end!)
+                                    if (conflict.conflictResponseDate.date.getTime() == checkDate.getTime()) {
+                                        newConflicts.push(conflict)
+                                    }
+                                }
+                                setCurrentConflicts(newConflicts)
+                                setStartTime(new Date(args.event.start!))
+                                setStartTimeString(args.event.start!.toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                }))
+                                //copy the date and add an hour
+                                const newEndTime = new Date(args.event.end!)
 
-                        setEndTime(newEndTime)
+                                setEndTime(newEndTime)
 
-                        setEndTimeString(newEndTime.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false
-                        }))
-                        setCreationState("type")
-                    }}/>
+                                setEndTimeString(newEndTime.toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                }))
+                                setCreationState("type")
+                            }}/>
                     <div className='box right'>
                         <h2>How To Schedule Events</h2>
                         <ul>
@@ -1081,6 +1081,7 @@ function App() {
                  <br />
                 {isLoading ? <div className="loader"></div>  : <button onClick={async () => {
                     setIsLoading(true)
+                    console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation}, Rehearsal Location: ${rehearsalLocation}, Event Type: ${eventType}`)
                     if(name == "" || description == "" || startTime == undefined || endTime == undefined || selectedLocation == undefined || rehearsalLocation == undefined || eventType == undefined){
                         alert("Please fill out all fields")
                         console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation}, Rehearsal Location: ${rehearsalLocation}, Event Type: ${eventType}`)
@@ -1273,9 +1274,9 @@ function App() {
                     setDescription("")
                     setStartTimeString("")
                     setEndTimeString("")
-                    setSelectedLocation(undefined)
-                    setRehearsalLocation(undefined)
-                    setEventType(undefined)
+                    setRehearsalLocation(activity?.rehearsalLocations[0])
+                    setEventType(activity?.eventTypes[0])
+                    setSelectedLocation(activity?.defaultLocation)
                     setCharacters([])
                     setAddedEnsemble(false)
                     setViewingDateForConflicts(null)
@@ -1297,7 +1298,9 @@ function App() {
                         setDescription("")
                         setStartTimeString("")
                         setEndTimeString("")
-                        setSelectedLocation(undefined)
+                        setRehearsalLocation(activity?.rehearsalLocations[0])
+                        setEventType(activity?.eventTypes[0])
+                        setSelectedLocation(activity?.defaultLocation)
                         setAddedEnsemble(false)
                         setViewingDateForConflicts(null)
                         setCurrentConflicts(conflicts)
@@ -1306,6 +1309,7 @@ function App() {
                     }
                     setCreationState("type")
                     setDescription("")
+                    setName("")
                     setAddedEnsemble(false)
                     const newConflicts: DateConflict[] = []
                     for(const conflict of conflicts){

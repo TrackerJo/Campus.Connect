@@ -22,6 +22,7 @@ import { ActivityEvent, addAlpha, CalendarEvent, ConflictResponse, Event, intToH
 import { getAllUserEvents, getUserConflictFormResponse } from '../api/db'
 import Calendar from '../components/Calendar'
 import { isLoggedIn } from '../api/auth'
+import BackIcon from '../assets/arrow_backward.png'
 
 
 
@@ -33,11 +34,13 @@ function App() {
     const [events, setEvents] = useState<(Event | ActivityEvent | TheaterEvent)[]>([])
     const [calendarEvents, setCalendarEvents] = useState<(CalendarEvent)[]>([])
     const [conflictResponse, setConflictResponse] = useState<ConflictResponse | null>(null)
-
+    const [isLoading, setIsLoading] = useState(false)
     useEffect(() => {
         isLoggedIn(() => {})
 
         async function fetchActivities() {
+        setIsLoading(true)
+
             const fetchedEvents = await getAllUserEvents();
             const conflictResponses: ConflictResponse[] = []
             console.log(fetchedEvents)
@@ -108,9 +111,10 @@ function App() {
                     
                     isAllDay: false,
                     interactive: true,
-                    description: event.info + (isTheaterEvent ? `\nLocation: ${event.rehearsalLocation.name}` : "") +  (partialConflict ? ` \n(Excused from ${partialConflictStartDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to ${partialConflictEndDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : hasConflict && !partialConflict ? " \n(Fully Excused)" : ''),
-                    color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' : isTheaterEvent ? event.rehearsalLocation.color.setAlpha(0.8).toHex() : 'blue',
+                    description: event.info  +  (partialConflict ? ` \n(Excused from ${partialConflictStartDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to ${partialConflictEndDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : hasConflict && !partialConflict ? " \n(Fully Excused)" : ''),
+                    color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' : isTheaterEvent ? event.rehearsalLocation.color.setAlpha(0.8).toRBGAString() : 'blue',
                     id: event.id!,
+                    location: isTheaterEvent ? `${event.rehearsalLocation.name}` : ""
                     
                 })
             }
@@ -118,6 +122,7 @@ function App() {
             console.log(fetchedEvents)
             console.log(calendarEventsList)
             // alert("fetchedActivities")
+        setIsLoading(false)
 
         }
         fetchActivities()
@@ -131,26 +136,25 @@ function App() {
 
     return (
         <>
-        <div className='title'>
+        <div className='page-title'>
+            <img src={BackIcon} alt="back arrow" onClick={() => {
+                window.location.href = '/'
+            }} />
             <h1>
                 Calendar
             </h1>
         </div>
-        <div className='center'>
-            <Calendar viewEvent={(event) => {}} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventClick={(eventArg) => {
-                const event = events.find((event) => event.id === eventArg.event.id)
+        {isLoading ?<div className='center'><div className='loader'></div></div> : <div className='center'>
+            <Calendar viewEvent={(event) => {}} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
+                const event = events.find((event) => event.id === eventId)
                 if(event){
-                    localStorage.setItem('event', JSON.stringify(event))
+                    localStorage.setItem('event', JSON.stringify(event.toMap()))
                     localStorage.removeItem('back')
                     window.location.href = '/Calendar/Event/'
                 }
             }}/>
-            <button className='ActionBtn' onClick={() => {
-                window.location.href = '/'
-            }}>
-                Back
-            </button>
-        </div>
+           
+        </div>}
         
         
         </>

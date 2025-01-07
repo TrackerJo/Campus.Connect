@@ -9,14 +9,28 @@ import { LegacyRef } from "react";
 export type CalendarProps = {
     events: CalendarEvent[];
     dateClick: (dateClickArg: DateClickArg) => void;
-    eventClick: (event: EventClickArg) => void;
+    eventClick?: (event: EventClickArg) => void;
+    eventIdClick?: (eventId: string) => void;
     deleteEvent: (event: EventImpl) => void;
     viewConflicts: (date: Date) => void;
     editEvent: (event: EventImpl) => void;
     viewEvent: (event: EventImpl) => void;
     canOpenContextMenu: boolean;
+    isCreating?: boolean;
     
 };
+
+export type MobileCalendarProps = {
+    events: CalendarEvent[];
+    eventClick: (eventId: string) => void;
+    
+};
+
+export type Day = {
+    day: Date;
+   
+    title: string;
+}
 
 export type CalendarEvent = {
     id: string;
@@ -824,14 +838,22 @@ export class EventDate {
         return eventDate;
     }
 
+     static formatDate(date: Date): string {
+
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const year = date.getFullYear();
+        return`${month}-${day}-${year}`;
+    }
   
     toMap():object {
       return {
-        "date": this.date,
+        "date": EventDate.formatDate(this.date),
         "from": this.from.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }),
         "to": this.to.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }),
     };
     }
+   
   
     static _parseTime(time: any): Date {
         if (typeof time === 'string') {
@@ -862,18 +884,11 @@ export class EventDate {
   
     public static fromMap(map: DocumentData): EventDate {   
         const eventDate = new EventDate();
-        if(map.date instanceof Date){
-            eventDate.date = map.date;
-        } else if(typeof map.date == "string"){
-            //Time must be 2024-11-11T08:30:00.000Z
-
-            eventDate.date = new Date(map.date);
-
-        } else {
-
-
-            eventDate.date = map.date.toDate();
-        }
+        const splitDate = map.date.split('-');
+        const year = parseInt(splitDate[2], 10);
+        const month = parseInt(splitDate[0], 10);
+        const day = parseInt(splitDate[1], 10);
+        eventDate.date = new Date(year, month - 1, day);
 
         
         eventDate.from = this._parseTime(map.from);
@@ -1218,7 +1233,7 @@ export class Message {
     message: string;
     senderUid: string;
     senderName: string;
-    senderFCMToken: string;
+
     gcId: string;
     activityId: string;
     messageId: string;
@@ -1229,7 +1244,7 @@ export class Message {
         this.message = '';
         this.senderUid = '';
         this.senderName = '';
-        this.senderFCMToken = '';
+
         this.gcId = '';
         this.activityId = '';
         this.messageId = '';
@@ -1242,7 +1257,7 @@ export class Message {
         messageObj.message = message;
         messageObj.senderUid = senderUid;
         messageObj.senderName = senderName;
-        messageObj.senderFCMToken = senderFCMToken;
+
         messageObj.gcId = gcId;
         messageObj.activityId = activityId;
         messageObj.messageId = messageId;
@@ -1256,7 +1271,7 @@ export class Message {
         "message": this.message,
         "senderUid": this.senderUid,
         "senderName": this.senderName,
-        "senderFCMToken": this.senderFCMToken,
+
         "gcId": this.gcId,
         "activityId": this.activityId,
         "messageId": this.messageId,
@@ -1271,7 +1286,7 @@ export class Message {
         message.message = map.message;
         message.senderUid = map.senderUid;
         message.senderName = map.senderName;
-        message.senderFCMToken = map.senderFCMToken;
+
         message.gcId = map.gcId;
         message.activityId = map.activityId;
         message.messageId = map.messageId;
@@ -1791,7 +1806,7 @@ export class GroupChatMember {
     name: string;
     email: string;
     phone: string;
-    FCMToken: string;
+
     userId: string;
 
 
@@ -1799,7 +1814,7 @@ export class GroupChatMember {
         this.name = "";
         this.email = "";
         this.phone = "";
-        this.FCMToken = "";
+
         this.userId = "";
     }
 
@@ -1809,7 +1824,7 @@ export class GroupChatMember {
 
         actor.email = email;
         actor.phone = phone;
-        actor.FCMToken = FCMToken;
+
         actor.userId = userId;
 
         return actor;
@@ -1820,7 +1835,7 @@ export class GroupChatMember {
         "fullname": this.name,
         "email": this.email,
         "phoneNumber": this.phone,
-        "FCMToken": this.FCMToken,
+
         "uid": this.userId,
 
         };
@@ -1831,7 +1846,7 @@ export class GroupChatMember {
         actor.name = map.fullname;
         actor.email = map.email;
         actor.phone = map.phoneNumber;
-        actor.FCMToken = map.FCMToken;
+
         actor.userId = map.uid;
 
         return actor;
@@ -1843,7 +1858,7 @@ export class ActivityMember {
     gender: "male" | "female";
     email: string;
     phone: string;
-    FCMToken: string;
+
     userId: string;
 
 
@@ -1852,7 +1867,7 @@ export class ActivityMember {
         this.gender = "male";
         this.email = "";
         this.phone = "";
-        this.FCMToken = "";
+
 
         this.userId = "";
     }
@@ -1863,7 +1878,7 @@ export class ActivityMember {
         actor.gender = gender;
         actor.email = email;
         actor.phone = phone;
-        actor.FCMToken = FCMToken;
+
         actor.userId = userId;
 
         return actor;
@@ -1875,7 +1890,7 @@ export class ActivityMember {
         "gender": this.gender,
         "email": this.email,
         "phoneNumber": this.phone,
-        "FCMToken": this.FCMToken,
+
         "uid": this.userId,
 
         };
@@ -1887,7 +1902,7 @@ export class ActivityMember {
         actor.gender = map.gender;
         actor.email = map.email;
         actor.phone = map.phoneNumber ?? map.phone;
-        actor.FCMToken = map.FCMToken;
+
         actor.userId = map.uid ?? map.userId;
 
         return actor;
@@ -1904,7 +1919,7 @@ export class ActivityTeacher {
     name: string;
     email: string;
     phone: string;
-    FCMToken: string;
+
     userId: string;
 
 
@@ -1912,7 +1927,7 @@ export class ActivityTeacher {
         this.name = "";
         this.email = "";
         this.phone = "";
-        this.FCMToken = "";
+
 
         this.userId = "";
     }
@@ -1922,7 +1937,7 @@ export class ActivityTeacher {
         actor.name = name;
         actor.email = email;
         actor.phone = phone;
-        actor.FCMToken = FCMToken;
+
         actor.userId = userId;
 
         return actor;
@@ -1933,7 +1948,7 @@ export class ActivityTeacher {
         "fullname": this.name,
         "email": this.email,
         "phoneNumber": this.phone,
-        "FCMToken": this.FCMToken,
+
         "uid": this.userId,
 
         };
@@ -1944,7 +1959,7 @@ export class ActivityTeacher {
         actor.name = map.fullname;
         actor.email = map.email;
         actor.phone = map.phoneNumber;
-        actor.FCMToken = map.FCMToken;
+
         actor.userId = map.uid;
 
         return actor;
@@ -2639,42 +2654,6 @@ export class TeacherData {
         teacherData.email = map.email;
         teacherData.phoneNumber = map.phoneNumber;
         return teacherData;
-    }
-  }
-
-  export class MiniUser {
-    name: string;
-    fcmToken: string;
-    uid: string;
-
-    constructor() {
-        this.name = "";
-        this.fcmToken = "";
-        this.uid = "";
-    }
-
-    public static fromBlank(name: string, fcmToken: string, uid: string): MiniUser {
-        const miniUser = new MiniUser();
-        miniUser.name = name;
-        miniUser.fcmToken = fcmToken;
-        miniUser.uid = uid;
-        return miniUser;
-    }
-
-    toMap(): object {
-        return {
-        "name": this.name,
-        "fcmToken": this.fcmToken,
-        "uid": this.uid,
-        };
-    }
-
-    public static fromMap(map: DocumentData): MiniUser {
-        const miniUser = new MiniUser();
-        miniUser.name = map.name;
-        miniUser.fcmToken = map.fcmToken;
-        miniUser.uid = map.uid;
-        return miniUser;
     }
   }
 

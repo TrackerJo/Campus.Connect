@@ -6,13 +6,14 @@ import { CalendarProps, ContextMenuItem } from '../constants'
 import './Calendar.css'
 import EventContextMenu from './Custom_Context_Menu'
 import { EventClickArg } from '@fullcalendar/core/index.js'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { EventImpl } from '@fullcalendar/core/internal'
 import CalendarHoverEventTile from './Calendar_Hover_Event_Tile'
+import MobileCalendar from './Mobile_Calendar'
 
 
 
-function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, editEvent, canOpenContextMenu, viewEvent}:CalendarProps) {
+function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, editEvent, canOpenContextMenu, viewEvent, eventIdClick, isCreating}:CalendarProps) {
   const [event, setEvent] = useState<EventClickArg>()
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [top, setTop] = useState(0)
@@ -24,13 +25,34 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
   const [hoverMenuTop, setHoverMenuTop] = useState(0)
   const [hoverMenuLeft, setHoverMenuLeft] = useState(0)
   const [hoveredEvent, setHoveredEvent] = useState<EventImpl | null>(null)
-  
+  const [isMobile, setIsMobile] = useState(false)
+
+
+  useEffect(() => {
+
+
+
+        const handleResize = () => {
+            if (window.innerWidth < 1366) {
+                setIsMobile(true)
+            } else {
+                setIsMobile(false)
+            }
+        }
+        // window.addEventListener('resize', handleResize)
+        handleResize()
+        // return () => window.removeEventListener('resize', handleResize)  
+    }, [])
 
   function getEvent() : EventClickArg | undefined {
     return event
   }
 
     return (
+        <>
+        { isMobile && !isCreating ? <MobileCalendar eventClick={(arg) => {
+          eventIdClick!(arg)
+        }} events={events}/> : 
         <div className='calendar box middle' onContextMenu={
           (event) => {
             if(!canOpenContextMenu){
@@ -165,9 +187,10 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
           }
         }>
         <FullCalendar
+
         allDaySlot={false}
     
-          
+          scrollTime={"15:30:00"}
           eventMouseEnter={(arg) => {
             setHoveredEvent(arg.event)
             setShowHoverMenu(true)
@@ -236,9 +259,9 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,timeGridFiveDay'
           }}
-          initialView='timeGridWeek'
+          initialView={'timeGridWeek'}
           editable={false}
           selectable={false}
           selectMirror={true}
@@ -246,13 +269,28 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
           weekends={true}
           expandRows={true}
           dateClick={dateClick}
-          eventClick={eventClick}
+          eventClick={(arg) => {
+            if(eventIdClick){
+              eventIdClick(arg.event.id)
+            } else {
+              eventClick!(arg)
+            }}
+          }
+          views={
+            {timeGridFiveDay: {
+              type: 'timeGrid',
+              duration: { days: 5 },
+              buttonText: '5 day'
+            }
+          }
+          }
 
           events={events} // alternatively, use the `events` setting to fetch from a feed
         />
         {(event != undefined || showContextMenu) && <EventContextMenu top={top} left={left} items={contextMenuItems} />}
           {showHoverMenu && hoveredEvent && <CalendarHoverEventTile top={hoverMenuTop} left={hoverMenuLeft} event={hoveredEvent} />}
-        </div>
+        </div>}
+        </>
     )
 }
 

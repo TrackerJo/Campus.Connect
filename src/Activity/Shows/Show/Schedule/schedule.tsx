@@ -85,7 +85,7 @@ function App() {
                     end: endDate.toISOString(),
                     isAllDay: false,
                     interactive: true,
-                    color: event.rehearsalLocation.color.setAlpha(0.8).toHex(),
+                    color: event.rehearsalLocation.color.setAlpha(0.8).toRBGAString(),
                     description:  event.info,
                     id: event.id,
                     location: event.rehearsalLocation.name
@@ -110,10 +110,10 @@ function App() {
         </div>
         <div className='center'>
             <Calendar canOpenContextMenu={false}
-                      eventClick={(event) => {
-                        const theaterEvent = theaterEvents.find((theaterEvent) => theaterEvent.id === event.event.id)
+                      eventIdClick={(eventId) => {
+                        const theaterEvent = theaterEvents.find((theaterEvent) => theaterEvent.id === eventId)
                         if(theaterEvent){
-                            localStorage.setItem('event', JSON.stringify(theaterEvent))
+                            localStorage.setItem('event', JSON.stringify(theaterEvent.toMap()))
                             localStorage.setItem('back', `/Activity/Shows/Show/Schedule/?activityId=${activityId}&showId=${showId}`)
                             window.location.href = `/Calendar/Event/`
                         }

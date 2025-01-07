@@ -1,0 +1,27 @@
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+.ForwardIcon {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.BackwardIcon {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+
+.fc-daygrid-day-events {
+  top: 12px;
+}
+
+.fc-daygrid-day-number {
+  font-size: 10px;
+}

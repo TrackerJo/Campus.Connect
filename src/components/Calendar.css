@@ -27,6 +27,10 @@
     cursor: pointer;
 }
 
+.fc-theme-standard .fc-popover {
+    color:black;
+}
+
 @media screen and (max-width: 728px) {
     .calendar {
         width: 80vw;
@@ -44,6 +48,16 @@
         height: 30px ;
         font-size: 0.75em !important;
 
+    }
+
+    .fc-timegrid-event .fc-event-time{
+        font-size: 8px;
+        white-space: initial;
+    }
+
+    .fc-v-event .fc-event-title {
+        font-size: 10px;
+        white-space: initial;
     }
 
     .fc-prev-button {
