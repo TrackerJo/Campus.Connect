@@ -41,6 +41,7 @@ export default defineConfig({
         schedule: resolve(root, 'Activity/Shows/Show/Schedule/index.html'),
         printSchedule: resolve(root, 'Activity/Shows/Show/Schedule/Print/index.html'),
         members: resolve(root, 'Activity/Members/index.html'),
+        allResources: resolve(root, 'Resources/index.html'),
       }
     }
   }

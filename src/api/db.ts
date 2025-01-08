@@ -54,6 +54,17 @@ export const getSchools = async () => {
     return schools;
 }
 
+export const getIfUserIsInSchool = async (schoolId: string, userId: string, accountType: "student" | "teacher") => {
+    const schoolDoc = doc(schoolsCollection, schoolId);
+    console.log("School ID: " + schoolId);
+    console.log("User ID: " + userId);
+    console.log("Account Type: " + accountType);
+    const userDoc = doc(collection(schoolDoc, accountType + "s"), userId);
+    const userSnap = await getDoc(userDoc);
+    return userSnap.exists();
+}
+
+
 export const getActivities = async (): Promise<Activity[]> => {
     //Get school id from local storage
     const accountType = localStorage.getItem("accountType");
@@ -1271,6 +1282,25 @@ export async function editShowEventsCharacters(show: Show) {
         event.lastUpdated = Date.now();
         await updateDoc(doc.ref, event.toMap());
     }
+}
+
+export async function getAllResources(): Promise<Resource[]> {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return [];
+    const activities = await getActivities();
+    const resources: Resource[] = [];
+    for (const activity of activities) {
+        console.log("Getting resources for " + activity.name);
+        if(activity.type == "theater"){
+           const shows = await getActivityShows(activity.id);
+
+              for(const show of shows){
+                console.log("Getting resources for " + show.name);
+                resources.push(...show.resources);
+              }
+        }
+    }
+    return resources;
 }
 
 // export async function fixEventDates(){

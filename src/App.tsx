@@ -38,6 +38,9 @@ function App() {
           <DashboardTile title='Activities' description='View your activities' onClick={() => {
             window.location.href = '/Activities/'
           }}/>
+          <DashboardTile title='Resources' description='View all your resources' onClick={() => {
+            window.location.href = '/Resources/'
+          }}/>
          
 
          

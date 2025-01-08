@@ -18,8 +18,8 @@ import { useRef, useState } from 'react'
 
 
 import './login.css'
-import { login, register } from '../api/auth'
-import { createUser, getSchools } from '../api/db'
+import { login, logout, register } from '../api/auth'
+import { createUser, getIfUserIsInSchool, getSchools } from '../api/db'
 import { DocumentData, GeoPoint } from 'firebase/firestore'
 import { Location, StudentData, TeacherData } from '../constants'
 import { getDistanceFromLatLong, getLatLongFromAddress } from '../api/distance'
@@ -147,6 +147,14 @@ function App() {
                 setIsLoggingIn(false)
                 alert('Wrong email or password')
                 return
+                }
+                const userId = localStorage.getItem("userId")!
+                const inSchool = await getIfUserIsInSchool(selectedSchool, userId, accountType)
+                if(!inSchool){
+                    setIsLoggingIn(false)
+                    alert("You are not in this school")
+                    await logout()
+                    return
                 }
                 localStorage.setItem("accountType", accountType);
                 setIsLoggingIn(false)
