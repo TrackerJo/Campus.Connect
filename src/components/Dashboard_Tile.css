@@ -1,4 +1,4 @@
-.tile{
+.dashboard-tile{
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -13,8 +13,28 @@
     color: white;
 }
 
-.tile h1 {
-    /* font-size: 20px; */
-    margin: 10px;
-    padding: 10px;
+.dashboard-tile h2 {
+    line-height: normal;
+    margin: 1px;
+    padding-top: 10px;
 }
+
+.dashboard-tile h1 {
+    /* font-size: 20px; */
+    margin: 1px;
+    /* padding-top: 10px; */
+}
+
+/* add padding to dashboard-tile h1 if theres not a dashboard tile h2 */
+.dashboard-tile:not(:has(h2)) h1 {
+    padding-top: 10px;
+}
+
+.dashboard-tile p {
+    /* font-size: 20px; */
+    margin: 1px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+

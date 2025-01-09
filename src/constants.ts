@@ -59,6 +59,7 @@ export type CustomContextMenuProps = {
 };
 
 export type DashboardTileProps = {
+    header?: string;
     title: string;
     description: string;
     onClick: () => void;
@@ -1443,6 +1444,7 @@ export class Show {
     name: string;
     id: string;
     activityId: string;
+    activityName: string;
     layout: Act[];
     characters: Character[];
     ensemble: Ensemble | null;
@@ -1470,6 +1472,7 @@ export class Show {
         this.isCreatingSchedule = false;
         this.songs = [];
         this.dances = [];
+        this.activityName = "";
         this.canCreateSchedule = false;
         this.hasEnsemble = false;
         this.conflictForm = new ConflictForm();

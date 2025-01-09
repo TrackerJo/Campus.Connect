@@ -120,6 +120,12 @@ function App() {
                     window.location.href = `/Activity/Shows/Show/Schedule/?activityId=${activityId}&showId=${showId}`
                 } }/>
                  </>}
+                 {accountType == "student" && <DashboardTile title={"Actor Profile"} description={"View your actor profile"} onClick={() => {
+                    //Save show to local storage
+
+                    localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
+                    window.location.href = `/Activity/Shows/Show/Actor/?activityId=${activityId}&showId=${showId}`
+                }}/>}
                 <DashboardTile title={"Resources"} description={"View all resources"} onClick={() => {
                     //Save show to local storage
 

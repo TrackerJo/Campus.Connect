@@ -42,6 +42,8 @@ export default defineConfig({
         printSchedule: resolve(root, 'Activity/Shows/Show/Schedule/Print/index.html'),
         members: resolve(root, 'Activity/Members/index.html'),
         allResources: resolve(root, 'Resources/index.html'),
+        actor: resolve(root, 'Activity/Shows/Show/Actor/index.html'),
+        profiles: resolve(root, 'Profiles/index.html'),
       }
     }
   }

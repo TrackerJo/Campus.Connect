@@ -16,9 +16,14 @@ import { fixStudents, fixTeachers } from './api/db'
 function App() {
   // @ts-ignore
   const [loggedIn, setIsLoggedIn] = useState(false)
+  const [accountType, setAccountType] = useState<"student" | "teacher">("student")
   useEffect(() => {
 
  isLoggedIn(setIsLoggedIn)
+    const accountType = localStorage.getItem('accountType')
+    if (accountType) {
+      setAccountType(accountType as "student" | "teacher")
+    }
 
 
   }, [])
@@ -41,6 +46,12 @@ function App() {
           <DashboardTile title='Resources' description='View all your resources' onClick={() => {
             window.location.href = '/Resources/'
           }}/>
+          {
+              accountType == "student" && <DashboardTile title='Actor Profiles' description='View all your actor profiles' onClick={() => {
+                window.location.href = '/Profiles/'
+              }
+            }/>
+          }
          
 
          

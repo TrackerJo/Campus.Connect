@@ -1303,6 +1303,25 @@ export async function getAllResources(): Promise<Resource[]> {
     return resources;
 }
 
+export async function getAllUserShows(): Promise<Show[]> {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return [];
+    const activities = await getActivities();
+    const shows: Show[] = [];
+    for (const activity of activities) {
+        console.log("Getting resources for " + activity.name);
+        if(activity.type == "theater"){
+           const rShows = await getActivityShows(activity.id);
+
+              for(const show of rShows){
+                show.activityName = activity.name;
+                shows.push(show);
+              }
+        }
+    }
+    return shows;
+}
+
 // export async function fixEventDates(){
 //     const schoolId = localStorage.getItem("schoolId");
 //     if (!schoolId) return;
