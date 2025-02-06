@@ -18,7 +18,7 @@ import { useRef, useState } from 'react'
 
 
 import './login.css'
-import { login, logout, register } from '../api/auth'
+import { isLoggedIn, login, logout, register } from '../api/auth'
 import { createUser, getIfUserIsInSchool, getSchools } from '../api/db'
 import { DocumentData, GeoPoint } from 'firebase/firestore'
 import { Location, StudentData, TeacherData } from '../constants'
@@ -90,7 +90,20 @@ function App() {
     }
 
     useEffect(() => {
+        
         async function fetechSchools() {
+            await isLoggedIn((isLoggedIn: boolean) => {
+                if(isLoggedIn && localStorage.getItem("accountType") != null){
+
+                    const urlParams = new URLSearchParams(window.location.search)
+                    const redirect = urlParams.get('redirect')
+                    if(redirect){
+                        window.location.href = redirect.replace(/~/g, "&")
+                    } else {
+                        window.location.href = '/'
+                    }
+                }
+            })
             const fetechSchools = await getSchools();
             setSchools(fetechSchools)
             const schooldId = localStorage.getItem("schoolId")
@@ -157,7 +170,8 @@ function App() {
                     return
                 }
                 localStorage.setItem("accountType", accountType);
-                setIsLoggingIn(false)
+
+                console.log("Logging in as " + accountType)
                 //Get url params
                 const urlParams = new URLSearchParams(window.location.search)
                 const redirect = urlParams.get('redirect')
@@ -166,6 +180,8 @@ function App() {
                 } else {
                     window.location.href = '/'
                 }
+                setIsLoggingIn(false)
+
 
             }}>Login</button>}
             <button className='actionBtn' onClick={() =>{

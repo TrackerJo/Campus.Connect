@@ -17,7 +17,7 @@ function ActTile({act, setAct, isCreate, removeAct, isAssign, characters, showGr
                 <div className="ActNameDiv">
                     <label htmlFor="Act">Act Name: </label>
                     <input type="text" name="" id="" value={act.name} onChange={(val) => {
-                        setAct(Act.fromBlank(val.target.value, act.scenes, act.actId,act.lastUpdated))
+                        setAct(Act.fromBlank(val.target.value, act.scenes, act.actId))
                     }}/>
                 </div>
                 
@@ -39,10 +39,10 @@ function ActTile({act, setAct, isCreate, removeAct, isAssign, characters, showGr
                                     return newScene
                                 }
                                 return s
-                            }), act.actId,act.lastUpdated))
+                            }), act.actId))
                         }
                         } removeScene={() => {
-                            setAct(Act.fromBlank(act.name, act.scenes.filter((s, i) => i !== index),act.actId ,act.lastUpdated))
+                            setAct(Act.fromBlank(act.name, act.scenes.filter((s, i) => i !== index),act.actId ))
                         }}/>
 
 
@@ -51,8 +51,8 @@ function ActTile({act, setAct, isCreate, removeAct, isAssign, characters, showGr
 
                 {act.scenes.length == 0 && <br /> }
                 <button className="ActionBtn" onClick={() => {
-                    const sceneID: number = Math.floor(Math.random() * 100000)
-                    setAct(Act.fromBlank(act.name, [...act.scenes, Scene.fromBlank("Scene " + (act.scenes.length + 1), [],sceneID, 0)],act.actId,act.lastUpdated))
+                    const sceneID: number = Date.now()
+                    setAct(Act.fromBlank(act.name, [...act.scenes, Scene.fromBlank("Scene " + (act.scenes.length + 1), [],sceneID)],act.actId))
                     setTimeout(() => {
                         const element = document.getElementById("scenes-" + id)!;
                         element.scrollTop = element.scrollHeight;

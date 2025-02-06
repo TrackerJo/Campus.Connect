@@ -44,6 +44,8 @@ export default defineConfig({
         allResources: resolve(root, 'Resources/index.html'),
         actor: resolve(root, 'Activity/Shows/Show/Actor/index.html'),
         profiles: resolve(root, 'Profiles/index.html'),
+        actorPrint: resolve(root, 'Activity/Shows/Show/Actor/Print/index.html'),
+        activityEvents: resolve(root, 'Activity/Events/index.html'),
       }
     }
   }

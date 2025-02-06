@@ -20,8 +20,8 @@ import {
     TheaterActivity,
     DateConflict,
     TheaterLocation,
-    intToHexColor,
-    addAlpha,
+
+
     FullCast,
     ActivityMember,
     EventType
@@ -242,7 +242,7 @@ function App() {
                             }
                         </div>
                     </div>
-                    <Calendar isCreating={true} canOpenContextMenu={true} events={calendarEvents}
+                    <Calendar canViewConflicts={true} isCreating={true} canOpenContextMenu={true} events={calendarEvents}
                               editEvent={(event) => {
                                   const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
 
@@ -1056,7 +1056,7 @@ function App() {
                 </div>
                 {type == "custom" ? <><button className="ActionBtn" onClick={() => {
                     const characterId = Math.floor(Math.random() * 100000)
-                    setCharacters([...characters, Character.fromBlank("Character 1", null, characterId, 0)])
+                    setCharacters([...characters, Character.fromBlank("Character 1", null, characterId)])
                      
 
                 }}>Add Character</button>
@@ -1064,7 +1064,7 @@ function App() {
                 <button className="ActionBtn" onClick={() => {
                   //Scroll to bottom of characters div
                   const showGroupId = Math.floor(Math.random() * 100000)
-                    setCharacters([...characters, ShowGroup.fromBlank("Show Group 1", [], showGroupId, 0)])
+                    setCharacters([...characters, ShowGroup.fromBlank("Show Group 1", [], showGroupId)])
                 }}>Add Show Group</button>
 
                 { show?.hasEnsemble &&
@@ -1073,7 +1073,7 @@ function App() {
                             return
                         setAddedEnsemble(true)
                         //Scroll to bottom
-                        setCharacters([...characters, EnsembleSection.fromBlank(true, false, false, false, [], 0)])
+                        setCharacters([...characters, EnsembleSection.fromBlank(true, false, false, false, [])])
                  }}>
                     Add Ensemble
                  </button>} </> : <></>} </> : <></>}

@@ -37,7 +37,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                 <h2>Select Play</h2>
                 <select className="SelectPlay" onChange={(e) => {
                     setSelectedShow(shows.find((show) => show.id == e.target.value) || null)
-                    setEnsembleSection(EnsembleSection.fromBlank(true, false, false, false, [], 333))
+                    setEnsembleSection(EnsembleSection.fromBlank(true, false, false, false, []))
                 }}>
                     <option value="">Select a Play</option>
                     {shows.map((show, index) => {

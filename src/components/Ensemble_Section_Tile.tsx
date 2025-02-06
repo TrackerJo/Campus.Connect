@@ -24,21 +24,21 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
             {!isAssign && <div>
                 <label htmlFor="">Include Everyone: </label>
                 <input type="radio" name="" id="" checked={ensembleSection.includeAll} onChange={(val) => {
-                    setEnsembleSection(EnsembleSection.fromBlank(val.target.checked,false, false,false, ensembleSection.customActors,ensembleSection.lastUpdated))
+                    setEnsembleSection(EnsembleSection.fromBlank(val.target.checked,false, false,false, ensembleSection.customActors))
                   
                 }}/>
 
                 <br />
                 <label htmlFor="">Include Males: </label>
                 <input type="radio" name="" id="" checked={ensembleSection.includeMale} onChange={(val) => {
-                    setEnsembleSection(EnsembleSection.fromBlank(false, val.target.checked, false,false,ensembleSection.customActors, ensembleSection.lastUpdated))
+                    setEnsembleSection(EnsembleSection.fromBlank(false, val.target.checked, false,false,ensembleSection.customActors))
                   
                 }}/>
 
                 <br />
                 <label htmlFor="">Include Females: </label>
                 <input type="radio" name="" id="" checked={ensembleSection.includeFemale} onChange={(val) => {
-                    setEnsembleSection(EnsembleSection.fromBlank(false, false, val.target.checked,false,ensembleSection.customActors, ensembleSection.lastUpdated))
+                    setEnsembleSection(EnsembleSection.fromBlank(false, false, val.target.checked,false,ensembleSection.customActors))
                   
                 }}/>
                 <br />
@@ -51,7 +51,7 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
                 }
                 {(isCreate || isCustom) && !isGroupChatCreate && <><label htmlFor="">Include Custom Actors: </label>
                 <input type="radio" name="" id="" checked={ensembleSection.includeCustom} onChange={(val) => {
-                    setEnsembleSection(EnsembleSection.fromBlank(false, false, false,val.target.checked,ensembleSection.customActors, ensembleSection.lastUpdated))
+                    setEnsembleSection(EnsembleSection.fromBlank(false, false, false,val.target.checked,ensembleSection.customActors))
                   
                 }}/></> } 
                 </div>}
@@ -64,7 +64,7 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
                             <img src={TrashIcon} alt="remove actor" className="RemoveActorImg" onClick={() => {
                                 const newActors = ensembleSection.customActors
                                 newActors.splice(index, 1)
-                                setEnsembleSection(EnsembleSection.fromBlank(ensembleSection.includeAll, ensembleSection.includeMale, ensembleSection.includeFemale,ensembleSection.includeCustom,newActors, ensembleSection.lastUpdated))
+                                setEnsembleSection(EnsembleSection.fromBlank(ensembleSection.includeAll, ensembleSection.includeMale, ensembleSection.includeFemale,ensembleSection.includeCustom,newActors))
                             }} />
 
                         </div>
@@ -73,7 +73,7 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
                         //Open dialog to assign actors
                         dialogRef.current?.showModal()
                     }}>
-                        Assign Actors
+                        Add Actors
                     </button>
                      </div>}
 
@@ -84,7 +84,7 @@ function EnsembleSectionTile({ensembleSection, setEnsembleSection, removeEnsembl
                 const newActors = ensembleSection.customActors
                 newActors.push(actor)
                 console.log("Setting actors")
-                setEnsembleSection(EnsembleSection.fromBlank(ensembleSection.includeAll, ensembleSection.includeMale, ensembleSection.includeFemale,ensembleSection.includeCustom,newActors, ensembleSection.lastUpdated))
+                setEnsembleSection(EnsembleSection.fromBlank(ensembleSection.includeAll, ensembleSection.includeMale, ensembleSection.includeFemale,ensembleSection.includeCustom,newActors))
                 dialogRef.current?.close()
            }} close={() => {
                 dialogRef.current?.close()

@@ -18,11 +18,12 @@ import { useRef, useState } from 'react'
 
 
 import './calendar.css'
-import { ActivityEvent, addAlpha, CalendarEvent, ConflictResponse, Event, intToHexColor, TheaterEvent } from '../constants'
-import { getAllUserEvents, getUserConflictFormResponse } from '../api/db'
+import { ActivityEvent, addAlpha, CalendarEvent, ConflictResponse, Event, intToHexColor, StudentData, TeacherData, TheaterEvent } from '../constants'
+import { getAllUserEvents, getUserConflictFormResponse, getUserData } from '../api/db'
 import Calendar from '../components/Calendar'
-import { isLoggedIn } from '../api/auth'
+import { isLoggedIn, logout } from '../api/auth'
 import BackIcon from '../assets/arrow_backward.png'
+import DownloadAppDialog from '../components/Download_App_Dialog'
 
 
 
@@ -35,8 +36,25 @@ function App() {
     const [calendarEvents, setCalendarEvents] = useState<(CalendarEvent)[]>([])
     const [conflictResponse, setConflictResponse] = useState<ConflictResponse | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const downloadAppDialogRef = useRef<HTMLDialogElement>(null)
     useEffect(() => {
         isLoggedIn(() => {})
+
+        getUserData().then((data) => {
+              if (data) {
+                if (data instanceof StudentData) {
+                  if(data.FCMToken == "" && data.fullname != "Wisdom Pearson" && data.fullname != "Chandler Harmeyer"){
+                    downloadAppDialogRef.current!.showModal()
+                  }
+                } else if(data instanceof TeacherData){
+                  if(data.FCMToken == ""){
+                    downloadAppDialogRef.current!.showModal()
+                  }
+                }
+              } else {
+                      logout()
+                    }
+            })
 
         async function fetchActivities() {
         setIsLoading(true)
@@ -145,7 +163,7 @@ function App() {
             </h1>
         </div>
         {isLoading ?<div className='center'><div className='loader'></div></div> : <div className='center'>
-            <Calendar viewEvent={(event) => {}} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
+            <Calendar viewEvent={(event) => {}} canViewConflicts={false} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
                 const event = events.find((event) => event.id === eventId)
                 if(event){
                     localStorage.setItem('event', JSON.stringify(event.toMap()))
@@ -155,6 +173,10 @@ function App() {
             }}/>
            
         </div>}
+
+        <DownloadAppDialog close={() => {
+            downloadAppDialogRef.current!.close()
+        }} dialogRef={downloadAppDialogRef}/>
         
         
         </>

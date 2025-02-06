@@ -109,7 +109,7 @@ function App() {
           
         </div>
         <div className='center'>
-            <Calendar canOpenContextMenu={false}
+            <Calendar canViewConflicts={false} canOpenContextMenu={false}
                       eventIdClick={(eventId) => {
                         const theaterEvent = theaterEvents.find((theaterEvent) => theaterEvent.id === eventId)
                         if(theaterEvent){

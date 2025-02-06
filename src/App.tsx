@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useState } from 'react'
+import { useRef, useEffect, useState, LegacyRef } from 'react'
 
 
 
@@ -11,12 +11,15 @@ import './App.css'
 
 import DashboardTile from './components/Dashboard_Tile'
 import { isLoggedIn, logout } from './api/auth'
-import { fixStudents, fixTeachers } from './api/db'
+import { fixStudents, fixTeachers, getCurrentUserAsActor, getUserData } from './api/db'
+import { StudentData, TeacherData } from './constants'
+import DownloadAppDialog from './components/Download_App_Dialog'
 
 function App() {
   // @ts-ignore
   const [loggedIn, setIsLoggedIn] = useState(false)
   const [accountType, setAccountType] = useState<"student" | "teacher">("student")
+  const downloadAppDialogRef = useRef<HTMLDialogElement>()
   useEffect(() => {
 
  isLoggedIn(setIsLoggedIn)
@@ -24,6 +27,23 @@ function App() {
     if (accountType) {
       setAccountType(accountType as "student" | "teacher")
     }
+
+    getUserData().then((data) => {
+      if (data) {
+        if (data instanceof StudentData) {
+          if(data.FCMToken == "" && data.fullname != "Wisdom Pearson" && data.fullname != "Chandler Harmeyer"){
+            downloadAppDialogRef.current!.showModal()
+          }
+        } else if(data instanceof TeacherData){
+          if(data.FCMToken == ""){
+            downloadAppDialogRef.current!.showModal()
+          }
+        }
+      } else {
+        logout()
+      }
+    })
+
 
 
   }, [])
@@ -37,6 +57,7 @@ function App() {
     </div>
       <div className='center'>
         <div className='tiles'>
+
           <DashboardTile title='Calendar' description='View your calendar' onClick={() => {
             window.location.href = '/Calendar/'
           }}/>
@@ -62,6 +83,9 @@ function App() {
           await logout()
         }}>Log Out</button>
       </div>
+      <DownloadAppDialog dialogRef={downloadAppDialogRef as LegacyRef<HTMLDialogElement>} close={() => {
+        downloadAppDialogRef.current!.close()
+      }}/>
     </>
   )
 }

@@ -74,6 +74,10 @@
   overflow-y: auto;
 }
 
+.showNameLabel {
+  padding-left: 10px;
+}
+
 .dances {
   max-height: 60vh;
   overflow-y: auto;

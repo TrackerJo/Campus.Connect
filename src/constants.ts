@@ -15,6 +15,7 @@ export type CalendarProps = {
     viewConflicts: (date: Date) => void;
     editEvent: (event: EventImpl) => void;
     viewEvent: (event: EventImpl) => void;
+    canViewConflicts: boolean;
     canOpenContextMenu: boolean;
     isCreating?: boolean;
     
@@ -75,6 +76,7 @@ export type ActTileProps = {
     characters: Character[];
     showGroups: ShowGroup[];
     hasEnsemble: boolean;
+    hasCreatedSchedule?: boolean;
 
 
     
@@ -89,6 +91,7 @@ export type SceneTileProps = {
     characters: Character[];
     showGroups: ShowGroup[];
     hasEnsemble: boolean;
+    hasCreatedSchedule?: boolean;
 
     
 };
@@ -126,6 +129,7 @@ export type CharacterTileProps = {
     isAssign: boolean;
     characters: Character[];
     actors: ActivityMember[];
+    hasCreatedSchedule?: boolean;
 
     
 };
@@ -197,6 +201,7 @@ export type ShowGroupTileProps = {
     showGroups: ShowGroup[];
     hasEnsemble: boolean;
     characters: Character[];
+    hasCreatedSchedule?: boolean;
     actors: ActivityMember[];
 
     
@@ -221,6 +226,7 @@ export type SongTileProps = {
     characters: Character[];
     showGroups: ShowGroup[];
     hasEnsemble: boolean;
+    hasCreatedSchedule?: boolean;
 
     
 };
@@ -239,6 +245,7 @@ export type DanceTileProps = {
     characters: Character[];
     showGroups: ShowGroup[];
     hasEnsemble: boolean;
+    hasCreatedSchedule?: boolean;
 
     
 };
@@ -422,6 +429,11 @@ export type QRCodeDialogProps = {
     dialogRef: LegacyRef<HTMLDialogElement>;
     close: () => void;
     link: string;
+}
+
+export type DownloadAppDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
 }
 
 export class Activity {
@@ -1073,6 +1085,8 @@ export class ActivityEvent {
         const activityEvent = new ActivityEvent();
         activityEvent.name = map.name;
         activityEvent.info = map.info;
+        activityEvent.id = map.id;
+
         activityEvent.location = Location.fromMap(map.location);
         activityEvent.date = EventDate.fromMap(map.date);
         const targets = map.targets;
@@ -1592,20 +1606,20 @@ export class Act {
     name: string;
     scenes: Scene[];
     actId: number;
-    lastUpdated: number;
+    hasCreatedSchedule: boolean;
 
     constructor() {
         this.name = "";
         this.scenes = [];
-        this.lastUpdated = 0;
+        this.hasCreatedSchedule = false;
         this.actId = 0;
     }
 
-    public static fromBlank(name: string, scenes: Scene[], actId: number, lastUpdated: number): Act {
+    public static fromBlank(name: string, scenes: Scene[], actId: number): Act {
         const act = new Act();
         act.name = name;
         act.scenes = scenes;
-        act.lastUpdated = lastUpdated;
+
         act.actId = actId;
         return act;
     }
@@ -1615,7 +1629,7 @@ export class Act {
         "name": this.name,
         "scenes": this.scenes.map((e) => e.toMap()),
         "actId": this.actId,
-        "lastUpdated": this.lastUpdated,
+
         };
     }
 
@@ -1629,7 +1643,7 @@ export class Act {
         }
         act.scenes = formattedScenes;
         act.actId = map.actId;
-        act.lastUpdated = map.lastUpdated;
+
         return act;
     }
 
@@ -1639,20 +1653,21 @@ export class Scene {
     name: string;
     characters: (Character | ShowGroup | EnsembleSection | FullCast)[];
     sceneId: number;
-    lastUpdated: number;
+
+    hasCreatedSchedule: boolean;
 
     constructor() {
         this.name = "";
         this.characters = [];
-        this.lastUpdated = 0;
+        this.hasCreatedSchedule = false;
         this.sceneId = 0;
     }
 
-    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection| FullCast)[], sceneId: number,lastUpdated: number): Scene {
+    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection| FullCast)[], sceneId: number): Scene {
         const scene = new Scene();
         scene.name = name;
         scene.characters = characters;
-        scene.lastUpdated = lastUpdated;
+
         scene.sceneId = sceneId;
         return scene;
     }
@@ -1662,7 +1677,7 @@ export class Scene {
         "name": this.name,
         "characters": this.characters.map((e) => e.toMap()),
         "sceneId": this.sceneId,
-        "lastUpdated": this.lastUpdated,
+
         };
     }
 
@@ -1684,7 +1699,7 @@ export class Scene {
         }
         scene.characters = formattedCharacters;
         scene.sceneId = map.sceneId;
-        scene.lastUpdated = map.lastUpdated;
+
         return scene;
     }
     
@@ -1696,20 +1711,20 @@ export class Dance {
     name: string;
     characters: (Character | ShowGroup | EnsembleSection | FullCast)[];
     danceId: number;
-    lastUpdated: number;
+    hasCreatedSchedule: boolean;
 
     constructor() {
         this.name = "";
         this.characters = [];
-        this.lastUpdated = 0;
+        this.hasCreatedSchedule = false;
         this.danceId = 0;
     }
 
-    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[], danceId: number,lastUpdated: number): Dance {
+    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[], danceId: number): Dance {
         const dance = new Dance();
         dance.name = name;
         dance.characters = characters;
-        dance.lastUpdated = lastUpdated;
+
         dance.danceId = danceId;
         return dance;
     }
@@ -1719,7 +1734,7 @@ export class Dance {
         "name": this.name,
         "characters": this.characters.map((e) => e.toMap()),
         "danceId": this.danceId,
-        "lastUpdated": this.lastUpdated,
+
         };
     }
 
@@ -1740,7 +1755,7 @@ export class Dance {
             }
         }
         dance.characters = formattedCharacters;
-        dance.lastUpdated = map.lastUpdated;
+
         dance.danceId = map.danceId;
         return dance;
     }
@@ -1750,35 +1765,32 @@ export class Song {
     name: string;
     characters: (Character | ShowGroup | EnsembleSection | FullCast)[];
     songId: number;
-    lastUpdated: number;
+    hasCreatedSchedule: boolean;
 
     constructor() {
         this.name = "";
         this.characters = [];
-        this.lastUpdated = 0;
+        this.hasCreatedSchedule = false;
         this.songId = 0;
     }
 
-    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[],songId: number, lastUpdated: number): Song {
+    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[],songId: number): Song {
         const song = new Song();
         song.name = name;
         song.characters = characters;
-        song.lastUpdated = lastUpdated;
+
         song.songId = songId;
         return song;
     }
 
     toMap(): object {
         //print all types of characters
-        for (const character of this.characters) {
-
-
-        }
+        
         return {
         "name": this.name,
         "characters": this.characters.map((e) => e.toMap()),
         "songId": this.songId,
-        "lastUpdated": this.lastUpdated,
+
         };
     }
 
@@ -1799,9 +1811,26 @@ export class Song {
             }
         }
         song.characters = formattedCharacters;
-        song.lastUpdated = map.lastUpdated;
+
         song.songId = map.songId;
         return song;
+    }
+}
+
+export class NotificationUser  {
+    userId: string;
+    email: string;
+
+    constructor() {
+        this.userId = "";
+        this.email = "";
+    }
+
+    public static fromBlank(userId: string, email: string): NotificationUser {
+        const notificationUser = new NotificationUser();
+        notificationUser.userId = userId;
+        notificationUser.email = email;
+        return notificationUser;
     }
 }
 
@@ -1902,7 +1931,7 @@ export class ActivityMember {
     public static fromMap(map: DocumentData): ActivityMember {
         const actor = new ActivityMember();
         actor.name = map.fullname ?? map.name;
-        actor.gender = map.gender;
+        actor.gender = map.gender ?? "male";
         actor.email = map.email;
         actor.phone = map.phoneNumber ?? map.phone;
 
@@ -1979,23 +2008,22 @@ export class Character {
     name: string;
     actor: ActivityMember | null;
     characterId: number;
-    lastUpdated: number;
     type: string;
+    hasCreatedSchedule: boolean;
     
 
     constructor() {
         this.name = "";
         this.actor = new ActivityMember();
-        this.lastUpdated = 0;
+        this.hasCreatedSchedule = false;
         this.characterId = 0;
         this.type = "Character";
     }
 
-    public static fromBlank(name: string, actor: ActivityMember | null, characterId: number, lastUpdated: number): Character {
+    public static fromBlank(name: string, actor: ActivityMember | null, characterId: number): Character {
         const character = new Character();
         character.name = name;
         character.actor = actor;
-        character.lastUpdated = lastUpdated;
         character.characterId = characterId;
         return character;
     }
@@ -2005,7 +2033,6 @@ export class Character {
         "name": this.name,
         "actor": this.actor ? this.actor.toMap() : "null",
         "characterId": this.characterId,
-        "lastUpdated": this.lastUpdated,
         "type": this.type,
         };
     }
@@ -2016,7 +2043,6 @@ export class Character {
 
         character.name = map.name;
         character.actor = map.actor != "null" && !isEmpty(map.actor) ? ActivityMember.fromMap(map.actor) : null;
-        character.lastUpdated = map.lastUpdated;
         character.characterId = map.characterId;
         return character;
     }
@@ -2095,7 +2121,7 @@ export class EnsembleSection {
     includeFemale: boolean;
     includeCustom: boolean;
     customActors: ActivityMember[];
-    lastUpdated: number;
+
     type: string;
 
     constructor() {
@@ -2104,18 +2130,18 @@ export class EnsembleSection {
         this.includeFemale = false;
         this.includeCustom = false;
         this.customActors = [];
-        this.lastUpdated = 0;
+
         this.type = "EnsembleSection";
     }
 
-    public static fromBlank(includeAll: boolean, includeMale: boolean, includeFemale: boolean, includeCustom: boolean, customActors: ActivityMember[],lastUpdated: number): EnsembleSection {
+    public static fromBlank(includeAll: boolean, includeMale: boolean, includeFemale: boolean, includeCustom: boolean, customActors: ActivityMember[]): EnsembleSection {
         const ensembleSection = new EnsembleSection();
         ensembleSection.includeAll = includeAll;
         ensembleSection.includeMale = includeMale;
         ensembleSection.includeFemale = includeFemale;
         ensembleSection.includeCustom = includeCustom;
         ensembleSection.customActors = customActors;
-        ensembleSection.lastUpdated = lastUpdated;
+
         return ensembleSection;
     }
 
@@ -2127,7 +2153,7 @@ export class EnsembleSection {
         "includeCustom": this.includeCustom,
         "customActors": this.customActors.map((e) => e.toMap()) ?? [],
         "type": this.type,
-        "lastUpdated": this.lastUpdated,
+
         };
     
     }
@@ -2146,7 +2172,7 @@ export class EnsembleSection {
         }
         ensembleSection.customActors = formattedCustomActors;
 
-        ensembleSection.lastUpdated = map.lastUpdated;
+
         return ensembleSection;
     }
 
@@ -2157,22 +2183,21 @@ export class ShowGroup {
     name: string;
     characters: (Character | EnsembleSection)[];
     showGroupId: number;
-    lastUpdated: number;
     type: string;
+    hasCreatedSchedule: boolean;
 
     constructor() {
         this.name = "";
         this.characters = [];
         this.showGroupId = 0;
-        this.lastUpdated = 0;
+        this.hasCreatedSchedule = false;
         this.type = "ShowGroup";
     }
 
-    public static fromBlank(name: string, characters: (Character  | EnsembleSection)[],showGroupId: number ,lastUpdated: number): ShowGroup {
+    public static fromBlank(name: string, characters: (Character  | EnsembleSection)[],showGroupId: number ): ShowGroup {
         const showGroup = new ShowGroup();
         showGroup.name = name;
         showGroup.characters = characters;
-        showGroup.lastUpdated = lastUpdated;
         showGroup.showGroupId = showGroupId;
         return showGroup;
     }
@@ -2182,7 +2207,6 @@ export class ShowGroup {
         "name": this.name,
         "characters": this.characters.map((e) => e.toMap()),
         "showGroupId": this.showGroupId,
-        "lastUpdated": this.lastUpdated,
         "type": this.type,
         };
     }
@@ -2201,7 +2225,6 @@ export class ShowGroup {
         }
         showGroup.characters = formattedCharacters;
         showGroup.showGroupId = map.showGroupId;
-        showGroup.lastUpdated = map.lastUpdated;
         return showGroup;
     }
     
@@ -2481,9 +2504,11 @@ export class Resource {
         return {
         "name": this.name,
         "description": this.description,
-        "type": this.type,
+        "resourceType": this.type,
         "link": this.link,
+        "type": this.type,
         "file":  this.file != undefined ? this.file.toMap(): "null",
+        "id": "",
         };
     }
 
@@ -2491,7 +2516,7 @@ export class Resource {
         const resource = new Resource();
         resource.name = map.name;
         resource.description = map.description;
-        resource.type = map.type;
+        resource.type = map.resourceType;
         resource.link = map.link;
         resource.file = map.file != "null" && map.file ? FBFile.fromMap(map.file) : undefined;
         return resource;

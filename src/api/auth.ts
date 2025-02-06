@@ -22,6 +22,9 @@ export async function login(email: string, password: string, schoolId: string){
 }
 
 export async function logout(){
+    localStorage.removeItem("userId");
+
+    localStorage.removeItem("accountType");
     return signOut(auth);
 }
 
@@ -56,6 +59,9 @@ export async function isLoggedIn(setIsLoggedIn: (isLoggedIn: boolean) => void){
               localStorage.setItem("userId", user.uid);
          } else {
               setIsLoggedIn(false);
+              if(window.location.pathname === "/Auth/"){
+                  return;
+              }
               //Set the url to the login page
               window.location.href = "/Auth/?redirect=" + window.location.pathname + window.location.search.replace(/&/g, '~');
          }

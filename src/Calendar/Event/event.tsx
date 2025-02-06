@@ -81,8 +81,8 @@ function App() {
                     {
                         event instanceof Event ? <p>Everyone</p> :
                             event instanceof ActivityEvent ?
-                                event?.generalTarget != "custom" ?
-                                    <p>{event?.generalTarget}</p> :
+                                event?.generalTarget != "custom" && event?.generalTarget != "groups" ?
+                                    <p>{event?.generalTarget.charAt(0).toUpperCase() + event?.generalTarget.slice(1)}</p> :
                                     event?.targets.map((attendee) => {
                                         return <div className={"attendee"}>
                                             <h1>{attendee.name}</h1>

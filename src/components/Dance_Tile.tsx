@@ -23,7 +23,7 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                 <div className="DanceNameDiv">
                     <label htmlFor="Scene">Song Name: </label>
                     <input type="text" name="" id="" value={dance.name} onChange={(val) => {
-                        setDance(Dance.fromBlank(val.target.value, dance.characters,dance.danceId, dance.lastUpdated))
+                        setDance(Dance.fromBlank(val.target.value, dance.characters,dance.danceId))
                     
                     }}/>
                 </div>
@@ -48,9 +48,9 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                                     return newCharacter
                                 }
                                 return c
-                            }),dance.danceId, dance.lastUpdated))
+                            }),dance.danceId))
                         }} removeCharacter={() => {
-                            setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index), dance.danceId,dance.lastUpdated))
+                            setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index), dance.danceId))
                         }}/>
                     else if(character instanceof EnsembleSection)
                         return <EnsembleSectionTile key={index} isGroupChatCreate={false} onAddEnsemble={() => {}} isAssign={false}  ensembleSection={character} isCustom={false} isCreate={isCreate} actors={[]} setEnsembleSection={(newEnsembleSection) => {
@@ -59,13 +59,13 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                                     return newEnsembleSection
                                 }
                                 return c
-                            }),dance.danceId, dance.lastUpdated))
+                            }),dance.danceId))
                     
 
                             
                 }} removeEnsembleSection={() => {
                         setAddedEnsemble(false)
-                        setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index),dance.danceId, dance.lastUpdated))
+                        setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index),dance.danceId))
                 }}/>
                 else if(character instanceof ShowGroup)
                     return <ShowGroupTile key={index} showGroup={character} hasEnsemble={hasEnsemble} characters={characters} actors={[]} isCreate={isCreate} isAssign={isAssign} showGroups={showGroups} setShowGroup={(newShowGroup) => {
@@ -74,14 +74,14 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                                 return newShowGroup
                             }
                             return c
-                        }),dance.danceId, dance.lastUpdated))
+                        }),dance.danceId))
                     }
                     } removeShowGroup={() => {
-                        setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index),dance.danceId, dance.lastUpdated))
+                        setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index),dance.danceId))
                     }}/>
                 else if (character instanceof FullCast)
                     return <FullCastTile key={index} canDelete={true} onDelete={() => {
-                        setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index),dance.danceId, dance.lastUpdated))
+                        setDance(Dance.fromBlank(dance.name, dance.characters.filter((c, i) => i !== index),dance.danceId))
                         setAddedFullCast(false)
                     }}/>
                     })}
@@ -89,7 +89,7 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                 <br />
                  <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
                     const characterId = Math.floor(Math.random() * 100000)
-                      setDance(Dance.fromBlank(dance.name, [...dance.characters, Character.fromBlank("Character 1", null,characterId ,0)],dance.danceId, dance.lastUpdated))
+                      setDance(Dance.fromBlank(dance.name, [...dance.characters, Character.fromBlank("", null,characterId )],dance.danceId))
                       setTimeout(() => {
                         const element = document.getElementById("characters-" + id)!;
                         element.scrollTop = element.scrollHeight;
@@ -101,7 +101,7 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                 <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
                   //Scroll to bottom of characters div
                   const showGroupId = Math.floor(Math.random() * 100000)
-                  setDance(Dance.fromBlank(dance.name, [...dance.characters, ShowGroup.fromBlank("Show Group 1", [],showGroupId, 0)],dance.danceId, dance.lastUpdated))
+                  setDance(Dance.fromBlank(dance.name, [...dance.characters, ShowGroup.fromBlank("", [],showGroupId)],dance.danceId))
                     //get last child of characters div and scroll to it
                     setTimeout(() => {
                         const element = document.getElementById("characters-"+id)!;
@@ -115,7 +115,7 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                     //Scroll to bottom of characters div
 
                     setAddedFullCast(true)
-                    setDance(Dance.fromBlank(dance.name, [...dance.characters, new FullCast()],dance.danceId, dance.lastUpdated))
+                    setDance(Dance.fromBlank(dance.name, [...dance.characters, new FullCast()],dance.danceId))
                     //get last child of characters div and scroll to it
                     setTimeout(() => {
                         const element = document.getElementById("characters-"+id)!;
@@ -138,7 +138,7 @@ function DanceTile({dance, setDance, isCreate, removeDance, isAssign, characters
                         const element2 = document.getElementById("dance-tile-" + dance.danceId)!;
                         element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
-                    setDance(Dance.fromBlank(dance.name, [...dance.characters, EnsembleSection.fromBlank(true, false, false,false, [],0)],dance.danceId, dance.lastUpdated))
+                    setDance(Dance.fromBlank(dance.name, [...dance.characters, EnsembleSection.fromBlank(true, false, false,false, [])],dance.danceId))
                 }}>
                 Add Ensemble
                 </button>}

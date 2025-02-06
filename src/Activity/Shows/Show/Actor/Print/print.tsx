@@ -1,7 +1,7 @@
 import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 
-import '../../../../index.css'
+import '../../../../../index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -17,11 +17,11 @@ import { useRef, useState } from 'react'
 
 
 
-import './actor.css'
+import './print.css'
 
-import { isLoggedIn } from '../../../../api/auth'
-import { Character, Dance, EnsembleSection, FullCast, Scene, Show, ShowGroup, Song, StudentData } from '../../../../constants'
-import { getUserData } from '../../../../api/db'
+import { isLoggedIn } from '../../../../../api/auth'
+import { Character, Dance, EnsembleSection, FullCast, Scene, Show, ShowGroup, Song, StudentData } from '../../../../../constants'
+import { getUserData } from '../../../../../api/db'
 
 
 
@@ -234,6 +234,10 @@ function App() {
                 })
                 setDances(userDances)
                 setLoading(false)
+                setTimeout(() => {
+                    print()
+                    window.close()
+                }, 500)
             });
 
 
@@ -263,7 +267,7 @@ function App() {
           
         </div>
         <div className='center'> 
-        {loading && <div className='loader'></div>}
+        
             {characters.length > 0 && (
                 <div className='section'>
                     <h2>Roles</h2>
@@ -330,16 +334,7 @@ function App() {
                     </div>
                 </div>
             )}
-            <button className='ActionBtn' onClick={() => {
-
-                window.open(`/Activity/Shows/Show/Actor/Print/?activityId=${activityId}&showId=${showId}`, "_blank")
-
-            }}>Print</button>
-            <button className='ActionBtn' onClick={() => {
-                window.location.href = `/Activity/Shows/Show/?activityId=${activityId}&showId=${showId}`
-            }}>
-                Back
-            </button>
+          
         </div>
 
        

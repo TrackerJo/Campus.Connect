@@ -22,7 +22,7 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
                 <div className="SceneNameDiv">
                     <label htmlFor="Scene">Scene Name: </label>
                     <input type="text" name="" id="" value={scene.name} onChange={(val) => {
-                        setScene(Scene.fromBlank(val.target.value, scene.characters, scene.sceneId,scene.lastUpdated))
+                        setScene(Scene.fromBlank(val.target.value, scene.characters, scene.sceneId))
                     
                     }}/>
                 </div>
@@ -47,9 +47,9 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
                                     return newCharacter
                                 }
                                 return c
-                            }), scene.sceneId, scene.lastUpdated))
+                            }), scene.sceneId))
                         }} removeCharacter={() => {
-                            setScene(Scene.fromBlank(scene.name, scene.characters.filter((c, i) => i !== index), scene.sceneId,scene.lastUpdated))
+                            setScene(Scene.fromBlank(scene.name, scene.characters.filter((c, i) => i !== index), scene.sceneId))
                         }}/>
                     else if(character instanceof EnsembleSection)
                         return <EnsembleSectionTile key={index} isGroupChatCreate={false} onAddEnsemble={() => {}} ensembleSection={character} isCustom={false} isCreate={isCreate} isAssign={isAssign} actors={[]} setEnsembleSection={(newEnsembleSection) => {
@@ -58,13 +58,13 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
                                     return newEnsembleSection
                                 }
                                 return c
-                            }),scene.sceneId, scene.lastUpdated))
+                            }),scene.sceneId))
                     
 
                             
                     }} removeEnsembleSection={() => {
                             setAddedEnsemble(false)
-                            setScene(Scene.fromBlank(scene.name, scene.characters.filter((c, i) => i !== index),scene.sceneId, scene.lastUpdated))
+                            setScene(Scene.fromBlank(scene.name, scene.characters.filter((c, i) => i !== index),scene.sceneId))
                     }}/>
                     else if(character instanceof ShowGroup)
                         return <ShowGroupTile key={index} showGroup={character} isCreate={isCreate} isAssign={isAssign} characters={characters} actors={[]} hasEnsemble={hasEnsemble} showGroups={showGroups} setShowGroup={(newShowGroup) => {
@@ -73,22 +73,22 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
                                     return newShowGroup
                                 }
                                 return c
-                            }),scene.sceneId, scene.lastUpdated))
+                            }),scene.sceneId))
                         }
                         } removeShowGroup={() => {
-                            setScene(Scene.fromBlank(scene.name, scene.characters.filter((c, i) => i !== index), scene.sceneId,scene.lastUpdated))
+                            setScene(Scene.fromBlank(scene.name, scene.characters.filter((c, i) => i !== index), scene.sceneId))
                         }}/>
                     else if(character instanceof FullCast)
                         return <FullCastTile key={index} canDelete={true} onDelete={() => {
                             setAddedFullCast(false)
-                            setScene(Scene.fromBlank(scene.name, scene.characters.filter((c, i) => i !== index), scene.sceneId,scene.lastUpdated))
+                            setScene(Scene.fromBlank(scene.name, scene.characters.filter((c, i) => i !== index), scene.sceneId))
                         }}/>
                     })}
                 </div>
                 <br />
                  <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
                     const characterId = Math.floor(Math.random() * 100000)
-                      setScene(Scene.fromBlank(scene.name, [...scene.characters, Character.fromBlank("Character 1", null,characterId ,0)],scene.sceneId, scene.lastUpdated))
+                      setScene(Scene.fromBlank(scene.name, [...scene.characters, Character.fromBlank("", null,characterId )],scene.sceneId))
                       setTimeout(() => {
                         const element = document.getElementById("characters-" + id)!;
                         element.scrollTop = element.scrollHeight;
@@ -100,7 +100,7 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
                 <button className={"ActionBtn " + (addedFullCast ? "disabled" : "")} disabled={addedFullCast} onClick={() => {
                   //Scroll to bottom of characters div
                   const showGroupId = Math.floor(Math.random() * 100000)
-                    setScene(Scene.fromBlank(scene.name, [...scene.characters, ShowGroup.fromBlank("Show Group 1",[],showGroupId, 0)],scene.sceneId, scene.lastUpdated))
+                    setScene(Scene.fromBlank(scene.name, [...scene.characters, ShowGroup.fromBlank("",[],showGroupId)],scene.sceneId))
                     //get last child of characters div and scroll to it
                     setTimeout(() => {
                         const element = document.getElementById("characters-" + id)!;
@@ -122,7 +122,7 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
                             const element2 = document.getElementById("scene-tile-" + scene.sceneId)!;
                             element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                         },100)
-                        setScene(Scene.fromBlank(scene.name, [...scene.characters, EnsembleSection.fromBlank(true, false, false,false,[] ,0)], scene.sceneId,scene.lastUpdated))
+                        setScene(Scene.fromBlank(scene.name, [...scene.characters, EnsembleSection.fromBlank(true, false, false,false,[])], scene.sceneId))
                  }}>
                     Add Ensemble
                  </button>}
@@ -138,7 +138,7 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
                             const element2 = document.getElementById("scene-tile-" + scene.sceneId)!;
                             element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                         },100)
-                        setScene(Scene.fromBlank(scene.name, [...scene.characters, new FullCast()], scene.sceneId,scene.lastUpdated))
+                        setScene(Scene.fromBlank(scene.name, [...scene.characters, new FullCast()], scene.sceneId))
                  }}>
                     Add Full Cast
                  </button>

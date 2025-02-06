@@ -13,7 +13,7 @@ import MobileCalendar from './Mobile_Calendar'
 
 
 
-function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, editEvent, canOpenContextMenu, viewEvent, eventIdClick, isCreating}:CalendarProps) {
+function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, editEvent, canOpenContextMenu, viewEvent, eventIdClick, isCreating, canViewConflicts}:CalendarProps) {
   const [event, setEvent] = useState<EventClickArg>()
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [top, setTop] = useState(0)
@@ -77,17 +77,17 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
               console.log(day)
               console.log(new Date(day!))
               setSelectedDay(day!)
-              setContextMenuItems([
+              setContextMenuItems(canViewConflicts ? [
                 
                 {name: 'View Conflicts', onClick: () => {
                   viewConflicts(new Date(day!))
                   setEvent(undefined)
                   setShowContextMenu(false)
                 }}
-              ])
+              ] : [])
               setTop(event.clientY)
               setLeft(event.clientX)
-              setShowContextMenu(true)
+              setShowContextMenu(canViewConflicts)
             }
             if(event.target.classList.contains('fc-daygrid-day-top')){
               event.preventDefault()
@@ -97,16 +97,16 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
               const date = new Date(day!)
               date.setDate(date.getDate() + 1)
               setSelectedDay(day!)
-              setContextMenuItems([
+              setContextMenuItems(canViewConflicts ? [
                 {name: 'View Conflicts', onClick: () => {
                   viewConflicts(date)
                   setEvent(undefined)
                   setShowContextMenu(false)
                 }}
-              ])
+              ] : [])
               setTop(event.clientY)
               setLeft(event.clientX)
-              setShowContextMenu(true)
+              setShowContextMenu(canViewConflicts)
             }
             if(event.target.classList.contains('fc-daygrid-day-frame')){
               event.preventDefault()
@@ -116,16 +116,16 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
               const date = new Date(day!)
               date.setDate(date.getDate() + 1)
               setSelectedDay(day!)
-              setContextMenuItems([
+              setContextMenuItems(canViewConflicts ? [
                 {name: 'View Conflicts', onClick: () => {
                   viewConflicts(date)
                   setEvent(undefined)
                   setShowContextMenu(false)
                 }}
-              ])
+              ] : [])
               setTop(event.clientY)
               setLeft(event.clientX)
-              setShowContextMenu(true)
+              setShowContextMenu(canViewConflicts)
             }
             if(event.target.classList.contains('fc-timegrid-slot')){
               event.preventDefault()
@@ -169,17 +169,17 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
               console.log(month, year, startingDay, selectedDay)
 
 
-              setContextMenuItems([
+              setContextMenuItems( canViewConflicts ?[
                 {name: 'View Conflicts', onClick: () => {
                   viewConflicts(selectedDay)
                   setEvent(undefined)
                   setShowContextMenu(false)
                  
                 }}
-              ])
+              ] : [])
               setTop(event.clientY)
               setLeft(event.clientX)
-              setShowContextMenu(true)
+              setShowContextMenu(canViewConflicts)
           
               
 
@@ -229,12 +229,18 @@ function Calendar({events, dateClick, eventClick, deleteEvent, viewConflicts, ed
                     setEvent(undefined)
                   
                 }},
-
-                {name: 'View Conflicts', onClick: () => {
-                 viewConflicts(arg.event.start!)
-                 setEvent(undefined)
-                }}
+                
+                
               ])
+              if(canViewConflicts){
+                setContextMenuItems([
+                  ...contextMenuItems,
+                  {name: 'View Conflicts', onClick: () => {
+                    viewConflicts(arg.event.start!)
+                    setEvent(undefined)
+                   }}
+                ])
+              }
               console.log(arg)
               
               setTop(e.clientY + 20)

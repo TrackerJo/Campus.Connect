@@ -80,7 +80,7 @@ function App() {
         </div>
         <div className='center'>
             <div className='tiles'>
-                {accountType == "teacher" && !show?.isCreatingSchedule ? <> <DashboardTile title={"Edit Show Template"} description={"Edit the show template"} onClick={() => {
+                {accountType == "teacher"  ? <> <DashboardTile title={"Edit Show Template"} description={"Edit the show template"} onClick={() => {
                     //Save show to local storage
 
                     localStorage.setItem('show', JSON.stringify(show?.toMap()))

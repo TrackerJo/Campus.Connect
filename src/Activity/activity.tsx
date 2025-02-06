@@ -95,7 +95,9 @@ function App() {
                             window.location.href = `/Activity/Shows/?activityId=${activityId}`
                         }} />
                     ) : (
-                        <DashboardTile title="Events" description='View all current events' onClick={() => {}} />
+                        <DashboardTile title="Events" description='View all current events' onClick={() => {
+                            window.location.href = `/Activity/Events/?activityId=${activityId}`
+                        }} />
                     )}
                     <DashboardTile title="Messages" description='View all messages' onClick={() => {
                         window.location.href = `/Activity/Messages/?activityId=${activityId}`

@@ -24,12 +24,15 @@ function EnsembleSectionDisplayTile({ensembleSection, canDelete, onDelete} :Ense
                 {ensembleSection.includeCustom && <div>
                     <label htmlFor="">Custom Actors: </label>
                     <br />
+                    <div className="AssignedActors">
                     {ensembleSection.customActors.map((actor, index) => {
                         return <div key={index} className="AssignedActor">
                             <label htmlFor="">{actor.name}</label>
 
                         </div>
                     })}
+                    </div>
+                    
                    
                      </div>}
 

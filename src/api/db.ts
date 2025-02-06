@@ -1,4 +1,4 @@
-import { addDoc, arrayRemove, arrayUnion, deleteDoc, DocumentData, getDocs, getFirestore, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, deleteDoc, DocumentData, getDocs, getFirestore, limit, onSnapshot, orderBy, Query, query, QuerySnapshot, setDoc, updateDoc, where } from "firebase/firestore";
 import { app } from "./init";
 import { collection, doc, getDoc } from "firebase/firestore"; 
 import {
@@ -27,7 +27,8 @@ import {
     Character,
     ShowGroup,
     EnsembleSection,
-    FullCast
+    FullCast,
+    NotificationUser
 } from "../constants";
 import { getCurrentUserId } from "./auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -266,8 +267,23 @@ export async function addActivityTheaterEvent(theaterEvent: TheaterEvent) {
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), theaterEvent.activityId);
     const eventsCol = collection(activityDoc, "events");
+    console.log("Adding event");
+    console.log(theaterEvent.toMap());
     const ref = await addDoc(eventsCol, theaterEvent.toMap());
     theaterEvent.id = ref.id;
+    await updateDoc(ref, {
+        id: ref.id
+    });
+}
+
+export async function addActivityEvent(activityEvent: ActivityEvent) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityEvent.activityId);
+    const eventsCol = collection(activityDoc, "events");
+    const ref = await addDoc(eventsCol, activityEvent.toMap());
+    activityEvent.id = ref.id;
     await updateDoc(ref, {
         id: ref.id
     });
@@ -318,6 +334,23 @@ export async function deleteActivityTheaterEvent(theaterEvent: TheaterEvent) {
 
 }
 
+export async function deleteActivityEvent(activityEvent: ActivityEvent) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityEvent.activityId);
+    const eventDoc = doc(collection(activityDoc, "events"), activityEvent.id);
+    await updateDoc(eventDoc, {
+        deleted: true
+    });
+    await httpsCallable(functions, "startDeleteActivityEvent")({
+        activityId: activityEvent.activityId,
+        eventId: activityEvent.id,
+        schoolId: schoolId
+    })
+
+}
+
 export async function getActivityShows(activityId: string): Promise<Show[]> {
     const schoolId = localStorage.getItem("schoolId");
     if (!schoolId) return [];
@@ -346,12 +379,12 @@ export async function saveActivityShowConflictForm(activityId: string, showId: s
 }
 
 export async function getCurrentUserAsActor(): Promise<ActivityMember | null> {
-    const user = await getCurrentUserId();
+    const user =  getCurrentUserId();
     const schoolId = localStorage.getItem("schoolId");
     if (!schoolId) return null;
     const schoolDoc = doc(db, "schools", schoolId);
-    const studentsCol = collection(schoolDoc, "students");
-    const actorDoc = doc(studentsCol, user);
+
+    const actorDoc = doc(schoolDoc, 'students', user!);
     const actorSnap = await getDoc(actorDoc);
     if (!actorSnap.exists()) return null;
     return ActivityMember.fromMap(actorSnap.data());
@@ -517,6 +550,15 @@ export async function editActivityTheaterEvent(theaterEvent: TheaterEvent) {
     await updateDoc(eventDoc, theaterEvent.toMap());
 }
 
+export async function editActivityEvent(activityEvent: ActivityEvent) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityEvent.activityId);
+    const eventDoc = doc(collection(activityDoc, "events"), activityEvent.id);
+    await updateDoc(eventDoc, activityEvent.toMap());
+}
+
 export async function getAllUserEvents(): Promise<(Event | ActivityEvent | TheaterEvent)[]> {
     const schoolId = localStorage.getItem("schoolId");
     const userId = localStorage.getItem("userId");
@@ -534,23 +576,64 @@ export async function getAllUserEvents(): Promise<(Event | ActivityEvent | Theat
     }
     console.log(activitiesSnapshot);
     for (const activityDoc of activitiesSnapshot.docs) {
-        let eventsSnapshot;
+        const eventsSnapshots: QuerySnapshot[] = [];
+
         if(accountType == "student"){
-            eventsSnapshot = await getDocs(query(collection(activityDoc.ref, "events"), where("targetUids", "array-contains", userId)));
+            console.log("Getting events for student");
+            eventsSnapshots.push(await getDocs(query(collection(activityDoc.ref, "events"), where("targetUids", "array-contains", userId))));
+            eventsSnapshots.push(await getDocs(query(collection(activityDoc.ref, "events"), where("generalTarget", "==", "students"))));
+
         } else {
-            eventsSnapshot = await getDocs(collection(activityDoc.ref, "events"));
+            console.log("Getting events for teacher");
+            eventsSnapshots.push(await getDocs(collection(activityDoc.ref, "events")));
         }
-        for (const eventDoc of eventsSnapshot.docs) {
-            const event = eventDoc.data();
-            console.log(event);
-            if (event.type == "activity-theater-event") {
-                events.push(TheaterEvent.fromMap(event));
-            } else {
-                events.push(ActivityEvent.fromMap(event));
+        for (const eventsSnapshot of eventsSnapshots) {
+            for (const eventDoc of eventsSnapshot.docs) {
+                const event = eventDoc.data();
+                console.log(event);
+                if (event.type == "activity-theater-event") {
+                    events.push(TheaterEvent.fromMap(event));
+                } else {
+                    events.push(ActivityEvent.fromMap(event));
+                }
             }
         }
     }
     return events;
+}
+
+export async function getActivityEvents(activityId: string) : Promise<(ActivityEvent )[]> {
+    const schoolId = localStorage.getItem("schoolId");
+    const userId = localStorage.getItem("userId");
+    const accountType = localStorage.getItem("accountType");
+    if (!schoolId || !userId) return [];
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+
+    const eventsSnapshots: QuerySnapshot[] = [];
+    const events: (ActivityEvent)[] = [];
+    if(accountType == "student"){
+        console.log("Getting events for student");
+        eventsSnapshots.push(await getDocs(query(collection(activityDoc, "events"), where("targetUids", "array-contains", userId))));
+        eventsSnapshots.push(await getDocs(query(collection(activityDoc, "events"), where("generalTarget", "==", "students"))));
+
+    } else {
+        console.log("Getting events for teacher");
+        eventsSnapshots.push(await getDocs(collection(activityDoc, "events")));
+    }
+    for (const eventsSnapshot of eventsSnapshots) {
+        for (const eventDoc of eventsSnapshot.docs) {
+            const event = eventDoc.data();
+            console.log(event);
+            event["id"] = eventDoc.id;
+            console.log(event);
+            events.push(ActivityEvent.fromMap(event));
+            
+        }
+    }
+    return events;
+
+
 }
 
 export async function getUserConflictFormResponse(activityId: string, showId: string): Promise<ConflictResponse | null> {
@@ -769,7 +852,7 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
             messageId: messageRef.id
         });
         //Send email
-        sendGroupChatMessage(message, [GroupChatMember.fromMap(recipientData)], gc, activityName);
+        sendGroupChatMessage(message, [NotificationUser.fromBlank(recipientData.userId, recipientData.email)], gc, activityName);
         return;
     }
     //Get group chat
@@ -787,19 +870,19 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
         const activity = await getActivity(activityId);
         if (!activity) return;
         if(gc.generalTarget == "everyone") {
-            let targets: GroupChatMember[] = activity.students.map((student) => GroupChatMember.fromMap(student));
-            targets = targets.concat(activity.teachers.map((teacher) => GroupChatMember.fromMap(teacher)));
-            targets = targets.concat(activity.parents.map((parent) => GroupChatMember.fromMap(parent)));
+            let targets: NotificationUser[] = activity.students.map((student) => NotificationUser.fromBlank(student.userId, student.email));
+            targets = targets.concat(activity.teachers.map((teacher) => NotificationUser.fromBlank(teacher.userId, teacher.email)));
+            targets = targets.concat(activity.parents.map((parent) => NotificationUser.fromBlank(parent.userId, parent.email)));
             //Remove sender
             targets = targets.filter((target) => target.userId != message.senderUid);
             sendGroupChatMessage(message, targets, gc, activity.name);
         } else if(gc.generalTarget == "students") {
-            let targets: GroupChatMember[] = activity.students.map((student) => GroupChatMember.fromMap(student));
+            let targets: NotificationUser[] = activity.students.map((student) => NotificationUser.fromBlank(student.userId, student.email));
             //Remove sender
             targets = targets.filter((target) => target.userId != message.senderUid);
             sendGroupChatMessage(message, targets, gc, activity.name);
         } else if(gc.generalTarget == "parents") {
-            let targets: GroupChatMember[] = activity.parents.map((parent) => GroupChatMember.fromMap(parent));
+            let targets: NotificationUser[] = activity.parents.map((parent) => NotificationUser.fromBlank(parent.userId, parent.email));
             //Remove sender
             targets = targets.filter((target) => target.userId != message.senderUid);
             sendGroupChatMessage(message, targets, gc, activity.name);
@@ -811,11 +894,12 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
     if(gc.generalTarget == "direct") {
         const otherMember = gc.members.find((member) => member.userId != userId);
         if (!otherMember) return;
-        sendGroupChatMessage(message, [otherMember], gc, activityName);
+        sendGroupChatMessage(message, [NotificationUser.fromBlank(otherMember.userId, otherMember.email)], gc, activityName);
         return;
     }
     if(gc.generalTarget == "custom") {
-        sendGroupChatMessage(message, gc.members.filter((member) => member.userId != userId), gc, activityName);
+        const targets: NotificationUser[] = gc.members.filter((member) => member.userId != userId).map((member) => NotificationUser.fromBlank(member.userId, member.email));
+        sendGroupChatMessage(message, targets, gc, activityName);
         return;
     }
     
@@ -1175,6 +1259,144 @@ export async function editShowEventsCharacters(show: Show) {
         const targets: ActivityMember[] = [];
   
         for(const character of event.characters){
+            if(character instanceof FullCast){
+                for(const actor of show!.ensemble!.actors){
+                    targets.push(actor)
+                }
+                for(const character of show!.characters){
+                    if(targets.find((e) => e.userId == character.actor!.userId) != undefined){
+                        continue
+                    }
+                    targets.push(character.actor!)
+                }
+                break
+            } 
+            if(character instanceof Character){
+                if(targets.find((e) => e.userId == character.actor!.userId) != undefined){
+                    continue
+                }
+                targets.push(character.actor!)
+            }
+            if(character instanceof EnsembleSection){
+                if(character.includeAll){
+                
+                    for(const actor of show!.ensemble!.actors){
+                        if(targets.find((e) => e.userId == actor.userId) != undefined){
+                            continue
+                        }
+                        targets.push(actor)
+                    }
+                } else if(character.includeMale){
+                    for(const actor of show!.ensemble!.actors){
+                        if(actor.gender == "male"){
+                            if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                continue
+                            }
+                            targets.push(actor)
+                        } 
+                    }
+                } else if(character.includeFemale){
+                    for(const actor of show!.ensemble!.actors){
+                        if(actor.gender == "female"){
+                            if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                continue
+                            }
+                            targets.push(actor)
+                        }
+                    }
+                } else if(character.includeCustom){
+                    for(const actor of character.customActors){
+                        if(targets.find((e) => e.userId == actor.userId) != undefined){
+                            continue
+                        }
+                        targets.push(actor)
+                    }
+                }
+
+            }
+            if(character instanceof ShowGroup){
+                for(const showCharacter of character.characters){
+                    if(showCharacter instanceof Character){
+                        if(targets.find((e) => e.userId == showCharacter.actor!.userId) != undefined){
+                            continue
+                        }
+                        targets.push(showCharacter.actor!)
+                    }
+                    if(showCharacter instanceof EnsembleSection){
+                        if(showCharacter.includeAll){
+                            for(const actor of show!.ensemble!.actors){
+                                if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                    continue
+                                }
+                                targets.push(actor)
+                            }
+                        } else if(showCharacter.includeMale){
+                            for(const actor of show!.ensemble!.actors){
+                                if(actor.gender == "male"){
+                                    if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                        continue
+                                    }
+                                    targets.push(actor)
+                                }
+                            }
+                        } else if(showCharacter.includeFemale){
+                            for(const actor of show!.ensemble!.actors){
+                                if(actor.gender == "female"){
+                                    if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                        continue
+                                    }
+                                    targets.push(actor)
+                                }
+                            }
+                        } else if(showCharacter.includeCustom){
+                            for(const actor of showCharacter.customActors){
+                                if(targets.find((e) => e.userId == actor.userId) != undefined){
+                                    continue
+                                }
+                                targets.push(actor)
+                            }
+                        }
+                    }
+                }
+
+            }
+
+        }
+        event.targets = targets;
+        event.lastUpdated = Date.now();
+        await updateDoc(doc.ref, event.toMap());
+    }
+}
+
+export async function editShowEventsCharactersTemplate(show: Show) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), show.activityId);
+    const eventsQuery = query(collection(activityDoc, "events"), where("showId", "==", show.id));
+    const eventsSnap = await getDocs(eventsQuery);
+    for (const doc of eventsSnap.docs) {
+        const event = TheaterEvent.fromMap(doc.data());
+        const newCharacters: (Character | ShowGroup)[] = [];
+        for (let i = 0; i < event.characters.length; i++) {
+            const character = event.characters[i];
+            if(character instanceof Character){
+                const char = show.characters.find((c) => c.characterId == character.characterId);
+                if(char){
+                    newCharacters.push(char);
+                }
+            } else if(character instanceof ShowGroup){
+                const sg = show.showGroups.find((g) => g.showGroupId == character.showGroupId);
+                if(sg){
+                    newCharacters.push(sg);
+                }
+            }
+            event.characters = newCharacters;
+            
+        }
+        const targets: ActivityMember[] = [];
+  
+        for(const character of newCharacters){
             if(character instanceof FullCast){
                 for(const actor of show!.ensemble!.actors){
                     targets.push(actor)

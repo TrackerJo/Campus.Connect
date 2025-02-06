@@ -5,7 +5,7 @@ import CharacterTile from "./Character_Tile"
 import EnsembleSectionTile from "./Ensemble_Section_Tile"
 import { useEffect, useState } from "react"
 
-function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAssign, showGroups, hasEnsemble, characters, actors} :ShowGroupTileProps){
+function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAssign, showGroups, hasEnsemble, characters, actors, hasCreatedSchedule} :ShowGroupTileProps){
     const [addedEnsemble, setAddedEnsemble] = useState(false)
     const [id, setId] = useState(0)
 
@@ -20,20 +20,20 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                     <label htmlFor="ShowGroup">Show Group: </label>
                     {isCreate ?
                     <input type="text" name="" id="" value={showGroup.name} onChange={(val) => {
-                        setShowGroup(ShowGroup.fromBlank(val.target.value, showGroup.characters,showGroup.showGroupId,showGroup.lastUpdated))
+                        setShowGroup(ShowGroup.fromBlank(val.target.value, showGroup.characters,showGroup.showGroupId))
                     }}/>: isAssign ? 
                     <>
                     <label htmlFor="">{showGroup.name}</label>
                     </>
                     :
                     //Dropdown for selecting existing characters
-                    <select name="show groups" id="showGroups" value={showGroup.name} onChange={(val) => {
+                    <select name="show groups" id="showGroups" value={showGroup.showGroupId} onChange={(val) => {
                         if(val.target.value == "null") return
-                        setShowGroup(showGroups.find((e) => e.name == val.target.value)!)
+                        setShowGroup(showGroups.find((e) => e.showGroupId == parseInt(val.target.value))!)
                     }}>
                         <option value={"null"}>Select a show group</option>
                         {showGroups.map((c, index) => {
-                            return <option value={c.name} key={index}>{c.name}</option>
+                            return <option value={c.showGroupId} key={index}>{c.name}</option>
                         })}
                         </select>
                     }
@@ -52,15 +52,15 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
 
                 {showGroup.characters.map((character, index) => {
                     if(character instanceof Character && !isAssign)
-                        return <CharacterTile key={index} character={character} actors={[]} isCreate={false} characters={characters} isAssign={isAssign} setCharacter={(newCharacter) => {
+                        return <CharacterTile key={index} character={character} actors={[]} isCreate={false} characters={characters} isAssign={isAssign} hasCreatedSchedule={hasCreatedSchedule} setCharacter={(newCharacter) => {
                             setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.map((c, i) => {
                                 if (i === index) {
                                     return newCharacter
                                 }
                                 return c
-                            }),showGroup.showGroupId, showGroup.lastUpdated))
+                            }),showGroup.showGroupId))
                         }} removeCharacter={() => {
-                            setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.filter((c, i) => i !== index),showGroup.showGroupId, showGroup.lastUpdated))
+                            setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.filter((c, i) => i !== index),showGroup.showGroupId))
                         }}/>
                     else if(character instanceof EnsembleSection)
                         return <EnsembleSectionTile key={index} isGroupChatCreate={false} onAddEnsemble={() => {}} ensembleSection={character} isAssign={isAssign} actors={actors} isCustom={false} isCreate={true} setEnsembleSection={(newEnsembleSection) => {
@@ -71,7 +71,7 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                                     return newEnsembleSection
                                 }
                                 return c
-                            }), showGroup.showGroupId,showGroup.lastUpdated);
+                            }), showGroup.showGroupId);
                             console.log("NEW SHOW GROUP")
                             console.log(newShowGroup.toMap())
                             setShowGroup(newShowGroup)
@@ -80,7 +80,7 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                             
                 }} removeEnsembleSection={() => {
                         setAddedEnsemble(false)
-                        setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.filter((c, i) => i !== index),showGroup.showGroupId, showGroup.lastUpdated))
+                        setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.filter((c, i) => i !== index),showGroup.showGroupId))
                 }}/>
                 
                     })}
@@ -89,7 +89,9 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                 {isCreate && <>
                 <button className="ActionBtn" onClick={() => {
                         const characterId = Math.floor(Math.random() * 100000)
-                        setShowGroup(ShowGroup.fromBlank(showGroup.name, [...showGroup.characters, Character.fromBlank("Character 1", null,characterId ,0)], showGroup.showGroupId,showGroup.lastUpdated))
+                        const newShowGroup = ShowGroup.fromBlank(showGroup.name, [...showGroup.characters, Character.fromBlank("", null,characterId )], showGroup.showGroupId)
+                        newShowGroup.hasCreatedSchedule = hasCreatedSchedule ?? false
+                        setShowGroup(newShowGroup)
                         setTimeout(() => {
                         const element = document.getElementById("characters-" + id)!;
                         element.scrollTop = element.scrollHeight;
@@ -107,7 +109,9 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
                             const element = document.getElementById("characters-" + id)!;
                         element.scrollTop = element.scrollHeight;
                         },100)
-                        setShowGroup(ShowGroup.fromBlank(showGroup.name, [...showGroup.characters, EnsembleSection.fromBlank(true, false, false,false,[] ,0)],showGroup.showGroupId, showGroup.lastUpdated))
+                        const newShowGroup = ShowGroup.fromBlank(showGroup.name, [...showGroup.characters, EnsembleSection.fromBlank(true, false, false,false,[] )],showGroup.showGroupId)
+                        newShowGroup.hasCreatedSchedule = hasCreatedSchedule ?? false
+                        setShowGroup(newShowGroup)
                     }}>
                     Add Ensemble
                     </button>}
