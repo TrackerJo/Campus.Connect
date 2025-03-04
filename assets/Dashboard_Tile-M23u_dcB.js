@@ -1,1 +1,0 @@
-import{j as s}from"./index-CTdd_IJn.js";function d({title:i,description:e,onClick:n,header:r}){return s.jsxs("div",{className:"dashboard-tile",onClick:n,children:[r&&s.jsx("h2",{children:r}),s.jsx("h1",{children:i}),s.jsx("p",{children:e})]})}export{d as D};
