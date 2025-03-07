@@ -195,3 +195,56 @@ input, select, textarea {
     border: 1px solid #FF6B35;
     margin:  10px;
   }
+
+  .event-dates {
+    display: flex;
+    /* justify-content: center; */
+    align-items: center;
+    flex-direction: column;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 400px;
+  }
+
+  .event-date {
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
+    width: 300px;
+    height: 100%;
+    gap: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    color: white;
+    padding: 10px;
+    border: 1px solid #FF6B35;
+    margin:  10px;
+    justify-content: space-evenly;
+  }
+
+  .event-date-title {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 80%;
+  }
+  .event-date-icon {
+    width: 20px;
+    height: 20px;
+    
+    cursor: pointer;
+  }
+
+  .datePicker {
+    display: flex;
+    flex-direction: column  ;
+    align-items: center;
+  }
+
+  .datePicker.hidden {
+    display: none;
+  }

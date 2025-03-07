@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityMember,AddUserDialogProps } from "../constants";
 
 import "./Add_User_Dialog.css"
 
-function AddUserDialog({members, dialogRef, addUser, close, addedMembers}: AddUserDialogProps){
-    const [searchResults, setSearchResults] = useState<(ActivityMember | ActivityMember)[]>([])
+function AddUserDialog({students, teachers, parents, dialogRef, addUser, close, addedMembers}: AddUserDialogProps){
+    const [searchResults, setSearchResults] = useState<(ActivityMember)[]>([])
     const [searchString, setSearchString] = useState<string>("")
+    const [members, setMembers] = useState<(ActivityMember)[]>(students)
+    const [viewState, setViewState] = useState<"students" | "parents" | "teachers">( "students")
 
 
     function search(searchString: string){
@@ -24,6 +26,21 @@ function AddUserDialog({members, dialogRef, addUser, close, addedMembers}: AddUs
 
     }
 
+    useEffect(() => {
+        search(searchString)
+    }
+    , [members])
+
+    useEffect(() => {
+        if(viewState == "students"){
+            setMembers(students)
+        } else if(viewState == "parents"){
+            setMembers(parents)
+        } else {
+            setMembers(teachers.map((teacher) => teacher.toActivityMember()))
+        }
+    }, [viewState])
+
     return (
         <dialog ref={dialogRef} >
             <div className="AddUserDialog">
@@ -39,6 +56,22 @@ function AddUserDialog({members, dialogRef, addUser, close, addedMembers}: AddUs
 
                 }
             }/>
+            <div className='sections'>
+                <h2 className={'section ' + (viewState == "students" ? "selected" : "")}  onClick={() => {
+                    setViewState("students")
+                    
+                }}>Students</h2>
+                {parents.length > 0 && <h2 className={'section ' + (viewState == "parents" ? "selected" : "")} onClick={() => {
+                    setViewState("parents")
+                    
+                }}>Parents</h2>}
+                {teachers.length > 0 && <h2 className={'section ' + (viewState == "teachers" ? "selected" : "")} onClick={() => {
+                    setViewState("teachers")
+                    
+                }}>Teachers</h2>}
+               
+
+            </div>
 
             <h3>Results</h3>
             <div className="UserResults">

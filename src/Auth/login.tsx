@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from 'react'
+import { StrictMode, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import '../index.css'
@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')!).render(
 )
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useRef, useState } from 'react'
+import {  useState } from 'react'
 
 
 
@@ -18,11 +18,12 @@ import { useRef, useState } from 'react'
 
 
 import './login.css'
-import { isLoggedIn, login, logout, register } from '../api/auth'
-import { createUser, getIfUserIsInSchool, getSchools } from '../api/db'
+import { isLoggedIn, login, logout, register, sendPasswordReset } from '../api/auth'
+import { createActivityJoinCode, createCompany, createUser, getCompanies, getIfUserIsInSchool, getSchools } from '../api/db'
 import { DocumentData, GeoPoint } from 'firebase/firestore'
-import { Location, StudentData, TeacherData } from '../constants'
-import { getDistanceFromLatLong, getLatLongFromAddress } from '../api/distance'
+import { Company, CompanyType, EmployerData, Location, StudentData, TeacherData } from '../constants'
+import AddLocationDialog from '../components/Add_Location_Dialog'
+
 
 
 function App() {
@@ -30,10 +31,12 @@ function App() {
     const [password, setPassword] = useState('')
     const [isLoggingIn, setIsLoggingIn] = useState(false)
     const [schools, setSchools] = useState<DocumentData[]>([])
+    const [companies, setCompanies] = useState<Company[]>([])
+    const [selectedCompany, setSelectedCompany] = useState('')
     const [selectedSchool, setSelectedSchool] = useState('')
-    const [loginStage, setLoginStage] = useState<"accountType" | "login" | "createAccount">("accountType")
-    const [accountType, setAccountType] = useState<"student" | "teacher">("student")
-    const [createAccountStage, setCreateAccountStage] = useState<"LoginInfo" | "SchoolCode" | "HomeAddress">("LoginInfo")
+    const [loginStage, setLoginStage] = useState<"accountType" | "login" | "createAccount" | "forgotPassword">("accountType")
+    const [accountType, setAccountType] = useState<"student" | "teacher" | "employer">("student")
+    const [createAccountStage, setCreateAccountStage] = useState<"LoginInfo" | "SchoolCode" | "HomeAddress" | "CreateOrJoinCompany"  | "CreateCompany">("LoginInfo")
     const [fullName, setFullName] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
     const [sex, setSex] = useState('')
@@ -43,8 +46,17 @@ function App() {
     const [homeCity, setHomeCity] = useState('')
     const [homeState, setHomeState] = useState('')
     const [homeZip, setHomeZip] = useState('')
+    const [companyJoinCode, setCompanyJoinCode] = useState('')
+    const [companyName, setCompanyName] = useState('')
+    const [companyLocation, setCompanyLocation] = useState<Location | undefined>(undefined)
+    const [companyType, setCompanyType] = useState<CompanyType | undefined>(undefined)
+    const [company, setCompany] = useState<Company | undefined>(undefined)
+    const addLocationDialogRef = useRef<HTMLDialogElement>(null)
+    const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
 
     const [skippedHomeAddress, setSkippedHomeAddress] = useState(false)
+    const [loadingCreateCompany, setLoadingCreateCompany] = useState(false)
+    const [loadingJoinCompany, setLoadingJoinCompany] = useState(false)
 
     const statesAbb = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
     const statesFull = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"]
@@ -73,7 +85,7 @@ function App() {
             alert("Error creating account")
             return
         }
-        const homeLocation = Location.fromBlank("home", fullHomeAddress, new GeoPoint(location.lat, location.lon))
+        const homeLocation = Location.fromBlank("home", fullHomeAddress, new GeoPoint(location.lat, location.lon), false)
 
         const student = StudentData.fromBlank(uid as string, school.schoolId, "unknown", distanceToSchool, "", "student", phoneNumber.replace("none", ""),sex as "male" | "female" ,"unknown", fullName.toLowerCase().trim(), fullName.trim(), email.trim(), {}, homeLocation)
         await createUser("student", student)
@@ -106,12 +118,32 @@ function App() {
             })
             const fetechSchools = await getSchools();
             setSchools(fetechSchools)
+            const fetchedCompanies = await getCompanies();
+            console.log(fetchedCompanies)
+            setCompanies(fetchedCompanies)
+
             const schooldId = localStorage.getItem("schoolId")
-            if(schooldId){
+            if(schooldId && schooldId != ""){
                 setSelectedSchool(schooldId)
-                return
+
+            } else {
+                setSelectedSchool(fetechSchools[0].schoolId)
             }
-            setSelectedSchool(fetechSchools[0].schoolId)
+            const companyId = localStorage.getItem("companyId")
+            if(companyId && companyId != ""){
+
+                setSelectedCompany(companyId)
+
+            } else {
+                if(fetchedCompanies.length > 0){
+                    console.log(fetchedCompanies[0].id)
+                    
+                    setSelectedCompany(fetchedCompanies[0].id)
+                }
+            }
+            
+            
+            
         }
         fetechSchools()
 
@@ -132,19 +164,26 @@ function App() {
                 setAccountType('teacher')
                 setLoginStage('login')
             }}>Teacher</button>
+            <button className='actionBtn' onClick={() => {
+                setAccountType('employer')
+                setLoginStage('login')
+            }}>Employer</button>
             </> : loginStage == "login" ? <>
              <h1>Login</h1>
             
-            <input type='text' placeholder='Email' onChange={(e) => {
+            <input type='text' placeholder='Email' value={email} onChange={(e) => {
                 setEmail(e.target.value)
             }}/>
 
             <input type='password' placeholder='Password' onChange={(e) => {
                 setPassword(e.target.value)
             }}/>
-            <label htmlFor="">Select your School</label>
+            <label htmlFor="" className='forgotPassword' onClick={() => {
+                setLoginStage('forgotPassword')
+            }}>Forgot Password?</label>
+            <label htmlFor="">Select your {accountType != "employer" ? "School" : "Company"}</label>
 
-            <select onChange={
+            {accountType != "employer" ? <select onChange={
                 (e) => {
                     setSelectedSchool(e.target.value)
                 }
@@ -152,22 +191,65 @@ function App() {
                 {schools.map((school) => {
                     return <option value={school.schoolId}>{school.schoolName}</option>
                 })}
-            </select>
+            </select> : <select onChange={
+                (e) => {
+                    setSelectedCompany(e.target.value)
+                }
+            } value={selectedCompany}>
+                {companies.map((company) => {
+                    return <option value={company.id}>{company.name}</option>
+                })}
+            </select>}
             {isLoggingIn ?  <div className="center"><div className="loader"></div></div> : <button className="actionBtn" onClick={async () => {
                 setIsLoggingIn(true)
-                const checkPassword = await login(email, password, selectedSchool)
+                const checkPassword = await login(email, password, selectedSchool, selectedCompany)
                 if(!checkPassword){
                 setIsLoggingIn(false)
                 alert('Wrong email or password')
                 return
                 }
                 const userId = localStorage.getItem("userId")!
-                const inSchool = await getIfUserIsInSchool(selectedSchool, userId, accountType)
-                if(!inSchool){
-                    setIsLoggingIn(false)
-                    alert("You are not in this school")
-                    await logout()
-                    return
+                if(accountType == "employer"){
+                    const company = companies.find((company) => company.id == selectedCompany)
+                    console.log(company)
+                    console.log(selectedCompany)
+                    if(!company){
+                        setIsLoggingIn(false)
+                        alert("Error logging in as employer")
+                        return
+                    }
+                    const inCompany = company.employers.find((employer) => employer.uid == userId)
+                    if(!inCompany){
+                        setIsLoggingIn(false)
+                        alert("You are not in this company")
+                        await logout()
+                        return
+                    }
+                } else {
+                    let inSchool = false;
+                    const school  = schools.find((school) => school.schoolId == selectedSchool)
+                    if(!school){
+                        setIsLoggingIn(false)
+                        alert("Error logging in")
+                        return
+                    }
+                    if(accountType == "teacher"){
+                        const teacher = school.teachers.find((teacher) => teacher.uid == userId)
+                        if(teacher){
+                            inSchool = true
+                        }
+                    } else {
+                        const student = school.students.find((student) => student.uid == userId)
+                        if(student){
+                            inSchool = true
+                        }
+                    }
+                    if(!inSchool){
+                        setIsLoggingIn(false)
+                        alert("You are not in this school")
+                        await logout()
+                        return
+                    }
                 }
                 localStorage.setItem("accountType", accountType);
 
@@ -184,11 +266,47 @@ function App() {
 
 
             }}>Login</button>}
-            <button className='actionBtn' onClick={() =>{
+            {/* <button className='actionBtn' onClick={() =>{
                 setLoginStage('createAccount')
-            }}>Create an Account</button>
-        
-        </> : accountType == "teacher" ? <> 
+            }}>Create an Account</button> */}
+            <p>
+            <label htmlFor="" className='info' onClick={() => {
+
+}}>Don't have an account? </label>
+ <label htmlFor="" className='ActionText' onClick={() => {
+                setLoginStage('createAccount')
+}}>Click here to create an account!</label>
+            </p>
+            <p>
+            <label htmlFor="" className='info' onClick={() => {
+
+}}>Signing in as a {accountType}, </label>
+ <label htmlFor="" className='ActionText' onClick={() => {
+                setLoginStage('accountType')
+}}>back?</label>
+            </p>
+       
+        </> : loginStage == "forgotPassword" ? <><h1>Forgot Password</h1>
+            
+            <input type='text' placeholder='Email' onChange={(e) => {
+                setForgotPasswordEmail(e.target.value)
+            }}/>
+
+            {isLoggingIn ?  <div className="center"><div className="loader"></div></div> : <button className="actionBtn" onClick={async () => {
+                setIsLoggingIn(true)
+                const sent = await sendPasswordReset(forgotPasswordEmail)
+                if(!sent){
+                    alert("Error sending email")
+                    setIsLoggingIn(false)
+                    return
+                }
+                setForgotPasswordEmail('')
+                alert("Email sent")
+                setLoginStage('login')
+                setIsLoggingIn(false)
+
+
+            }}>Send Password Request Email</button>}</> :  accountType == "teacher" ? <> 
         <h1>Create Account</h1>
         <input type='text' placeholder='Full Name' onChange={(e) => {
             setFullName(e.target.value)
@@ -327,7 +445,7 @@ function App() {
                 alert("Password must be at least 6 characters")
                 return
             }
-            if(sex == ""){
+            if(sex == "" && accountType != "employer"){
                 alert("Please select your sex")
                 return
             }
@@ -335,6 +453,10 @@ function App() {
             if(school != undefined){
                 setIsLoggingIn(true)
                 createStudentAccount(school)
+                return
+            }
+            if(accountType == "employer"){
+                setCreateAccountStage('CreateOrJoinCompany')
                 return
             }
             setCreateAccountStage('SchoolCode')
@@ -355,7 +477,8 @@ function App() {
             setSkippedHomeAddress(true)
             setCreateAccountStage('SchoolCode')
         }}>Skip</label> */}
-        </> : <>
+        </> : createAccountStage == "CreateOrJoinCompany" ? <><h1>Create Account</h1>{createAccountJoinOrCreateCompany()}</>  : createAccountStage == "CreateCompany" ? <><h1>Create Account</h1>{createAccountCreateCompany()}</> :
+         <>
         <h1>Create Account</h1>
         {createAccountSchoolCode()}
         
@@ -393,7 +516,12 @@ function App() {
         </div>
     </div>
 
-
+        <AddLocationDialog addLocation={(location) => {
+            setCompanyLocation(location)
+            addLocationDialogRef.current!.close()
+        }} close={() => {
+            addLocationDialogRef.current!.close()
+        }} dialogRef={addLocationDialogRef} savedLocations={[]} />
     </>
   )
 
@@ -437,13 +565,13 @@ function App() {
         <input type='text' placeholder='Phone Number' onChange={(e) => {
             setPhoneNumber(e.target.value)
         }}/>
-        <select onChange={(e) => {
+       {accountType != "employer" && <select onChange={(e) => {
             setSex(e.target.value)
         }}>
             <option value="" selected>Select your Sex</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
-        </select></>
+        </select>}</>
         )
 
     }
@@ -459,6 +587,164 @@ function App() {
             <input type='text' placeholder='School Email' value={schoolEmail} onChange={(e) => {
                 setSchoolEmail(e.target.value)
             } }/></>
+        )
+    
+    }
+
+    function createAccountJoinOrCreateCompany() {
+        return (
+            <>
+            <button className='actionBtn' onClick={() => {
+                setCreateAccountStage('CreateCompany')
+            }}>Create a Company</button>
+    
+            <p>Or</p>
+    
+            <input type='text' placeholder='Compnay Join Code' value={companyJoinCode} onChange={(e) => {
+                setCompanyJoinCode(e.target.value)
+            } }/>
+            {loadingJoinCompany ? <div className={"center"}>
+            <div className='loader'></div>
+        </div>  :<button className='actionBtn' onClick={async () => {
+            if(companyJoinCode == ""){
+                alert("Please enter a company join code")
+                return
+            }
+            setLoadingJoinCompany(true)
+            const company = companies.find((company) => company.joinCode == companyJoinCode)
+            if(!company){
+                alert("Invalid join code")
+                setLoadingJoinCompany(false)
+                return
+            }
+            setCompany(company)
+            localStorage.setItem("companyId", company.id)
+            const registerResult = await register(email, password)
+            if(!registerResult){
+                alert("Error creating account: " + registerResult)
+                setLoadingJoinCompany(false)
+                return
+            }
+            const employer = new EmployerData({
+                uid: registerResult as string,
+                companyId: company.id,
+                email: email,
+                fullname: fullName,
+                phoneNumber: phoneNumber,
+                accountType: "employer",
+                FCMToken: ""
+
+
+            })
+            await createUser("employer", employer)
+            localStorage.setItem("accountType", "employer")
+            const urlParams = new URLSearchParams(window.location.search)
+            const redirect = urlParams.get('redirect')
+            if(redirect){
+                window.location.href = redirect.replace(/~/g, "&")
+            } else {
+                window.location.href = '/'
+            }
+            
+
+            setLoadingJoinCompany(false)
+
+        }}>Join Company</button>}</>
+            
+        )
+    
+    }
+
+    function createAccountCreateCompany() {
+        return (
+            <>
+            <h2>Create a company</h2>
+            <input type='text' placeholder='Company Name' value={companyName} onChange={(e) => {
+                setCompanyName(e.target.value)
+            }}/>
+            <div className='form-element'>
+                <label htmlFor="">Company Location: </label>
+                {companyLocation ? <label htmlFor="">{companyLocation.name} ({companyLocation.address})</label> : <label htmlFor="">Location not set</label>}
+                <button className='actionBtn' onClick={() => {
+                    //setCompanyLocation()
+                    addLocationDialogRef.current!.showModal()
+                }}>Set Location</button>
+            </div>
+            <div className='form-element'>
+                <label htmlFor="">Company Type: </label>
+                <select name="companyType" id="" value={companyType} onChange={(e) => {
+                    setCompanyType(e.target.value as CompanyType)
+                }}>
+                    <option value={undefined} selected>Select Company Type</option>
+                    <option value={CompanyType.Job}>Job</option>
+                    <option value={CompanyType.Volunteer}>Volunteer</option>
+                    
+                </select>
+
+            </div>
+           
+            {loadingCreateCompany ?<div className={"center"}>
+            <div className='loader'></div>
+        </div>  : <button className='actionBtn' onClick={async () => {
+                if(companyName == ""){
+                    alert("Please enter a company name")
+                    return
+                }
+                if(!companyLocation){
+                    alert("Please set a company location")
+                    return
+                }
+                if(!companyType){
+                    alert("Please select a company type")
+                    return
+                }
+                setLoadingCreateCompany(true)
+                const company = new Company({
+                    name: companyName,
+                    location: companyLocation,
+                    employers: [],
+                    id: "",
+                    lastUpdated: Date.now(),
+                    type: companyType,
+                    joinCode: createActivityJoinCode(companyName),
+                    savedLocations: []
+                })
+                const newCompany = await createCompany(company)
+               
+                localStorage.setItem("companyId", company.id)
+                const registerResult = await register(email, password)
+                if(!registerResult){
+                    alert("Error creating account: " + registerResult)
+                    setLoadingCreateCompany(false)
+                    return
+                }
+                const employer = new EmployerData({
+                    uid: registerResult as string,
+                    companyId: newCompany.id,
+                    email: email,
+                    fullname: fullName,
+                    phoneNumber: phoneNumber,
+                    accountType: "employer",
+                    FCMToken: ""
+
+
+                })
+                await createUser("employer", employer)
+                localStorage.setItem("accountType", "employer")
+                const urlParams = new URLSearchParams(window.location.search)
+                const redirect = urlParams.get('redirect')
+                if(redirect){
+                    window.location.href = redirect.replace(/~/g, "&")
+                } else {
+                    window.location.href = '/'
+                }
+                setLoadingCreateCompany(false)
+                
+
+                
+
+            }}>Create Company</button>}</>
+            
         )
     
     }

@@ -65,12 +65,12 @@
 }
 
 .showGroups {
-  max-height: 60vh;
+  max-height: 80vh;
   overflow-y: auto;
 }
 
 .layout {
-  max-height: 60vh;
+  max-height: 80vh;
   overflow-y: auto;
 }
 
@@ -79,12 +79,12 @@
 }
 
 .dances {
-  max-height: 60vh;
+  max-height: 80vh;
   overflow-y: auto;
 }
 
 .songs {
-  max-height: 60vh;
+  max-height: 80vh;
   overflow-y: auto;
 }
 
@@ -104,7 +104,50 @@
 }
 
 .characters{
-  max-height: 40vh;
+  max-height: 80vh;
 
   overflow-y: auto;
+}
+
+.sections {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2em;
+
+}
+
+input, select, textarea {
+
+  padding: 10px;
+  margin: 10px;
+  border-radius: 5px;
+  border: 1px solid #FF6B35;
+
+  
+}
+
+.section {
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.section.selected {
+  font-weight: bold;
+  /* create a border on the bottom that is the orange */
+  border-bottom: 4px solid #ff6b35;
+
+}
+
+.act-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2em;
+}
+
+.act-header img {
+  /* width: 1px; */
+
+  cursor: pointer;
 }

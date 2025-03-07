@@ -22,15 +22,15 @@ function deg2rad(deg: number): number {
    * @returns A Promise that resolves to an object containing latitude and longitude.
    */
   export async function getLatLongFromAddress(address: string): Promise<{ lat: number; lon: number }> {
-    const url = `https://geocode.maps.co/search?q=${address}&api_key=667ef1741c1fc644172402icg005d42`;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${import.meta.env.VITE_GOOGLE_API}`;
   
     try {
       const response = await fetch(url, { method: 'POST' });
       if (response.ok) {
         const json = await response.json();
         const data = {
-          lat: parseFloat(json[0].lat),
-          lon: parseFloat(json[0].lon),
+          lat: json["results"][0].geometry.location.lat,
+          lon: json["results"][0].geometry.location.lng
         };
         console.log(data);
         return data;

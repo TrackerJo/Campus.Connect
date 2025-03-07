@@ -42,6 +42,7 @@ import ShowGroupTile from '../../../../components/Show_Group_Tile';
 import ConflictDisplayTile from '../../../../components/Conflict_Display_Tile';
 import FullCastTile from '../../../../components/Full_Cast_Tile';
 import { isLoggedIn } from '../../../../api/auth';
+import BackIcon from '../../../../assets/arrow_backward.png'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -80,6 +81,9 @@ function App() {
     const [isMobile, setIsMobile] = useState<boolean>(false)
     const [filterEnsmeble, setFilterEnsemble] = useState<boolean>(false)
     const [ensembleActors, setEnsembleActors] = useState<ActivityMember[]>([])
+            const [copiedEvent, setCopiedEvent] = useState<TheaterEvent | undefined>(undefined)
+    const [isFromPaste, setIsFromPaste] = useState<boolean>(false)
+    
 
 
     useEffect(() => {
@@ -207,9 +211,16 @@ function App() {
         <div  className='center'>
             <h1 className='title'>Create Schedule</h1>
            
-            {creationState == "date" ? <> <h2 className='mode'>Select a Date</h2>
+            {creationState == "date" ?<div className='page-title'>
+                <img src={BackIcon} alt="back arrow" onClick={() => {
+                
+                window.location.href = "/Activity/Shows/Show/?activityId=" + activityId + "&showId=" + showId
+
+            }} />
+                 <h2 className='mode'>Select a Date</h2> </div>: <></>}
                 <div className='container'>
-                    <div className='box left'>
+                {creationState == "date" ? <>    
+                <div className='box left'>
                         <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
                         {show?.hasEnsemble && <>
                             <label htmlFor="">Ignore Ensemble Conflicts</label>
@@ -224,9 +235,28 @@ function App() {
                                             if (ensembleActors.find((actor) => actor.userId == conflict.actor.userId)) {
                                                 continue
                                             }
-                                            newConflicts.push(conflict)
+                                            if(viewingDateForConflicts != null){
+                                                if (conflict.conflictResponseDate.date.getTime() == viewingDateForConflicts.getTime()) {
+                                                    newConflicts.push(conflict)
+                                                }
+                                            } else {
+                                                newConflicts.push(conflict)
+                                            }
+
                                         }
                                         setCurrentConflicts(newConflicts)
+                                    } else {
+                                       if(viewingDateForConflicts != null){
+                                        const newConflicts: DateConflict[] = []
+                                        for (const conflict of conflicts) {
+                                            if (conflict.conflictResponseDate.date.getTime() == viewingDateForConflicts.getTime()) {
+                                                newConflicts.push(conflict)
+                                            }
+                                        }
+                                        setCurrentConflicts(newConflicts)
+                                    } else{
+                                        setCurrentConflicts([...conflicts])
+                                    }
                                     }
                                 }}/>
                                 <span className="checkmark"> </span>
@@ -242,7 +272,51 @@ function App() {
                             }
                         </div>
                     </div>
-                    <Calendar canViewConflicts={true} isCreating={true} canOpenContextMenu={true} events={calendarEvents}
+                    </> : <></>}
+                    <div className={creationState != "date" ? "datePicker hidden" : "datePicker"}>
+                    <Calendar canViewConflicts={true} canPaste={copiedEvent != undefined} canCopy={true} copyEvent={(event)=>{
+                        const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
+                        
+                        setCopiedEvent(theaterEvent)
+
+
+                    }}  pasteEvent={(date)=>{
+                        const checkDate = new Date(date)
+                        checkDate.setHours(0, 0, 0, 0)
+                          setSelectedDate(checkDate)
+
+                          
+                      
+                        setStartTime(new Date(copiedEvent!.date.from))
+                        setStartTimeString(copiedEvent!.date.from.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        }))
+                        //copy the date and add an hour
+                        const newEndTime = new Date(copiedEvent!.date.to)
+
+                        setEndTime(newEndTime)
+                        console.log(newEndTime)
+                        setEndTimeString(newEndTime.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        }))
+                        setName(copiedEvent!.name)
+                        setDescription(copiedEvent!.info)
+
+                       
+                        setSelectedLocation(copiedEvent!.location)
+                        setRehearsalLocation(copiedEvent!.rehearsalLocation)
+                        setCharacters(copiedEvent!.characters)
+                        setEventType(copiedEvent!.activityEventType)
+
+                        setType(copiedEvent!.theaterEventType as "song" | "dance" | "scene" | "custom")
+                        
+                        setCreationState("info")
+                        setIsFromPaste(true)
+                    }} isCreating={true} canOpenContextMenu={true} events={calendarEvents}
                               editEvent={(event) => {
                                   const theaterEvent = getTheaterEvents().find((e) => e.id == event.id)
 
@@ -374,6 +448,8 @@ function App() {
                                 }))
                                 setCreationState("type")
                             }}/>
+                            </div>
+                            {creationState == "date" ? <>
                     <div className='box right'>
                         <h2>How To Schedule Events</h2>
                         <ul>
@@ -382,7 +458,9 @@ function App() {
                             <li>Right click a current event to view/edit the event or delete the event</li>
                         </ul>
                     </div>
+                    </> : <></>}
                 </div>
+                {creationState == "date" ? <>
                 <button className={"ActionBtn"} onClick={() => {
                     localStorage.setItem('events', JSON.stringify(theaterEvents))
 
@@ -396,7 +474,16 @@ function App() {
                     Back
                 </button>
             </> : creationState == "type" ? <>
+            <div className='page-title'>
+                <img src={BackIcon} alt="back arrow" onClick={() => {
+                
+                setCreationState("date")
+                setViewingDateForConflicts(null)
+                setCurrentConflicts([...conflicts])
+
+            }} />
                 <h2 className='mode'>Select a Rehersal Type</h2>
+                </div>
                 {!isMobile && <div className='conflicts-div'>
                     <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
                     <label htmlFor="">Ignore Ensemble Conflicts</label>
@@ -898,7 +985,50 @@ function App() {
                         }
                     </div>
                 </div>}
-                <h2 className='mode'>Enter Rehersal Information</h2>
+                <div className='page-title'>
+                <img src={BackIcon} alt="back arrow" onClick={() => {
+                
+                if(isEditing){
+                    setCreationState("date")
+                    setSelectedDate(null)
+                    setStartTime(null)
+                    setEndTime(null)
+                    setType("custom")
+                    setName("")
+                    setDescription("")
+                    setStartTimeString("")
+                    setEndTimeString("")
+                    setRehearsalLocation(activity?.rehearsalLocations[0])
+                    setEventType(activity?.eventTypes[0])
+                    setSelectedLocation(activity?.defaultLocation)
+                    setAddedEnsemble(false)
+                    setViewingDateForConflicts(null)
+                    setCurrentConflicts(conflicts)
+                    setIsEditing(false)
+                    return
+                }
+                if(isFromPaste){
+                    setIsFromPaste(false)
+                setCreationState("date")
+
+                } else {
+                setCreationState("type")
+
+                }
+                setDescription("")
+                setName("")
+                setAddedEnsemble(false)
+                const newConflicts: DateConflict[] = []
+                for(const conflict of conflicts){
+
+                    if(conflict.conflictResponseDate.date.getTime() == viewingDateForConflicts!.getTime()){
+                        newConflicts.push(conflict)
+                    }
+                }
+                setCurrentConflicts(newConflicts)
+
+            }} /><h2 className='mode'>Enter Rehersal Information</h2>
+            </div>
                 <label htmlFor="Name">Name: </label>
                 <input type="text" value={name} onChange={(val) => {
                     setName(val.target.value)
@@ -1222,6 +1352,12 @@ function App() {
                         //Edit calendar event
                         const startDate: Date = newEvent.date.from
                         const endDate: Date = newEvent.date.to
+                        startDate.setDate(newEvent.date.date.getDate())
+                startDate.setMonth(newEvent.date.date.getMonth())
+                startDate.setFullYear(newEvent.date.date.getFullYear())
+                endDate.setDate(newEvent.date.date.getDate())
+                endDate.setMonth(newEvent.date.date.getMonth())
+                endDate.setFullYear(newEvent.date.date.getFullYear())
                         const calendarEvent: CalendarEvent = {
                             title: newEvent.name,
                             start: startDate.toISOString(),
@@ -1246,6 +1382,12 @@ function App() {
                         //Add to calendar
                     const startDate: Date = newEvent.date.from
                     const endDate: Date = newEvent.date.to
+                    startDate.setDate(newEvent.date.date.getDate())
+                startDate.setMonth(newEvent.date.date.getMonth())
+                startDate.setFullYear(newEvent.date.date.getFullYear())
+                endDate.setDate(newEvent.date.date.getDate())
+                endDate.setMonth(newEvent.date.date.getMonth())
+                endDate.setFullYear(newEvent.date.date.getFullYear())
                     const calendarEvent: CalendarEvent = {
                         title: newEvent.name,
                         start: startDate.toISOString(),
@@ -1281,6 +1423,7 @@ function App() {
                     setAddedEnsemble(false)
                     setViewingDateForConflicts(null)
                     setCurrentConflicts(conflicts)
+                    setIsFromPaste(false)
                     
 
 
@@ -1307,7 +1450,14 @@ function App() {
                         setIsEditing(false)
                         return
                     }
-                    setCreationState("type")
+                    if(isFromPaste){
+                        setIsFromPaste(false)
+                    setCreationState("date")
+
+                    } else {
+                        setCreationState("type")
+
+                    }
                     setDescription("")
                     setName("")
                     setAddedEnsemble(false)

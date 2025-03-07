@@ -38,6 +38,7 @@ function App() {
         const events = JSON.parse(localStorage.getItem('events')!)
         if(events){
             for (let i = 0; i < events.length; i++) {
+                console.log(events[i])
                 events[i] = TheaterEvent.fromMap(events[i])
             }
             setEvents(events)
@@ -53,7 +54,7 @@ function App() {
     }, [])
 
 
-    const groupedEvents = events.reduce((acc: { [key: string]: TheaterEvent[] }, event) => {
+    const groupedEvents = events.sort((a, b) => a.date.date.getTime() - b.date.date.getTime()).reduce((acc: { [key: string]: TheaterEvent[] }, event) => {
         const date = event.date.date.toLocaleDateString('en-US', {
             weekday: 'long', 
             month: 'long',
@@ -65,6 +66,7 @@ function App() {
             acc[date] = []
         }
         acc[date].push(event)
+        console.log(acc)
         return acc
     }, {})
     return (
@@ -86,7 +88,7 @@ function App() {
                                 <li key={event.id} className='event'>
                                     <span className='event-title'>{event.name}: {event.rehearsalLocation.name}</span>
 
-                                    <span className='event-time'>{event.date.from.toLocaleTimeString([],{hour: '2-digit', minute: '2-digit'})} - {event.date.to.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>
+                                    <span className='event-time'>{event.date.from.toLocaleTimeString([],{hour: 'numeric', minute: '2-digit'})} - {event.date.to.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}</span>
                                 </li>
                             ))}
                         </ul>

@@ -94,7 +94,12 @@ function CreateCustomUserDialog({close, created, dialogRef, activityId}: CreateC
                 //Create the user
                 const schoolId = localStorage.getItem("schoolId")
                 const uid = await createUserAccount(email, password);
-                const student: StudentData = StudentData.fromBlank(uid, schoolId!, "unknown", 0, "", "student", phoneNumber, sex as "male" | "female", "unknown", fullName.toLowerCase().trim(), fullName.trim(), email.trim(),{}, Location.fromBlank("", "", new GeoPoint(0, 0)));
+                if(uid == ""){
+
+                    setIsLoading(false)
+                    return
+                }
+                const student: StudentData = StudentData.fromBlank(uid, schoolId!, "unknown", 0, "", "student", phoneNumber, sex as "male" | "female", "unknown", fullName.toLowerCase().trim(), fullName.trim(), email.trim(),{}, Location.fromBlank("", "", new GeoPoint(0, 0),false));
                 await createCustomUser(student, activityId)
 
                 created()

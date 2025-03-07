@@ -21,6 +21,13 @@
 dialog {
     text-align: center;
 }
+.AddConflictDialog {
+    height: 60vh;
+}
+
+.ActionBtn {
+    height: unset;
+}
 
 @media screen and (max-width: 728px) {
     .AddConflictDialog {

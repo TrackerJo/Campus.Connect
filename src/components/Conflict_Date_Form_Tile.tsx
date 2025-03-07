@@ -14,10 +14,10 @@ function ConflictDateFormTile({conflict, conflictResponseDate, setConflict} :Con
                     <label htmlFor="Character">Date: {conflict.date.date.toDateString()}</label>
                     
                     <br />
-                    <label htmlFor="Actor">From: {conflict.date.from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} </label>
+                    <label htmlFor="Actor">From: {conflict.date.from.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} </label>
                     
                     <br />
-                    <label htmlFor="Actor">To: {conflict.date.to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</label>
+                    <label htmlFor="Actor">To: {conflict.date.to.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</label>
                    
                     <br />
                    {conflict.moreInfo != "" && <label htmlFor="Character">More Info: {conflict.moreInfo}</label>}
@@ -45,9 +45,9 @@ function ConflictDateFormTile({conflict, conflictResponseDate, setConflict} :Con
 
                 <label htmlFor="">Conflict:</label>
                 <br />
-                <label htmlFor="">From: {conflictResponseDate.from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</label>
+                <label htmlFor="">From: {conflictResponseDate.from.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</label>
                 <br />
-                <label htmlFor="">To: {conflictResponseDate.to!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</label>
+                <label htmlFor="">To: {conflictResponseDate.to!.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</label>
                 {conflictResponseDate.note != "" && <br/>}
                 {conflictResponseDate.note != "" && <label htmlFor="">Note: {conflictResponseDate.note}</label>}
 

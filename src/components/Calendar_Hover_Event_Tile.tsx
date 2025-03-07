@@ -9,7 +9,7 @@ function CalendarHoverEventTile({event, top, left} : CalendarHoverEventTileProps
                 {event.title}
             </div>
             <div className="event-time">
-                {event.start?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {event.end?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {event.start?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {event.end?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
             </div>
             
             <div className="event-description">

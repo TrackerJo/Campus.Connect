@@ -13,6 +13,8 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
         //Generate a unique id for the show group
         setId(Math.floor(Math.random() * 100000))
     }, [])
+    console.log("SHOW GROUP TILE")
+    console.log(characters)
     return (
         <div className={"ShowGroupTile" + (isCreate || isAssign ? "Create" : "")} id={"show-group-tile-" + showGroup.showGroupId}>
             <div className="header">
@@ -51,6 +53,7 @@ function ShowGroupTile({showGroup, setShowGroup, isCreate, removeShowGroup, isAs
 
 
                 {showGroup.characters.map((character, index) => {
+                    console.log(character)
                     if(character instanceof Character && !isAssign)
                         return <CharacterTile key={index} character={character} actors={[]} isCreate={false} characters={characters} isAssign={isAssign} hasCreatedSchedule={hasCreatedSchedule} setCharacter={(newCharacter) => {
                             setShowGroup(ShowGroup.fromBlank(showGroup.name, showGroup.characters.map((c, i) => {

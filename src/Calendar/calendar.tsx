@@ -130,7 +130,7 @@ function App() {
                     isAllDay: false,
                     interactive: true,
                     description: event.info  +  (partialConflict ? ` \n(Excused from ${partialConflictStartDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to ${partialConflictEndDate!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : hasConflict && !partialConflict ? " \n(Fully Excused)" : ''),
-                    color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' : isTheaterEvent ? event.rehearsalLocation.color.setAlpha(0.8).toRBGAString() : 'blue',
+                    color: hasConflict && !partialConflict ? 'black' : hasConflict ? 'grey' : isTheaterEvent ? event.rehearsalLocation.color.setAlpha(0.8).toRBGAString() : event.eventType.color.setAlpha(0.8).toRBGAString(),
                     id: event.id!,
                     location: isTheaterEvent ? `${event.rehearsalLocation.name}` : ""
                     
@@ -163,7 +163,7 @@ function App() {
             </h1>
         </div>
         {isLoading ?<div className='center'><div className='loader'></div></div> : <div className='center'>
-            <Calendar viewEvent={(event) => {}} canViewConflicts={false} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
+            <Calendar viewEvent={(event) => {}} canPaste={false} canCopy={false} copyEvent={()=>{}}  pasteEvent={()=>{}}  canViewConflicts={false} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
                 const event = events.find((event) => event.id === eventId)
                 if(event){
                     localStorage.setItem('event', JSON.stringify(event.toMap()))

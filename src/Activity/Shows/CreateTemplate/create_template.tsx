@@ -22,7 +22,7 @@ import './create_template.css'
 
 
 
-import { Act, Character, Dance, Ensemble, Show, ShowGroup, Song } from '../../../constants'
+import { Act, Character, Dance, Ensemble, Scene, Show, ShowGroup, Song } from '../../../constants'
 import ActTile from '../../../components/Act_Tile'
 import CharacterTile from '../../../components/Character_Tile'
 import ShowGroupTile from '../../../components/Show_Group_Tile'
@@ -31,6 +31,8 @@ import {addShowTemplate, createShow, editShow, editShowEventsCharactersTemplate,
 import DanceTile from '../../../components/Dance_Tile'
 import { isLoggedIn } from '../../../api/auth'
 import { json } from 'stream/consumers'
+import SceneTile from '../../../components/Scene_Tile'
+import BackArrow from '../../../assets/back.png'
 
 
 
@@ -54,6 +56,8 @@ function App() {
     const [ensemble, setEnsemble] = useState<Ensemble | null>(null)
     const [edittingShow, setEdittingShow] = useState<Show | null>(null)
     const [seenWarning, setSeenWarning] = useState<boolean>(false)
+    const [currentSection, setCurrentSection] = useState<"Characters" | "Show Groups"| "Layout" | "Songs" | "Dances">("Characters")
+    const [currentAct, setCurrentAct] = useState<Act | null>(null)
 
     function getCanCreateSchedule(): boolean {
         let canCreateSchedule = true
@@ -200,6 +204,7 @@ function App() {
             setShowName(show.name)
             setHasEnsemble(show.hasEnsemble)
             setCharacters(show.characters)
+            console.log(show.characters)
             setShowGroups(show.showGroups)
             setLayout(show.layout)
             setSongs(show.songs)
@@ -224,7 +229,7 @@ function App() {
         <>
         <div className='title'>
             <h1>
-                Create Show Template
+                {hasCreatedSchedule ? "Edit" : "Create"} Show Template
             </h1>
           
         </div>
@@ -243,7 +248,30 @@ function App() {
                 </label>
                 
             </div>}
-            <h2>Create Characters</h2>
+            <div className='sections'>
+                <h2 className={'section ' + (currentSection == "Characters" ? "selected" : "")}  onClick={() => {
+                    setCurrentSection("Characters")
+                    
+                }}>Characters</h2>
+                <h2 className={'section ' + (currentSection == "Show Groups" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Show Groups")
+                    
+                }}>Show Groups</h2>
+                <h2 className={'section ' + (currentSection == "Layout" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Layout")
+                    
+                }}>Layout</h2>
+                <h2 className={'section ' + (currentSection == "Songs" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Songs")
+                    
+                }}>Songs</h2>
+                <h2 className={'section ' + (currentSection == "Dances" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Dances")
+                    
+                }}>Dances</h2>
+
+            </div>
+{currentSection == "Characters"  && <>
             <div className='characters' id='create-characters'>
                 {characters.map((character, index) => {
                     return <CharacterTile key={index} actors={[]} character={character} characters={[]} hasCreatedSchedule={character.hasCreatedSchedule} isAssign={false} setCharacter={(newCharacter) => {
@@ -326,9 +354,9 @@ function App() {
                         const element2 = document.getElementById("character-tile-" + characterId)!;
                         element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
-                }}>Add Character</button>
-            <h2>Create Show Groups</h2>
-            <div className='showGroups' id='create-showGroups'>
+                }}>Add Character</button></>}
+
+            {currentSection == "Show Groups" && <><div className='showGroups' id='create-showGroups'>
                 {showGroups.map((showGroup, index) => {
                     return <ShowGroupTile key={index} showGroup={showGroup} showGroups={[]} actors={[]} hasCreatedSchedule={showGroup.hasCreatedSchedule} hasEnsemble={hasEnsemble} characters={characters} isAssign={false} setShowGroup={(newShowGroup) => {
                         setShowGroups((prev) => {
@@ -352,11 +380,48 @@ function App() {
                         const element2 = document.getElementById("show-group-tile-" + showGroupId)!;
                         element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
-                }}>Add Show Group</button>
-            <h2>Create Layout</h2>
-            <div className='layout' id='create-layout'>
+                }}>Add Show Group</button></>}
+{currentSection == "Layout" &&
+            <>{currentAct == null ? <><div className='layout' id='create-layout'>
+                
                 {layout.map((act, index) => {
-                    return <ActTile key={index} hasEnsemble={hasEnsemble} act={act} characters={characters} showGroups={showGroups} isAssign={false} setAct={(newAct) => {
+                    return <ActTile key={index} canMoveDown={layout.indexOf(act) != layout.length - 1} canMoveUp={layout.indexOf(act) != 0} moveDown={() => {
+                        //Move down
+                        setLayout((prev) => {
+                            const newLayout = [...prev]
+                            const newIndex = layout.indexOf(act) + 1
+                            newLayout[layout.indexOf(act)] = layout[newIndex]
+                            newLayout[newIndex] = act
+                            return newLayout
+                        })
+
+                        //Scroll into view
+                        setTimeout(() => {
+                            const element = document.getElementById("create-layout")!;
+                            element.scrollTop = element.scrollHeight;
+                            const element2 = document.getElementById("act-tile-" + act.actId)!;
+                            element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                        },100)
+                    }} moveUp={() => {
+                        //Move up
+                        setLayout((prev) => {
+                            const newLayout = [...prev]
+                            const newIndex = layout.indexOf(act) - 1
+                            newLayout[layout.indexOf(act)] = layout[newIndex]
+                            newLayout[newIndex] = act
+                            return newLayout
+                        })
+
+                        //Scroll into view
+                        setTimeout(() => {
+                            const element = document.getElementById("create-layout")!;
+                            element.scrollTop = element.scrollHeight;
+                            const element2 = document.getElementById("act-tile-" + act.actId)!;
+                            element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                        },100)
+                    }} selectAct={(act) => {
+                        setCurrentAct(act)
+                    }} hasEnsemble={hasEnsemble} act={act} characters={characters} showGroups={showGroups} isAssign={false} setAct={(newAct) => {
                        setLayout((prev) => {
                            const newLayout = [...prev]  
                            newLayout[index] = newAct
@@ -380,9 +445,136 @@ function App() {
                         const element2 = document.getElementById("act-tile-" + actId)!;
                         element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
-                }}>Add Act</button>
-            <h2>Create Songs</h2>
-            <div className='songs' id='create-songs'>
+                }}>Add Act</button></> : <>
+                <div>
+                    <div className='act-header'>
+                        <img src={BackArrow} alt="" onClick={()=> {
+                            setCurrentAct(null)
+                        }}/>
+                    <h2>{currentAct.name}</h2>
+                        </div>
+                <label htmlFor="Scene">Scenes: </label>
+                <div id={"scenes-" + currentAct.actId} className="scenes">
+
+                    {currentAct.scenes.map((scene, index) => {
+                        return <SceneTile key={index} canMoveDown={currentAct.scenes.indexOf(scene) != currentAct.scenes.length - 1} canMoveUp={currentAct.scenes.indexOf(scene) != 0} moveDown={() => {
+                            //Move down
+                            setLayout((prev) => {
+                                const newLayout = [...prev]
+                                const newIndex = currentAct.scenes.indexOf(scene) + 1   
+                                setCurrentAct(Act.fromBlank(currentAct.name, currentAct.scenes.map((s, i) => {
+                                    if (i === index) {
+                                        return currentAct.scenes[newIndex]
+                                    }
+                                    if (i === newIndex) {
+                                        return scene
+                                    }
+                                    return s
+                                }
+                                ), currentAct.actId))
+                                newLayout[layout.findIndex((a) => a.actId == currentAct.actId)].scenes[currentAct.scenes.indexOf(scene)] = currentAct.scenes[newIndex]
+                                newLayout[layout.findIndex((a) => a.actId == currentAct.actId)].scenes[newIndex] = scene
+                                
+                                return newLayout
+                            }
+                            )
+
+                            //Scroll into view
+                            setTimeout(() => {
+                                const element = document.getElementById("scenes-" + currentAct.actId)!;
+                                // element.scrollTop = element.scrollHeight;
+                                const element2 = document.getElementById("scene-tile-" + scene.sceneId)!;
+                                element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                            },100)
+                        }} moveUp={() => {
+                            //Move up
+                            setLayout((prev) => {
+                                const newLayout = [...prev]
+                                const newIndex = currentAct.scenes.indexOf(scene) - 1
+                                const newScene = currentAct.scenes[newIndex]
+                                console.log(newScene)
+                                setCurrentAct(Act.fromBlank(currentAct.name, currentAct.scenes.map((s, i) => {
+                                    if (i === index) {  
+                                        return newScene
+                                    }
+                                    if (i === newIndex) {
+                                        return scene
+                                    }
+                                    return s
+                                }
+                                ), currentAct.actId))
+                                newLayout[layout.findIndex((a) => a.actId == currentAct.actId)].scenes[currentAct.scenes.indexOf(scene)] = currentAct.scenes[newIndex]
+                                newLayout[layout.findIndex((a) => a.actId == currentAct.actId)].scenes[newIndex] = scene
+                                return newLayout
+                            })
+
+                            //Scroll into view
+                            setTimeout(() => {
+                                const element = document.getElementById("scenes-" + currentAct.actId)!;
+                                // element.scrollTop = element.scrollHeight;
+                                const element2 = document.getElementById("scene-tile-" + scene.sceneId)!;
+                                element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                            },100)
+                        
+                        }}  hasEnsemble={hasEnsemble} scene={scene} isCreate={false} characters={characters} showGroups={showGroups} isAssign={false} setScene={(newScene) => {
+                            setLayout((prev) => {
+                                const newLayout = [...prev]  
+                                const ind = newLayout.findIndex((a) => a.actId == currentAct.actId)
+                                newLayout[ind] = Act.fromBlank(currentAct.name, currentAct.scenes.map((s, i) => {
+                                    if (i === index) {
+                                        return newScene
+                                    }
+                                    return s
+                                }), currentAct.actId)
+                                setCurrentAct(Act.fromBlank(currentAct.name, currentAct.scenes.map((s, i) => {
+                                    if (i === index) {
+                                        return newScene
+                                    }
+                                    return s
+                                }), currentAct.actId))
+                                return newLayout
+                         })
+
+                        }
+                        } removeScene={() => {
+                            setLayout((prev) => {
+                                const newLayout = [...prev]  
+                                const i = newLayout.findIndex((a) => a.actId == currentAct.actId)
+                                newLayout[i] = Act.fromBlank(currentAct.name, currentAct.scenes.filter((s, i) => i !== index),currentAct.actId )
+                                setCurrentAct(Act.fromBlank(currentAct.name, currentAct.scenes.filter((s, i) => i !== index),currentAct.actId ))
+                                return newLayout
+                         })
+
+                        }}/>
+
+
+                    } )}
+                </div>
+
+                {currentAct.scenes.length == 0 && <br /> }
+                <button className="ActionBtn" onClick={() => {
+                    const sceneID: number = Date.now()
+                    setLayout((prev) => {
+                        const newLayout = [...prev]
+                        const ind = newLayout.findIndex((a) => a.actId == currentAct.actId)  
+                        newLayout[ind] =Act.fromBlank(currentAct.name, [...currentAct.scenes, Scene.fromBlank("Scene " + (currentAct.scenes.length + 1), [],sceneID)],currentAct.actId)
+                        setCurrentAct(Act.fromBlank(currentAct.name, [...currentAct.scenes, Scene.fromBlank("Scene " + (currentAct.scenes.length + 1), [],sceneID)],currentAct.actId))
+                        return newLayout
+                 })
+
+                    setTimeout(() => {
+                        const element = document.getElementById("scenes-" + currentAct.actId)!;
+                        element.scrollTop = element.scrollHeight;
+                        const element2 = document.getElementById("scene-tile-" + sceneID)!;
+                        element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                        // const element3 = document.getElementById("act-tile-" + currentAct.actId)!
+                        // element3.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+                    },100)
+               }}>Add Scene</button>
+            </div>
+          </>}</>}
+
+           { currentSection == "Songs" && <><div className='songs' id='create-songs'>
                 {songs.map((song, index) => {
                     return <SongTile key={index} song={song} hasEnsemble={hasEnsemble} characters={characters} showGroups={showGroups} isAssign={false} setSong={(newSong) => {
                         setSongs((prev) => {
@@ -408,8 +600,8 @@ function App() {
                         const element2 = document.getElementById("song-tile-" + songId)!;
                         element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
-                }}>Add Song</button>
-            <h2>Create Dances</h2>
+                }}>Add Song</button> </>}
+            {currentSection == "Dances" && <>   
             <div className='dances' id='create-dances'>
                 {dances.map((dance, index) => {
                     return <DanceTile key={index} dance={dance} hasEnsemble={hasEnsemble} characters={characters} showGroups={showGroups} isAssign={false} setDance={(newDance) => {
@@ -436,7 +628,7 @@ function App() {
                         const element2 = document.getElementById("dance-tile-" + danceId)!;
                         element2.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
                     },100)
-                }}>Add Dance</button>
+                }}>Add Dance</button> </>}
            {isLoading ? <div className="loader"></div> : <button className='ActionBtn' onClick={async () => {
                 //Create show template\
                 setIsLoading(true)
@@ -465,8 +657,9 @@ function App() {
                     show.canCreateSchedule = getCanCreateSchedule()
                     show.resources = edittingShow!.resources
                     show.templateId = edittingShow!.templateId
+
                     if(!show.canCreateSchedule){
-                        alert("Since there are not characters that aren't assigned to actosrs, you will not be able to edit the schdule until you assign actors to all characters")
+                        alert("Since there are characters that haven't been assigned to actors, you will not be able to edit/create the schedule until you assign actors to all characters")
                     }
                     await editShow(show)
                     if(hasCreatedSchedule){

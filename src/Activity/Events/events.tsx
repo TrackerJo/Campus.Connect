@@ -24,7 +24,10 @@ import Calendar from '../../components/Calendar'
 import { isLoggedIn, logout } from '../../api/auth'
 import BackIcon from '../../assets/arrow_backward.png'
 import DownloadAppDialog from '../../components/Download_App_Dialog'
-
+import AddEventDateDialog from '../../components/Add_Event_Date_Dialog'
+import TrashIcon  from '../../assets/trash.png'
+import ExportScheduleDialog from '../../components/Export_Schedule_Dialog'
+import ImportScheduleDialog from '../../components/Import_Schedule_Dialog'
 
 
 
@@ -40,7 +43,7 @@ function App() {
         const [activity, setActivity] = useState<Activity | null>()
         const [currentView, setCurrentView] = useState<"students" | "parents">("students")
 
-        const [creationState, setCreationState] = useState<"date" | "info">("date")
+        const [creationState, setCreationState] = useState<"date" | "info" | "multipleEvents">("date")
         const [selectedDate, setSelectedDate] = useState<Date | null>(null)
         const [startTime, setStartTime] = useState<Date | null>(null)
         const [endTime, setEndTime] = useState<Date | null>(null)
@@ -67,6 +70,13 @@ function App() {
         const [editEvent, setEditEvent] = useState<ActivityEvent | null>(null)
 
         const [eventType, setEventType] = useState<EventType | undefined>(undefined)
+        const [copiedEvent, setCopiedEvent] = useState<ActivityEvent | undefined>(undefined)
+        const [eventDates, setEventDates] = useState<EventDate[]>([])
+        const [defaultEventDate, setDefaultEventDate] = useState<EventDate | undefined>(undefined)
+        const addEventDateDialogRef = useRef<HTMLDialogElement>(null)
+        const exportScheduleDialogRef = useRef<HTMLDialogElement>(null)
+        const importScheduleDialogRef = useRef<HTMLDialogElement>(null)
+        const [isLoadingAddEvent, setIsLoadingAddEvent] = useState<boolean>(false)
 
     useEffect(() => {
         isLoggedIn(() => {})
@@ -141,6 +151,8 @@ function App() {
     function getEvents(){
         return events
     }
+
+   
 
     const handleStartTimeChange = (val: React.ChangeEvent<HTMLInputElement>) => {
         const timeString = val.target.value; // "HH:mm"
@@ -223,7 +235,7 @@ function App() {
 
     function addEventScreen(){
         return (
-            <><h2 className='mode'>Enter Rehersal Information</h2>
+            <><h2 className='mode'>Enter Event Information</h2>
             <label htmlFor="Name">Name: </label>
             <input type="text" value={name} onChange={(val) => {
                 setName(val.target.value)
@@ -320,13 +332,13 @@ function App() {
             {inviteType == "custom" ? customInviteView() : <></>}
 
              <br />
-            {isLoading ? <div className="loader"></div>  : <button onClick={async () => {
-                setIsLoading(true)
+            {isLoadingAddEvent ? <div className="loader"></div>  : <button onClick={async () => {
+                setIsLoadingAddEvent(true)
                 console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation},Event Type: ${eventType}`)
-                if(name == "" || description == "" || startTime == undefined || endTime == undefined || selectedLocation == undefined ||  eventType == undefined){
+                if(name == "" ||  startTime == undefined || endTime == undefined || selectedLocation == undefined ||  eventType == undefined){
                     alert("Please fill out all fields")
                     console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation},  Event Type: ${eventType}`)
-                    setIsLoading(false)
+                    setIsLoadingAddEvent(false)
                     return
                 }
                 
@@ -337,12 +349,25 @@ function App() {
                 const eventDate: EventDate = EventDate.fromBlank(selectedDate!, startTime!, endTime!)
                 console.log(eventDate.toMap())
                 const targets: ActivityMember[] = []
+                const selectedEventType = eventType!
+                selectedEventType.color.setAlpha(255);
                 
-                const newEvent: ActivityEvent = ActivityEvent.fromBlank(name, description, location, eventDate, "activity-event", Date.now(), activityId!,activityGroups.map((g) => g.groupName), members , inviteType, eventType!, activityGroups, hasSchoolEvent!, schoolEventId, [], activity!.name)
+                const newEvent: ActivityEvent = ActivityEvent.fromBlank(name, description, location, eventDate, "activity-event", Date.now(), activityId!,activityGroups.map((g) => g.groupName), members , inviteType, selectedEventType, activityGroups, hasSchoolEvent!, schoolEventId, [], activity!.name)
 
-                console.log(newEvent)
+
                 if(isEditing){
                     newEvent.id = editEvent!.id
+                    if(editEvent!.generalTarget == "groups"){
+                        newEvent.groupTargets.forEach((group) => {
+                            group.groupMembers.forEach((member) => {
+                                if(!targets.find((m) => m.userId == member.userId)){
+                                    targets.push(member)
+                                }
+                            })
+                        })
+                    }
+                    newEvent.targets = [...targets]
+
                     await editActivityEvent(newEvent)
                     setIsEditing(false)
                     //Edit calendar event
@@ -362,19 +387,243 @@ function App() {
                         location: newEvent.location.name 
                         
                     }
-                    const newCalendarEvents = calendarEvents.filter((e) => e.id != newEvent.id)
+                    const newCalendarEvents = calendarEvents.filter((e) => e.id != editEvent!.id)
+                    console.log(newCalendarEvents)
+                    console.log(editEvent!.id)
+                    
+
                     newCalendarEvents.push(calendarEvent)
-                    setCalendarEvents(newCalendarEvents)
+                    setCalendarEvents([...newCalendarEvents])
                     //Edit theater event
-                    const newEvents = events.filter((e) => e.id != newEvent.id)
+                    const newEvents = events.filter((e) => e.id != editEvent!.id)
                     newEvents.push(newEvent)
                     console.log(newEvents)
                     setEvents([...newEvents])
                 } else{
                     await addActivityEvent(newEvent)
                     //Add to calendar
+                    const startDate: Date = newEvent.date.from
+                    const endDate: Date = newEvent.date.to
+                    startDate.setDate(newEvent.date.date.getDate())
+                    startDate.setMonth(newEvent.date.date.getMonth())
+                    startDate.setFullYear(newEvent.date.date.getFullYear())
+                    endDate.setDate(newEvent.date.date.getDate())
+                    endDate.setMonth(newEvent.date.date.getMonth())
+                    endDate.setFullYear(newEvent.date.date.getFullYear())
+                    const calendarEvent: CalendarEvent = {
+                        title: newEvent.name,
+                        start: startDate.toISOString(),
+                        end: endDate.toISOString(),
+                        
+                        isAllDay: false,
+                        interactive: true,
+                        description: newEvent.info,
+                        color: newEvent.eventType.color.setAlpha(0.8).toRBGAString(),
+                        id: newEvent.id!,
+                        location: newEvent.location.name 
+                        
+                    }
+                    setCalendarEvents([...calendarEvents, calendarEvent])
+                    setEvents([...events, newEvent])
+
+                }
+                setIsLoadingAddEvent(false)
+                //Reset all fields
+                setCreationState("date")
+                setSelectedDate(null)
+                setStartTime(null)
+                setEndTime(null)
+
+                setName("")
+                setDescription("")
+                setStartTimeString("")
+                setEndTimeString("")
+
+                setEventType(activity?.eventTypes[0])
+                setSelectedLocation(activity?.defaultLocation)
+                setMembers([])
+
+
+                setInviteType('students')
+                
+
+
+
+            }} className='ActionBtn'>{isEditing ? "Save" : "Submit"}</button>}
+
+            <button onClick={() => {
+                if(isEditing){
+                    setCreationState("date")
+                    setSelectedDate(null)
+                    setStartTime(null)
+                    setEndTime(null)
+
+                    setName("")
+                    setDescription("")
+                    setStartTimeString("")
+                    setEndTimeString("")
+                    setSelectedLocation(activity!.defaultLocation)
+                    setEventType(activity!.eventTypes[0])
+                    setSelectedLocation(activity?.defaultLocation)
+
+
+
+                    setIsEditing(false)
+                    return
+                }
+                setCreationState("date")
+                setDescription("")
+                setName("")
+                setInviteType('students')
+                
+            }} className='ActionBtn'>Back</button></>
+        )
+    }
+
+    function addMultipleEventScreen(){
+        return (
+            <><h2 className='mode'>Enter Event Information</h2>
+            <label htmlFor="Name">Name: </label>
+            <input type="text" value={name} onChange={(val) => {
+                setName(val.target.value)
+            }}/>
+            <br />
+            <label htmlFor="Description">Description: </label>
+            <textarea value={description} onChange={(val) => {
+                setDescription(val.target.value)
+            }}/>
+            <br />
+            
+
+            <label htmlFor="StartTime">Start Time: </label>
+            <input type="time" value={startTimeString} onChange={handleStartTimeChange}/>    
+            <br />
+            <label htmlFor="EndTime">End Time: </label>
+            <input type="time" value={endTimeString} onChange={handleEndTimeChange}/>
+            <br />
+            <label htmlFor="location">Location: </label>
+            <select name="location" id="location" onChange={(e) => {
+                setSelectedLocation(activity?.locations.find((location) => location.name == e.target.value))
+            }}>
+                {activity?.locations.map((location, index) => {
+                    return <option value={location.name} key={index} selected={selectedLocation?.name == location.name}>{location.name + " (" + location.address + ")"}</option>
+                })
+                }
+            </select>
+            
+            <br />
+            <label htmlFor="eventType">Event Type: </label>
+            <select name="eventType" id="event-type" onChange={(e) => {
+                setEventType(activity?.eventTypes.find((type) => type.name == e.target.value))
+            }}>
+                {activity?.eventTypes.map((type, index) => {
+                    return <option value={type.name} key={index} selected={eventType?.name == type.name}>{type.name}</option>
+                })
+                }
+            </select>
+            <br />
+            <label htmlFor="inviteType">Invite Type: </label>
+            <select name="inviteType" id="invite-type" onChange={(e) => {
+                setInviteType(e.target.value as "students" | "parents" | "groups" | "custom")
+            }}>
+                <option value="students" selected={inviteType == "students"}>Students</option>
+                <option value="parents" selected={inviteType == "parents"}>Parents</option>
+                <option value="groups" selected={inviteType == "groups"}>Groups</option>
+                <option value="custom" selected={inviteType == "custom"}>Custom</option>
+            </select>
+            {inviteType == "groups" ? <><br />
+            <label htmlFor="groups">Groups: </label>
+            <div className="groups">
+                {activity!.groups.map((group, index) => {
+                    return <div className="group" key={group.groupName}>
+                         <label className="custom-checkbox">
+                        
+                                                        <input type="checkbox" id="ensemble" checked={activityGroups.find((g) => g.groupName == group.groupName) != undefined} onChange={(e) => {
+                                                              if(e.target.checked){
+                                                                setActivityGroups([...activityGroups, group])
+                                                                setMembers([...members, ...group.groupMembers])
+                                                            } else{
+                                                                setActivityGroups(activityGroups.filter((g) => g.groupName != group.groupName))
+                                                                setMembers(members.filter((member) => !group.groupMembers.includes(member)))
+                                                            }
+                                                        }}/>
+                                                        <span className="checkmark"> </span>
+                                                    </label>
+                        
+                        <label htmlFor={group.groupName}>{group.groupName}</label>
+                    </div>
+                })}
+
+            </div>
+            </> : <></>}
+            {inviteType == "custom" ? customInviteView() : <></>}
+            <br />
+            <h2>Event Dates</h2>
+            <div className="event-dates">
+                {eventDates.map((date, index) => {
+                    return <div className="event-date" key={index}>
+                        <div className='event-date-title'>
+                        <label htmlFor="" className="event-date-name">{date.date.toDateString()}</label>
+
+                        <label htmlFor="" className="event-date-time">{date.from.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) + " - " + date.to.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</label>
+                        </div>
+                       
+                        <img src={TrashIcon} className='event-date-icon' onClick={() => {
+                            setEventDates(eventDates.filter((d) => d != date))
+                        }}/>
+                    </div>
+                })}
+
+                </div>
+                <button className={"ActionBtn"} onClick={() => {
+                    if(startTime == undefined || endTime == undefined){
+                        alert("Please fill out start time and end time")
+                        return
+                    }
+                    const currentDate = new Date()
+                    currentDate.setHours(0, 0, 0, 0)
+                    const newEventDate = EventDate.fromBlank(currentDate, startTime!, endTime!)
+                    setDefaultEventDate(newEventDate)
+                    addEventDateDialogRef.current?.showModal()
+                }}>Add Date</button>
+
+             <br />
+            {isLoadingAddEvent ? <div className="loader"></div>  : <button onClick={async () => {
+                setIsLoadingAddEvent(true)
+                console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation},Event Type: ${eventType}`)
+                if(name == "" ||  startTime == undefined || endTime == undefined || selectedLocation == undefined ||  eventType == undefined || eventDates.length == 0){
+                    alert("Please fill out all fields")
+                    console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation},  Event Type: ${eventType}`)
+                    setIsLoadingAddEvent(false)
+                    return
+                }
+                
+                console.log("Submit")
+                const location: Location = selectedLocation != undefined ? selectedLocation : activity!.locations[0]
+                console.log(startTime)
+                console.log(endTime)
+                const newCalendarEvents: CalendarEvent[] = []
+                for(const date of eventDates){
+
+
+
+                const selectedEventType = eventType!
+                selectedEventType.color.setAlpha(255);
+                
+                const newEvent: ActivityEvent = ActivityEvent.fromBlank(name, description, location, date, "activity-event", Date.now(), activityId!,activityGroups.map((g) => g.groupName), members , inviteType, selectedEventType, activityGroups, hasSchoolEvent!, schoolEventId, [], activity!.name)
+
+
+               
+                    await addActivityEvent(newEvent)
+                    //Add to calendar
                 const startDate: Date = newEvent.date.from
                 const endDate: Date = newEvent.date.to
+                startDate.setDate(newEvent.date.date.getDate())
+                startDate.setMonth(newEvent.date.date.getMonth())
+                startDate.setFullYear(newEvent.date.date.getFullYear())
+                endDate.setDate(newEvent.date.date.getDate())
+                endDate.setMonth(newEvent.date.date.getMonth())
+                endDate.setFullYear(newEvent.date.date.getFullYear())
                 const calendarEvent: CalendarEvent = {
                     title: newEvent.name,
                     start: startDate.toISOString(),
@@ -388,11 +637,13 @@ function App() {
                     location: newEvent.location.name 
                     
                 }
-                setCalendarEvents([...calendarEvents, calendarEvent])
+                newCalendarEvents.push(calendarEvent)
                 setEvents([...events, newEvent])
+            }
+            setCalendarEvents([...calendarEvents, ...newCalendarEvents])
 
-                }
-                setIsLoading(false)
+                
+            setIsLoadingAddEvent(false)
                 //Reset all fields
                 setCreationState("date")
                 setSelectedDate(null)
@@ -449,15 +700,85 @@ function App() {
         <>
         <div className='page-title'>
             <img src={BackIcon} alt="back arrow" onClick={() => {
+                if(creationState != "date"){
+                    setCreationState("date")
+                    if(isEditing){
+                        setCreationState("date")
+                        setSelectedDate(null)
+                        setStartTime(null)
+                        setEndTime(null)
+    
+                        setName("")
+                        setDescription("")
+                        setStartTimeString("")
+                        setEndTimeString("")
+                        setSelectedLocation(activity!.defaultLocation)
+                        setEventType(activity!.eventTypes[0])
+                        setSelectedLocation(activity?.defaultLocation)
+    
+    
+    
+                        setIsEditing(false)
+                        return
+                    }
+                    setCreationState("date")
+                    setDescription("")
+                    setName("")
+                    setInviteType('students')
+                    return
+                }
                 window.location.href = '/Activity/?activityId=' + activityId
             }} />
             <h1>
-                Calendar
+                Events
             </h1>
             
         </div>
         {isLoading ?<div className='center'><div className='loader'></div></div> : <div className='center'>
-           {accountType == "teacher" ? creationState == "date" ?  <Calendar canViewConflicts={false} isCreating={true} canOpenContextMenu={true} events={calendarEvents}
+            <div className={creationState != "date" ? "datePicker hidden" : "datePicker"}> <Calendar canPaste={copiedEvent != undefined} canCopy={true} copyEvent={(event)=>{
+                const activityEvent = events.find((e) => e.id == event.id)
+                for(const event of events){
+                    console.log(event.id)
+                }
+                setCopiedEvent(activityEvent)
+                console.log(activityEvent)
+                console.log(event.id)
+           }}  pasteEvent={(date)=>{
+            console.log("PASTE EVENT")
+            console.log(date)
+                                  const checkDate = new Date(date)
+                                  checkDate.setHours(0, 0, 0, 0)
+                                    setSelectedDate(checkDate)
+
+                                    
+                                
+                                  setStartTime(new Date(copiedEvent!.date.from))
+                                  setStartTimeString(copiedEvent!.date.from.toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: false
+                                  }))
+                                  //copy the date and add an hour
+                                  const newEndTime = new Date(copiedEvent!.date.to)
+
+                                  setEndTime(newEndTime)
+                                  console.log(newEndTime)
+                                  setEndTimeString(newEndTime.toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: false
+                                  }))
+                                  setSelectedLocation(copiedEvent!.location)
+                                  setEventType(copiedEvent!.eventType)
+                                  setName(copiedEvent!.name)
+                                    setDescription(copiedEvent!.info)
+                                    setMembers(copiedEvent!.targets)
+                                    setInviteType(copiedEvent!.generalTarget as "students" | "parents" | "groups" | "custom")
+                                    setActivityGroups(copiedEvent!.groupTargets)
+                                    
+                                  
+                                  setCreationState("info")
+           }} canViewConflicts={false} isCreating={true} canOpenContextMenu={true} events={calendarEvents}
                               editEvent={(event) => {
                                   const activityEvent = getEvents().find((e) => e.id == event.id)
                                     console.log(event.id)
@@ -569,19 +890,90 @@ function App() {
                                 setSelectedLocation(activity!.defaultLocation)
                                 setEventType(activity!.eventTypes[0])
                                 setCreationState("info")
-                            }}/> : addEventScreen() : <Calendar viewEvent={(event) => {}} canViewConflicts={false} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
+                            }}/> 
+                            <button className={"ActionBtn"} onClick={() => {
+                                setCreationState("multipleEvents")
+                                setEventType(activity!.eventTypes[0])
+                            }}>Add Multiple Events</button>
+                            <button className={"ActionBtn"} onClick={() => {
+                                localStorage.setItem('events', JSON.stringify(events.map((event) => event.toMap())))
+                                
+                                window.open('/Activity/Events/Print/', "_blank")
+                            }}>
+                                Print
+                            </button>
+                            <button className={"ActionBtn"} onClick={() => {
+                                exportScheduleDialogRef.current?.showModal()
+            }}>
+                Export to CSV
+            </button>
+            <button className={"ActionBtn"} onClick={() => {
+                                importScheduleDialogRef.current?.showModal()
+            }}>
+                Import from CSV
+            </button></div> 
+           {accountType == "teacher" ?  creationState == "multipleEvents" ? addMultipleEventScreen() : creationState == "date" ?<></> : addEventScreen() : <> <Calendar canPaste={false} canCopy={false} copyEvent={()=>{}}  pasteEvent={()=>{}} viewEvent={(event) => {}} canViewConflicts={false} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
                 const event = events.find((event) => event.id === eventId)
                 if(event){
                     localStorage.setItem('event', JSON.stringify(event.toMap()))
                     localStorage.removeItem('back')
                     window.location.href = '/Calendar/Event/'
                 }
-            }}/>}
+            }}/> <button className={"ActionBtn"} onClick={() => {
+                localStorage.setItem('events', JSON.stringify(events.map((event) => event.toMap())))
+
+                window.open('/Activity/Events/Print/', "_blank")
+            }}>
+                Print
+            </button></>}
            
         </div>}
 
-       
-        
+        <AddEventDateDialog dialogRef={addEventDateDialogRef} addDate={(date) => {
+            setEventDates([...eventDates, date])
+            addEventDateDialogRef.current!.close()
+        }} close={() => {
+            addEventDateDialogRef.current!.close()
+        }} eventDate={defaultEventDate}/>
+        {activity != null && <ExportScheduleDialog dialogRef={exportScheduleDialogRef} events={events} close={() => {
+            exportScheduleDialogRef.current!.close()
+        }} activity={activity!}/>}
+       {activity != null && <ImportScheduleDialog activity={activity} dialogRef={importScheduleDialogRef} close={() => {
+            importScheduleDialogRef.current!.close()
+        }} addEvents={async (importedEvents) => {
+            const newCalendarEvents: CalendarEvent[] = []
+            for(const newEvent of importedEvents){
+            await addActivityEvent(newEvent)
+                    //Add to calendar
+                const startDate: Date = newEvent.date.from
+                const endDate: Date = newEvent.date.to
+                startDate.setDate(newEvent.date.date.getDate())
+                startDate.setMonth(newEvent.date.date.getMonth())
+                startDate.setFullYear(newEvent.date.date.getFullYear())
+                endDate.setDate(newEvent.date.date.getDate())
+                endDate.setMonth(newEvent.date.date.getMonth())
+                endDate.setFullYear(newEvent.date.date.getFullYear())
+                const calendarEvent: CalendarEvent = {
+                    title: newEvent.name,
+                    start: startDate.toISOString(),
+                    end: endDate.toISOString(),
+                    
+                    isAllDay: false,
+                    interactive: true,
+                    description: newEvent.info,
+                    color: newEvent.eventType.color.setAlpha(0.8).toRBGAString(),
+                    id: newEvent.id!,
+                    location: newEvent.location.name 
+                    
+                }
+                newCalendarEvents.push(calendarEvent)
+                setEvents([...events, newEvent])
+            }
+            setCalendarEvents([...calendarEvents, ...newCalendarEvents])
+
+
+
+        }}/>}
         
         </>
     )

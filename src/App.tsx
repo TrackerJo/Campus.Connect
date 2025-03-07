@@ -18,31 +18,17 @@ import DownloadAppDialog from './components/Download_App_Dialog'
 function App() {
   // @ts-ignore
   const [loggedIn, setIsLoggedIn] = useState(false)
-  const [accountType, setAccountType] = useState<"student" | "teacher">("student")
+  const [accountType, setAccountType] = useState<"student" | "teacher"| "employer">("student")
   const downloadAppDialogRef = useRef<HTMLDialogElement>()
   useEffect(() => {
 
  isLoggedIn(setIsLoggedIn)
     const accountType = localStorage.getItem('accountType')
     if (accountType) {
-      setAccountType(accountType as "student" | "teacher")
+      setAccountType(accountType as "student" | "teacher"| "employer")
     }
 
-    getUserData().then((data) => {
-      if (data) {
-        if (data instanceof StudentData) {
-          if(data.FCMToken == "" && data.fullname != "Wisdom Pearson" && data.fullname != "Chandler Harmeyer"){
-            downloadAppDialogRef.current!.showModal()
-          }
-        } else if(data instanceof TeacherData){
-          if(data.FCMToken == ""){
-            downloadAppDialogRef.current!.showModal()
-          }
-        }
-      } else {
-        logout()
-      }
-    })
+    
 
 
 
@@ -57,7 +43,7 @@ function App() {
     </div>
       <div className='center'>
         <div className='tiles'>
-
+          { accountType != "employer" ? <>
           <DashboardTile title='Calendar' description='View your calendar' onClick={() => {
             window.location.href = '/Calendar/'
           }}/>
@@ -73,6 +59,15 @@ function App() {
               }
             }/>
           }
+           {accountType == "student" && <DashboardTile title='Opportunities' description='View opportunities' onClick={() => {
+            window.location.href = '/Opportunities/'
+          }}/>}
+           </> : <> <DashboardTile title='Company' description='View your company' onClick={() => {
+            window.location.href = '/Company/'
+          }}/>
+          <DashboardTile title='Opportunities' description='View, edit, and add opportunities' onClick={() => {
+            window.location.href = '/Opportunities/'
+          }}/></>}
          
 
          

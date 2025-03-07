@@ -1,0 +1,26 @@
+
+
+dialog {
+    text-align: center;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.AddEventDateDialog {
+    height: 60vh;
+}
+
+.ActionBtn {
+    height: unset;
+}
+
+@media screen and (max-width: 728px) {
+    .AddEventDateDialog {
+        width: 70vw;
+    }
+    
+}

@@ -25,15 +25,29 @@ body {
   }
   
   .Login input{
-    margin: 15px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid black;
+     /* margin: 15px; */
+    /* padding: 10px; */
+    /* border-radius: 5px; */
+    /* border: 1px solid black; */
     background-color: transparent;
-    color: black;
+    color: black; 
     
   
   
+  }
+
+  .info {
+    font-size: small;
+  }
+
+  .forgotPassword{
+    color: #FF6B35;
+    cursor: pointer;
+    text-align: end;
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: small;
+    margin-top: -10px;
   }
 
   .center {
@@ -54,10 +68,10 @@ body {
   }
 
   .Login select{
-    margin: 15px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid black;
+    /* margin: 15px; */
+    /* padding: 10px; */
+    /* border-radius: 5px; */
+    /* border: 1px solid black; */
     background-color: transparent;
     color: black;
   }

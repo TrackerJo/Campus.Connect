@@ -6,8 +6,12 @@ import "./Scene_Tile.css"
 import ShowGroupTile from "./Show_Group_Tile"
 import TrashIcon from "../assets/trash.png"
 import FullCastTile from "./Full_Cast_Tile"
+import UpIcon from "../assets/up.png"
+import DownIcon from "../assets/down.png"
+import UpGreyIcon from "../assets/up_grey.png"
+import DownGreyIcon from "../assets/down_grey.png"
 
-function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters, showGroups, hasEnsemble} :SceneTileProps){
+function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters, showGroups, hasEnsemble, canMoveUp, canMoveDown, moveUp, moveDown} :SceneTileProps){
     const [addedEnsemble, setAddedEnsemble] = useState(false)
     const [addedFullCast, setAddedFullCast] = useState(false)
     const [id, setId] = useState(0)
@@ -27,7 +31,17 @@ function SceneTile({scene, setScene, isCreate, removeScene, isAssign, characters
                     }}/>
                 </div>
                
-                <div>
+                <div className="SceneActions">
+                <img src={canMoveUp ? UpIcon : UpGreyIcon} alt="" className={"UpIcon " + (canMoveUp ? "" : "disabled")} onClick={()=> {
+                        if(canMoveUp){
+                            moveUp()
+                        }
+                    }}/>
+                    <img src={canMoveDown ? DownIcon : DownGreyIcon} alt=""className={"DownIcon " + (canMoveDown ? "" : "disabled")} onClick={() => {
+                        if(canMoveDown){
+                            moveDown()
+                        }
+                    }} />
                     <img src={TrashIcon} alt="" className="TrashIcon" onClick={() => {
                         removeScene()
                     }}/>

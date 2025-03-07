@@ -109,7 +109,7 @@ function App() {
           
         </div>
         <div className='center'>
-            <Calendar canViewConflicts={false} canOpenContextMenu={false}
+            <Calendar canViewConflicts={false} canPaste={false} canCopy={false} copyEvent={()=>{}}  pasteEvent={()=>{}} canOpenContextMenu={false}
                       eventIdClick={(eventId) => {
                         const theaterEvent = theaterEvents.find((theaterEvent) => theaterEvent.id === eventId)
                         if(theaterEvent){
@@ -137,7 +137,7 @@ function App() {
             }}/>
             <br />
             <button className={"ActionBtn"} onClick={() => {
-                localStorage.setItem('events', JSON.stringify(theaterEvents))
+                localStorage.setItem('events', JSON.stringify(theaterEvents.map((event) => event.toMap())))
 
                 window.open('/Activity/Shows/Show/Schedule/Print/', "_blank")
             }}>

@@ -59,7 +59,7 @@
 }
 
 .showGroups {
-  max-height: 60vh;
+  max-height: 70vh;
   overflow-y: auto;
 }
 
@@ -87,13 +87,13 @@
 }
 
 .characters{
-  max-height: 40vh;
+  max-height: 70vh;
 
   overflow-y: auto;
 }
 
 .ensemble{
-  max-height: 40vh;
+  max-height: 70vh;
 
   overflow-y: auto;
 }
@@ -103,3 +103,24 @@
   cursor: pointer;
 }
 
+
+
+.sections {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2em;
+
+}
+
+.section {
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.section.selected {
+  font-weight: bold;
+  /* create a border on the bottom that is the orange */
+  border-bottom: 4px solid #ff6b35;
+
+}

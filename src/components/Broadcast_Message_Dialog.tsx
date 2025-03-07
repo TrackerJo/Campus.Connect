@@ -1,6 +1,6 @@
 import "./Broadcast_Message_Dialog.css";
 
-import { Activity, ActivityGroup, ActivityMember, BroadcastMessageDialogProps, Message, TheaterActivity } from "../constants";
+import { Activity, ActivityGroup, ActivityMember, ActivityTeacher, BroadcastMessageDialogProps, Message, TheaterActivity } from "../constants";
 import { useEffect, useRef, useState } from "react";
 import { getActivity, sendActivityGCMessage } from "../api/db";
 import AddUserDialog from "./Add_User_Dialog";
@@ -16,6 +16,9 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
 
     const [activity, setActivity] = useState<Activity | TheaterActivity | null>(null)
     const [members, setMembers] = useState<(ActivityMember)[]>([])
+    const [parents, setParents] = useState<(ActivityMember)[]>([])
+    const [students, setStudents] = useState<(ActivityMember)[]>([])
+    const [teachers, setTeachers] = useState<(ActivityTeacher)[]>([])
     const [addedMembers, setAddedMembers] = useState<(ActivityMember)[]>([])
     const [activityGroups, setActivityGroups] = useState<(ActivityGroup)[]>([])
 
@@ -32,11 +35,18 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
             if (activity != null) {
                 if(activity instanceof TheaterActivity){
                    
-                    setMembers([...activity.parents, ...activity.students])
+                    setMembers([...activity.parents, ...activity.students, ...activity.teachers.map((teacher) => teacher.toActivityMember())])
+                    setStudents(activity.students)
+                    setParents(activity.parents)
+                    setTeachers(activity.teachers)
+
                     setActivityGroups(activity.groups)
 
                 } else {
-                    setMembers([...activity.parents, ...activity.students])
+                    setMembers([...activity.parents, ...activity.students, ...activity.teachers.map((teacher) => teacher.toActivityMember())])
+                    setStudents(activity.students)
+                    setParents(activity.parents)
+                    setTeachers(activity.teachers)
                     setActivityGroups(activity.groups)
                 }
             }
@@ -104,7 +114,7 @@ function BroadcastMessageDialog({ close, dialogRef, activityId, userData, refres
                     </button>
                 </div>
             </dialog>
-            <AddUserDialog members={members} dialogRef={addMemberDialogRef} addedMembers={addedMembers} close={() => { 
+            <AddUserDialog students={students} parents={parents} teachers={teachers} dialogRef={addMemberDialogRef} addedMembers={addedMembers} close={() => { 
                 addMemberDialogRef.current!.close()
             }} addUser={(newMember: ActivityMember | ActivityMember) => {
                 

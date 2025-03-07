@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { EventClickArg } from "@fullcalendar/core/index.js";
 import { EventImpl } from "@fullcalendar/core/internal";
 import { DateClickArg } from "@fullcalendar/interaction/index.js";
@@ -15,9 +16,13 @@ export type CalendarProps = {
     viewConflicts: (date: Date) => void;
     editEvent: (event: EventImpl) => void;
     viewEvent: (event: EventImpl) => void;
+    copyEvent: (event: EventImpl) => void;
+    pasteEvent: (date: Date) => void;
     canViewConflicts: boolean;
     canOpenContextMenu: boolean;
     isCreating?: boolean;
+    canPaste: boolean;
+    canCopy: boolean;
     
 };
 
@@ -77,6 +82,11 @@ export type ActTileProps = {
     showGroups: ShowGroup[];
     hasEnsemble: boolean;
     hasCreatedSchedule?: boolean;
+    selectAct: (act: Act) => void;
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+    moveUp: () => void;
+    moveDown: () => void;
 
 
     
@@ -92,6 +102,10 @@ export type SceneTileProps = {
     showGroups: ShowGroup[];
     hasEnsemble: boolean;
     hasCreatedSchedule?: boolean;
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+    moveUp: () => void;
+    moveDown: () => void;
 
     
 };
@@ -207,6 +221,20 @@ export type ShowGroupTileProps = {
     
 };
 
+export type LocationTileProps = {
+    location: Location;
+    onEdit: () => void;
+    onDelete: () => void;
+    canEdit: boolean;
+    canDelete: boolean;
+}
+
+export type EditCompanyNameDialogProps = {
+    editCompanyName: (companyName: string) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    companyName: string | undefined;
+}
 export type ShowGroupDisplayTileProps = {
     showGroup: ShowGroup;
     canDelete: boolean;
@@ -273,6 +301,29 @@ export type AssignActorDialogProps = {
     keepPastResult: boolean;
 }
 
+export type ExportScheduleDialogProps = {
+
+
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    activity: Activity;
+    close: () => void;  
+    events: (ActivityEvent)[];
+}
+
+export type ImportScheduleDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    activity: Activity;
+    addEvents: (events: ActivityEvent[]) => void;
+
+}
+
+export type ConfirmApplyDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    confirmed: () => void;
+}
+
 export type AddConflictDialogProps = {
     date: Date;
     minTime: Date;
@@ -291,6 +342,15 @@ export type JoinActivityDialogProps = {
 export type CreateActivityDialogProps = {
     dialogRef: LegacyRef<HTMLDialogElement>;
     close: () => void;
+}
+
+export type OpportunityTileProps = {
+    opportunity: Opportunity;
+    accountType: "student" | "employer";
+    studentData?: StudentData;
+    onEdit: () => void;
+    onRemove: () => void;
+    onApply: () => void;
 }
 
 export type CalendarHoverEventTileProps = {
@@ -352,7 +412,9 @@ export type CreateGroupChatDialogProps = {
 }
 
 export type AddUserDialogProps = {
-    members: (ActivityMember | ActivityMember)[];
+    students: ActivityMember[];
+    parents: ActivityMember[];
+    teachers: ActivityTeacher[];
     addedMembers: (ActivityMember)[];
     close: () => void;
     dialogRef: LegacyRef<HTMLDialogElement>;
@@ -366,6 +428,40 @@ export type AddFromPlayDialogProps = {
     addMembers: (members: ActivityMember[]) => void;
     setName: (name: string) => void;
 }
+
+export type AddEventDateDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    addDate: (date: EventDate) => void;
+    eventDate: EventDate | undefined;
+}
+
+export type EditEventTypeDialogProps = {
+    editEventType: (eventType: EventType) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    eventTypes: EventType[];
+    eventType: EventType | undefined;
+}
+
+
+
+export type EditActivityNameDialogProps = {
+    editActivityName: (activityName: string) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+
+    activityName: string | undefined;
+}
+
+export type EditRehearsalLocationDialogProps = {
+    editRehearsalLocation: (rehearsalLocation: TheaterLocation) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    rehearsalLocations: TheaterLocation[];
+    rehearsalLocation: TheaterLocation | undefined;
+}
+
 
 export type AddFromGroupDialogProps = {
     activityGroups: ActivityGroup[];
@@ -395,6 +491,43 @@ export type ResourceTileProps = {
     canRemove: boolean;
     removeResource: () => void;
 }
+
+export type EditLocationDialogProps = {
+    editLocation: (location: Location) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    location: Location | undefined; 
+}
+
+export type EditGroupDialogProps = {
+    editGroup: (group: ActivityGroup) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    group: ActivityGroup | undefined;
+    groups: ActivityGroup[];
+    activityStudents: ActivityMember[];
+    activityParents: ActivityMember[];
+}
+
+export type CreateGroupDialogProps = {
+    createGroup: (group: ActivityGroup) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    groups: ActivityGroup[];
+    activityStudents: ActivityMember[];
+    activityParents: ActivityMember[];
+}
+
+
+export interface Place {
+    description: string;
+    place_id: string;
+    lat?: number;
+    lng?: number;
+  }
+export type LocationSearchTileProps = {
+    onSelect: (place: Place) => void;
+}   
 
 export type AddAdditionalDayDialogProps = {
     dialogRef: LegacyRef<HTMLDialogElement>;
@@ -462,7 +595,7 @@ export class Activity {
         this.teachers = [];
         this.locations = [];
         this.eventTypes = [];
-        this.defaultLocation = Location.fromBlank("", "", new GeoPoint(0, 0));
+        this.defaultLocation = Location.fromBlank("", "", new GeoPoint(0, 0), false);
         this.showBy = "";
         this.lastUpdated = 0;
     }
@@ -586,7 +719,7 @@ export class TheaterActivity {
         this.teachers = [];
         this.locations = [];
         this.eventTypes = [];
-        this.defaultLocation = Location.fromBlank("", "", new GeoPoint(0, 0));
+        this.defaultLocation = Location.fromBlank("", "", new GeoPoint(0, 0), false);
         this.showBy = "";
         this.lastUpdated = 0;
     }
@@ -724,18 +857,21 @@ export class Location {
     name: string;
     address: string;
     location: GeoPoint;
+    isSchool: boolean;
 
     constructor() {
         this.name = "";
         this.address = "";
         this.location = new GeoPoint(0, 0);
+        this.isSchool = false;
     }
 
-    public static fromBlank(name: string, address: string, location: GeoPoint): Location {
+    public static fromBlank(name: string, address: string, location: GeoPoint, isSchool: boolean): Location {
         const newLocation = new Location();
         newLocation.name = name;
         newLocation.address = address;
         newLocation.location = location;
+        newLocation.isSchool = isSchool
         return newLocation;
     }
 
@@ -745,6 +881,7 @@ export class Location {
         "name": this.name,
         "address": this.address,
         "location": this.location,
+        "isSchool": this.isSchool ?? false,
         };
     }
 
@@ -753,6 +890,7 @@ export class Location {
         location.name = map.name;
         location.address = map.address;
         location.location = map.location;
+        location.isSchool = map.isSchool;
         return location;
     }
 }
@@ -866,6 +1004,13 @@ export class EventDate {
         "to": this.to.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }),
     };
     }
+
+    getDateStart(): Date {
+        const date = new Date(this.date);
+        date.setHours(this.from.getHours());
+        date.setMinutes(this.from.getMinutes());
+        return date;
+    }
    
   
     static _parseTime(time: any): Date {
@@ -924,7 +1069,7 @@ export class Event {
     constructor() {
         this.name = '';
         this.info = '';
-        this.location = Location.fromBlank('', '', new GeoPoint(0, 0));
+        this.location = Location.fromBlank('', '', new GeoPoint(0, 0), false);
         this.date = EventDate.fromBlank(new Date(), new Date(), new Date());
         this.type = '';
         this.lastUpdated = 0;
@@ -1007,7 +1152,7 @@ export class ActivityEvent {
         this.activityName = '';
         this.name = '';
         this.info = '';
-        this.location = Location.fromBlank('', '', new GeoPoint(0, 0));
+        this.location = Location.fromBlank('', '', new GeoPoint(0, 0), false);
         this.date = EventDate.fromBlank(new Date(), new Date(), new Date());
         this.type = '';
         this.lastUpdated = 0;
@@ -1334,7 +1479,7 @@ export class TheaterEvent {
     constructor() {
         this.name = '';
         this.info = '';
-        this.location = Location.fromBlank('', '', new GeoPoint(0, 0));
+        this.location = Location.fromBlank('', '', new GeoPoint(0, 0), false);
         this.date = EventDate.fromBlank(new Date(), new Date(), new Date());
         this.type = '';
         this.lastUpdated = 0;
@@ -1928,6 +2073,10 @@ export class ActivityMember {
         };
     }
 
+    toGroupChatMember(): GroupChatMember {
+        return GroupChatMember.fromBlank(this.name, this.email, this.phone, "", this.userId);
+    }
+
     public static fromMap(map: DocumentData): ActivityMember {
         const actor = new ActivityMember();
         actor.name = map.fullname ?? map.name;
@@ -1984,6 +2133,10 @@ export class ActivityTeacher {
         "uid": this.userId,
 
         };
+    }
+
+    toActivityMember(): ActivityMember {
+        return ActivityMember.fromBlank(this.name, "male", this.email, this.phone, "", this.userId);
     }
 
     public static fromMap(map: DocumentData): ActivityTeacher {
@@ -2600,6 +2753,10 @@ export class StudentData {
         };
     }
 
+    toActivityMember(): ActivityMember {
+        return ActivityMember.fromBlank(this.fullname, this.gender, this.email, this.phoneNumber, this.FCMToken, this.uid);
+    }
+
     public static fromMap(map: DocumentData): StudentData {
         const studentData = new StudentData();
         studentData.uid = map.uid;
@@ -2713,6 +2870,7 @@ export class TeacherData {
     }
 
     toMap(): object {
+
         return {
         "red": this.red,
         "green": this.green,
@@ -2859,6 +3017,606 @@ function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } 
     const { r, g, b, a } = hexToRGBA(hex);
     return Color.fromBlank(r, g, b, a);
   }
+  
+  export enum ShiftType {
+    Weekdays = "weekdays",
+    Weekends = "weekends",
+    All = "all"
+  }
+  
+  function shiftTypeFromString(type: string): ShiftType {
+    return Object.values(ShiftType).find(e => e === type) as ShiftType;
+  }
+  
+  export enum OpportunityType {
+    Job = "job",
+    OneTimeVolunteer = "oneTimeVolunteer",
+    RecurringVolunteer = "recurringVolunteer"
+  }
+  
+  export function opportunityTypeFromString(type: string): OpportunityType {
+    return Object.values(OpportunityType).find(e => e === type) as OpportunityType;
+  }
+  
+  
+  export class Opportunity {
+    id: string;
+    lastUpdated: number;
+    companyName: string;
+    companyId: string;
+    position: string;
+    location: Location;
+    description: string;
+    isAvailable: boolean;
+    applicants: ActivityMember[];
+    type: OpportunityType;
+    applicationLink: string;
+  
+    constructor({
+      id,
+      lastUpdated,
+      companyName,
+      companyId,
+      position,
+      location,
+      description,
+      isAvailable,
+      applicants,
+      type,
+      applicationLink,
+    }: {
+      id: string;
+      lastUpdated: number;
+      companyName: string;
+      companyId: string;
+      position: string;
+      location: Location;
+      description: string;
+      isAvailable: boolean;
+      applicants: ActivityMember[];
+      type: OpportunityType;
+      applicationLink: string;
+    }) {
+      this.id = id;
+      this.lastUpdated = lastUpdated;
+      this.companyName = companyName;
+      this.position = position;
+      this.companyId = companyId;
+      this.location = location;
+      this.description = description;
+      this.isAvailable = isAvailable;
+      this.applicants = applicants;
+      this.type = type;
+      this.applicationLink = applicationLink;
+    }
+  
+    toMap(): Record<string, any> {
+      return {
+        id: this.id,
+        lastUpdated: this.lastUpdated,
+        companyName: this.companyName,
+        companyId: this.companyId,
+        position: this.position,
+        location: this.location.toMap(),
+        description: this.description,
+        isAvailable: this.isAvailable,
+        applicants: this.applicants.map(e => e.toMap()),
+        type: this.type,
+        applicationLink: this.applicationLink,
+      };
+    }
+  
+    static fromMap(data: DocumentData): Opportunity {
+      return new Opportunity({
+        id: data.id,
+        lastUpdated: data.lastUpdated,
+        companyName: data.companyName,
+        companyId: data.companyId,
+        position: data.position,
+        location: Location.fromMap(data.location),
+        description: data.description,
+        type: opportunityTypeFromString(data.type),
+        isAvailable: data.isAvailable,
+        applicationLink: data.applicationLink,
+        applicants: (data.applicants as never[]).map(e => ActivityMember.fromMap(e)),
+      });
+    }
+  }
+  
+  export class Job extends Opportunity {
+    hourlyRate: number;
+    shiftType: ShiftType;
+  
+    constructor({
+      position,
+      companyName,
+      companyId,
+      location,
+      hourlyRate,
+      description,
+      shiftType,
+      id,
+      lastUpdated,
+      isAvailable,
+      applicationLink,
+      applicants,
+      type = OpportunityType.Job,
+    }: {
+      position: string;
+      companyName: string;
+      companyId: string;
+      location: Location;
+      hourlyRate: number;
+      description: string;
+      shiftType: ShiftType;
+      id: string;
+      lastUpdated: number;
+      isAvailable: boolean;
+      applicationLink: string;
+      applicants: ActivityMember[];
+      type?: OpportunityType;
+    }) {
+      super({
+        position,
+        companyName,
+        companyId,
+        location,
+        description,
+        id,
+        lastUpdated,
+        isAvailable,
+        applicationLink,
+        type,
+        applicants,
+      });
+      this.hourlyRate = hourlyRate;
+      this.shiftType = shiftType;
+    }
+  
+    toMap(): Record<string, any> {
+      return {
+        position: this.position,
+        companyName: this.companyName,
+        companyId: this.companyId,
+        location: this.location.toMap(),
+        hourlyRate: this.hourlyRate,
+        description: this.description,
+        shiftType: this.shiftType,
+        id: this.id,
+        lastUpdated: this.lastUpdated,
+        isAvailable: this.isAvailable,
+        applicationLink: this.applicationLink,
+        applicants: this.applicants.map(e => e.toMap()),
+        type: this.type,
+      };
+    }
+  
+    static fromMap(data: DocumentData): Job {
+      return new Job({
+        position: data.position,
+        companyName: data.companyName,
+        companyId: data.companyId,
+        location: Location.fromMap(data.location),
+        hourlyRate: data.hourlyRate,
+        description: data.description,
+        shiftType: shiftTypeFromString(data.shiftType),
+        id: data.id,
+        lastUpdated: data.lastUpdated,
+        isAvailable: data.isAvailable,
+        applicationLink: data.applicationLink,
+        applicants: (data.applicants as never[]).map(e => ActivityMember.fromMap(e)),
+      });
+    }
+  }
+  
+  export class Volunteer extends Opportunity {
+    volunteers: ActivityMember[];
+  
+    constructor({
+      position,
+      companyName,
+      companyId,
+      location,
+      description,
+      id,
+      lastUpdated,
+      isAvailable,
+      applicationLink,
+      volunteers,
+      type = OpportunityType.RecurringVolunteer,
+      applicants,
+    }: {
+      position: string;
+      companyName: string;
+      companyId: string;
+      location: Location;
+      description: string;
+      id: string;
+      lastUpdated: number;
+      isAvailable: boolean;
+      applicationLink: string;
+      volunteers: ActivityMember[];
+      type?: OpportunityType;
+      applicants: ActivityMember[];
+    }) {
+      super({
+        position,
+        companyName,
+        companyId,
+        location,
+        description,
+        id,
+        lastUpdated,
+        isAvailable,
+        applicationLink,
+        type,
+        applicants,
+      });
+      this.volunteers = volunteers;
+    }
+  
+    toMap(): Record<string, any> {
+      return {
+        position: this.position,
+        companyName: this.companyName,
+        companyId: this.companyId,
+        location: this.location.toMap(),
+        description: this.description,
+        id: this.id,
+        lastUpdated: this.lastUpdated,
+        isAvailable: this.isAvailable,
+        applicationLink: this.applicationLink,
+        volunteers: this.volunteers.map(e => e.toMap()),
+        type: this.type,
+        applicants: this.applicants.map(e => e.toMap()),
+      };
+    }
+  
+    static fromMap(data: DocumentData): Volunteer {
+      return new Volunteer({
+        position: data.position,
+        companyName: data.companyName,
+        companyId: data.companyId,
+        location: Location.fromMap(data.location),
+        description: data.description,
+        id: data.id,
+        lastUpdated: data.lastUpdated,
+        isAvailable: data.isAvailable,
+        applicationLink: data.applicationLink,
+        type: opportunityTypeFromString(data.type),
+        applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
+        volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
+      });
+    }
+  }
+  
+  export class OneTimeVolunteer extends Volunteer {
+    eventDate: EventDate;
+    taskId: string;
+  
+    constructor({
+      position,
+      companyName,
+      companyId,
+      location,
+      description,
+      id,
+      lastUpdated,
+      isAvailable,
+      applicationLink,
+      volunteers,
+      applicants,
+      eventDate,
+      taskId,
+      type = OpportunityType.OneTimeVolunteer,
+    }: {
+      position: string;
+      companyName: string;
+      companyId: string;
+      location: Location;
+      description: string;
+      id: string;
+      lastUpdated: number;
+      isAvailable: boolean;
+      applicationLink: string;
+      volunteers: ActivityMember[];
+      applicants: ActivityMember[];
+      eventDate: EventDate;
+      taskId: string;
+      type?: OpportunityType;
+    }) {
+      super({
+        position,
+        companyName,
+        companyId,
+        location,
+        description,
+        id,
+        lastUpdated,
+        isAvailable,
+        applicationLink,
+        volunteers,
+        type,
+        applicants,
+      });
+      this.eventDate = eventDate;
+      this.taskId = taskId;
+    }
+  
+    toMap(): Record<string, any> {
+      return {
+        position: this.position,
+        companyName: this.companyName,
+        companyId: this.companyId,
+        location: this.location.toMap(),
+        description: this.description,
+        id: this.id,
+        lastUpdated: this.lastUpdated,
+        isAvailable: this.isAvailable,
+        applicationLink: this.applicationLink,
+        volunteers: this.volunteers.map(e => e.toMap()),
+        eventDate: this.eventDate.toMap(),
+        type: this.type,
+        taskId: this.taskId,
+        applicants: this.applicants.map(e => e.toMap()),
+      };
+    }
+  
+    static fromMap(data: DocumentData): OneTimeVolunteer {
+      return new OneTimeVolunteer({
+        position: data.position,
+        companyName: data.companyName,
+        companyId: data.companyId,
+        location: Location.fromMap(data.location),
+        description: data.description,
+        id: data.id,
+        lastUpdated: data.lastUpdated,
+        isAvailable: data.isAvailable,
+        applicationLink: data.applicationLink,
+        type: opportunityTypeFromString(data.type),
+        applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
+        volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
+        taskId: data.taskId,
+        eventDate: EventDate.fromMap(data.eventDate),
+      });
+    }
+  }
+  
+  export class RecurringVolunteer extends Volunteer {
+    shiftType: ShiftType;
+  
+    constructor({
+      position,
+      companyName,
+      companyId,
+      location,
+      description,
+      id,
+      lastUpdated,
+      isAvailable,
+      applicationLink,
+      volunteers,
+      applicants,
+      shiftType,
+      type = OpportunityType.RecurringVolunteer,
+    }: {
+      position: string;
+      companyName: string;
+      companyId: string;
+      location: Location;
+      description: string;
+      id: string;
+      lastUpdated: number;
+      isAvailable: boolean;
+      applicationLink: string;
+      volunteers: ActivityMember[];
+      applicants: ActivityMember[];
+      shiftType: ShiftType;
+      type?: OpportunityType;
+    }) {
+      super({
+        position,
+        companyName,
+        companyId,
+        location,
+        description,
+        id,
+        lastUpdated,
+        isAvailable,
+        applicationLink,
+        volunteers,
+        type,
+        applicants,
+      });
+      this.shiftType = shiftType;
+    }
+  
+    toMap(): Record<string, any> {
+      return {
+        position: this.position,
+        companyName: this.companyName,
+        companyId: this.companyId,
+        location: this.location.toMap(),
+        description: this.description,
+        id: this.id,
+        lastUpdated: this.lastUpdated,
+        isAvailable: this.isAvailable,
+        applicationLink: this.applicationLink,
+        volunteers: this.volunteers.map(e => e.toMap()),
+        shiftType: this.shiftType,
+        type: this.type,
+        applicants: this.applicants.map(e => e.toMap()),
+      };
+    }
+  
+    static fromMap(data: DocumentData): RecurringVolunteer {
+      return new RecurringVolunteer({
+        position: data.position,
+        companyName: data.companyName,
+        companyId: data.companyId,
+        location: Location.fromMap(data.location),
+        description: data.description,
+        id: data.id,
+        lastUpdated: data.lastUpdated,
+        isAvailable: data.isAvailable,
+        applicationLink: data.applicationLink,
+        type: opportunityTypeFromString(data.type),
+        applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
+        volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
+        shiftType: shiftTypeFromString(data.shiftType),
+      });
+    }
+  }
+  
+  export enum CompanyType {
+    Job = "Job",
+    Volunteer = "Volunteer"
+  }
+  
+  export function companyTypeFromString(type: string): CompanyType {
+    return Object.values(CompanyType).find(e => e === type) as CompanyType;
+  }
 
   
+  export class EmployerData {
+    uid: string;
+    FCMToken: string;
+    phoneNumber: string;
+    fullname: string;
+    email: string;
+    companyId: string;
+    accountType: string;
   
+    constructor({
+      uid,
+      FCMToken,
+      accountType,
+      fullname,
+      email,
+      companyId,
+      phoneNumber,
+    }: {
+      uid: string;
+      FCMToken: string;
+      accountType: string;
+      fullname: string;
+      email: string;
+      companyId: string;
+      phoneNumber: string;
+    }) {
+      this.uid = uid;
+      this.FCMToken = FCMToken;
+      this.phoneNumber = phoneNumber;
+      this.accountType = accountType;
+      this.fullname = fullname;
+      this.companyId = companyId;
+      this.email = email;
+    }
+  
+    static empty(): EmployerData {
+      return new EmployerData({
+        uid: "",
+        FCMToken: "",
+        accountType: "employer",
+        fullname: "",
+        email: "",
+        companyId: "",
+        phoneNumber: "",
+      });
+    }
+  
+    toMap(): { [key: string]: string } {
+      return {
+        "uid": this.uid,
+        "FCMToken": this.FCMToken,
+        "phoneNumber": this.phoneNumber,
+        "accountType": this.accountType,
+        "fullname": this.fullname,
+        "companyId": this.companyId,
+        "email": this.email,
+      };
+    }
+  
+    static fromMap(map: DocumentData): EmployerData {
+      return new EmployerData({
+        uid: map.uid,
+        FCMToken: map.FCMToken,
+        phoneNumber: map.phoneNumber,
+        accountType: map.accountType,
+        fullname: map.fullname,
+        companyId: map.companyId,
+        email: map.email,
+      });
+    }
+  }
+  
+  export class Company {
+    id: string;
+    name: string;
+    location: Location;
+    lastUpdated: number;
+    employers: EmployerData[];
+    joinCode: string;
+    savedLocations: Location[];
+    type: CompanyType;
+  
+    constructor({
+      id,
+      name,
+      location,
+      lastUpdated,
+      employers,
+      joinCode,
+      savedLocations,
+      type,
+    }: {
+      id: string;
+      name: string;
+      location: Location;
+      lastUpdated: number;
+      employers: EmployerData[];
+      joinCode: string;
+      savedLocations: Location[];
+      type: CompanyType;
+    }) {
+      this.id = id;
+      this.name = name;
+      this.location = location;
+      this.lastUpdated = lastUpdated;
+      this.employers = employers;
+      this.joinCode = joinCode;
+      this.savedLocations = savedLocations;
+      this.type = type;
+    }
+  
+    toMap(): Record<string, any> {
+      return {
+        id: this.id,
+        name: this.name,
+        location: this.location.toMap(),
+        lastUpdated: this.lastUpdated,
+        employers: this.employers.map(e => e.toMap()),
+        joinCode: this.joinCode,
+        savedLocations: this.savedLocations.map(e => e.toMap()),
+        employerUids: this.employers.map(e => e.uid),
+        type: this.type,
+      };
+    }
+  
+   
+  
+   
+  
+    static fromMap(data: DocumentData): Company {
+      return new Company({
+        id: data.id,
+        name: data.name,
+        location: Location.fromMap(data.location),
+        lastUpdated: data.lastUpdated,
+        employers: (data.employers as any[]).map(e => EmployerData.fromMap(e)),
+        joinCode: data.joinCode,
+        savedLocations: (data.savedLocations as any[]).map(e => Location.fromMap(e)),
+        type: companyTypeFromString(data.type),
+      });
+    }
+  }

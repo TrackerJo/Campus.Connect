@@ -17,8 +17,20 @@
     text-align: center;
     background-color: #f5f5f5;
     cursor: pointer;
-    margin: 1em;
 
+
+}
+
+.UserResults {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: column;
+
+
+
+    border-radius: 3px;
+    gap: 5px;
 }
 
 .AddBtn{
@@ -53,10 +65,47 @@
     margin: 1em;
 }
 
+.UserResult {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 80%;
+    padding: 0.5em;
+    margin: 1em;
+    border-radius: 3px;
+
+
+    font-weight: 600;
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+    transition: all 0.3s ease;
+}
+
+.sections {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2em;
+  
+  }
+  
+  
+  
+  .section {
+    font-weight: normal;
+    cursor: pointer;
+  }
+  
+  .section.selected {
+    font-weight: bold;
+    /* create a border on the bottom that is the orange */
+    border-bottom: 4px solid #ff6b35;
+  
+  }
+
 .AddUserDialog {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+
     align-items: center;
     width: 35vw;
     height: 100%;

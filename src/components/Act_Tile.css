@@ -14,6 +14,7 @@
     color: white;
     text-align: center;
     margin: 1em;
+    cursor: pointer;
 }
 
 
@@ -41,7 +42,13 @@
     color: white;
     cursor: pointer;
     margin: 0.5em;
-    width: 1em;
+    width: 1.5em !important;
+}
+.ForwardIcon {
+    color: white;
+    cursor: pointer;
+    margin: 0.5em;
+    width: 2em !important;
 }
 
 .ActTile .header{
@@ -60,6 +67,36 @@
 .scenes{
     max-height: 82vh;
     overflow-y: auto;
+}
+
+.ActActions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+/* 
+    padding: 0.5em; */
+    /* margin: 0.5em; */
+    border-radius: 3px;
+}
+
+.DownIcon {
+    color: white;
+    cursor: pointer;
+    margin: 0.5em;
+    width: 1.5em !important;
+}
+
+.disabled {
+
+    cursor: not-allowed !important;
+}
+
+.UpIcon {
+    color: white;
+    cursor: pointer;
+    margin: 0.5em;
+    width: 1.5em !important;
 }
 
 @media screen and (max-width: 768px) {

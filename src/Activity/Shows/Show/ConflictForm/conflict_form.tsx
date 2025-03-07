@@ -20,7 +20,7 @@ import { useRef, useState } from 'react'
 import './conflict_form.css'
 import { ActivityMember, ConflictDate, ConflictForm, ConflictResponse, ConflictResponseDate, EventDate, Show } from '../../../../constants'
 import ConflictDateTile from '../../../../components/Conflict_Date_Tile'
-import { deleteActivityShowConflictResponse, getActivity, getActivityShow, getActvityShowConflictFormResponses, getCurrentUserAsActor, saveActivityShowConflictForm, submitActivityShowConflictForm } from '../../../../api/db'
+import { deleteActivityShowConflictResponse, getActivity, getActivityShow, getActvityShowConflictFormResponses, getCurrentUserAsActor, saveActivityShowConflictForm, submitActivityShowConflictForm, updateActivityShowConflictForm } from '../../../../api/db'
 import ConflictDateFormTile from '../../../../components/Conflict_Date_Form_Tile'
 import AddRecurringConflictDialog from '../../../../components/Add_Recurring_Conflict_Dialog'
 import SimpleConflictResponseDisplayTile from '../../../../components/Simple_Conflict_Response_Date_Display_Tile'
@@ -61,6 +61,7 @@ function App() {
     const addActorDialogRef = useRef<HTMLDialogElement>(null)
     const addRecurringConflictsDialog = useRef<HTMLDialogElement>(null)
     const addAdditionalDayDialog = useRef<HTMLDialogElement>(null)
+    const [editingConflictForm, setEditingConflictForm] = useState<boolean>(false)
 
 
     
@@ -135,6 +136,7 @@ function App() {
         if (accountType) {
             setAccountType(accountType as "student" | "teacher")
             console.log(accountType)
+            console.log(getCurrentUserId())
             if(accountType == "teacher" && activity) {
                if(activity.teachers.findIndex((teacher) => {
                    return teacher.userId == getCurrentUserId()
@@ -167,7 +169,66 @@ function App() {
 
     }, [])
 
+    function conflictFormDates() {
+        return (
+            <>
+            <button className='ActionBtn' onClick={() => {
+                addAdditionalDayDialog.current?.showModal()
+            }}>Add Additional Day</button>
+                <div className='conflicts'>
 
+                    {
+                        conflictDates.map((conflictDate, index) => {
+                            return (
+                                <ConflictDateTile key={conflictDate.date.date.toISOString()} conflict={conflictDate} canDelete={true} onDelete={() => {
+                                    const newDates = [...conflictDates]
+                                    newDates.splice(index, 1)
+                                    setConflictDates(newDates)
+                                }} setConflict={(newConflictDate) => {
+                                    const newDates = [...conflictDates]
+                                    newDates[index] = newConflictDate
+                                    setConflictDates(newDates)
+                                }}/>
+                            )
+                        })
+                    
+                    }
+                </div>
+                <br />
+                {isLoading ? <div className='loader'></div> : <button className='ActionBtn' onClick={async () => {
+                    setIsLoading(true)
+                    if (formDeadline == null && !editingConflictForm) {
+                        alert("Please set a form deadline")
+                        setIsLoading(false)
+                        return
+                    }
+                    const newShow = Show.fromMap(show!.toMap())
+                    if(editingConflictForm) {
+                        newShow!.conflictForm!.dates = conflictDates
+                        setShow(newShow)
+                        await updateActivityShowConflictForm(activityId, showId, newShow!.conflictForm!)
+                        setEditingConflictForm(false)
+                        setIsLoading(false)
+                        return
+                    }
+                    newShow!.conflictForm = ConflictForm.fromBlank(conflictDates, formDeadline!,Date.now())
+                    setShow(newShow)
+                    console.log(newShow)
+                    
+                    await saveActivityShowConflictForm(activityId, showId, newShow.conflictForm)
+                    setIsLoading(false)
+                }}>
+                    Save Conflict Form
+                </button>}
+                <br />
+               {!editingConflictForm && <button className='ActionBtn' onClick={() => {
+                    setCreationStage("setDates")
+                    setConflictDates([])
+                }}>
+                    Back
+                </button>}</>
+        )
+    }
 
     return (
         <>
@@ -263,59 +324,13 @@ function App() {
                 }}>
                     Next
                 </button> </> :
-                <>
                 
-                <button className='ActionBtn' onClick={() => {
-                    addAdditionalDayDialog.current?.showModal()
-                }}>Add Additional Day</button>
-                    <div className='conflicts'>
+                conflictFormDates()
 
-                        {
-                            conflictDates.map((conflictDate, index) => {
-                                return (
-                                    <ConflictDateTile key={conflictDate.date.date.toISOString()} conflict={conflictDate} canDelete={true} onDelete={() => {
-                                        const newDates = [...conflictDates]
-                                        newDates.splice(index, 1)
-                                        setConflictDates(newDates)
-                                    }} setConflict={(newConflictDate) => {
-                                        const newDates = [...conflictDates]
-                                        newDates[index] = newConflictDate
-                                        setConflictDates(newDates)
-                                    }}/>
-                                )
-                            })
-                        
-                        }
-                    </div>
-                    <br />
-                    {isLoading ? <div className='loader'></div> : <button className='ActionBtn' onClick={async () => {
-                        setIsLoading(true)
-                        if (formDeadline == null) {
-                            alert("Please set a form deadline")
-                            setIsLoading(false)
-                            return
-                        }
-                        const newShow = Show.fromMap(show!.toMap())
-                        newShow!.conflictForm = ConflictForm.fromBlank(conflictDates, formDeadline!,Date.now())
-                        setShow(newShow)
-                        console.log(newShow)
-                        await saveActivityShowConflictForm(activityId, showId, newShow.conflictForm)
-                        setIsLoading(false)
-                    }}>
-                        Save Conflict Form
-                    </button>}
-                    <br />
-                    <button className='ActionBtn' onClick={() => {
-                        setCreationStage("setDates")
-                        setConflictDates([])
-                    }}>
-                        Back
-                    </button>
-
-                 </>}
+                 }
 
                 </> 
-                :  accountType == "teacher" && !addingConflictResponse ? 
+                :  accountType == "teacher" && !addingConflictResponse && !editingConflictForm ? 
                 <>
                 <h2>Conflict Form Responses</h2>
                 <div className='conflicts'>
@@ -335,7 +350,7 @@ function App() {
                                                   <div className='conflict-response-date'>
                                                     {date.date!.toDateString()}
                                                     <br />
-                                                    {date.from!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {date.to!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {date.from!.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {date.to!.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                                                     {
                                                         date.note != "" && <br/>
                                                     }
@@ -373,6 +388,11 @@ function App() {
                     }
 
                 </div>
+
+                <button className='ActionBtn' onClick={() => {
+                    setConflictDates(show!.conflictForm!.dates)
+                    setEditingConflictForm(true)
+                }}>Edit Conflict Form</button>
                 <button className='ActionBtn' onClick={() => {
                     addActorDialogRef.current?.showModal()
                 }}>Add Conflict Response</button>
@@ -381,7 +401,7 @@ function App() {
                     await navigator.clipboard.writeText(link)
                     alert("Link copied to clipboard")
                 }}>Share Conflict Form</button>
-                </>
+                </>: accountType == "teacher" && editingConflictForm ? conflictFormDates()
                 : (formResponses.length == 0 && show?.formStatus == "open") || addingConflictResponse ?
                 <>
                 <h2>Conflict Form</h2>
@@ -413,6 +433,7 @@ function App() {
                         )
                     })}
                 </div>
+               
                 <br />
                 {isLoading ? <div className='loader'></div> :  <button className='ActionBtn' onClick={async () => {
                     setIsLoading(true)
@@ -511,7 +532,7 @@ function App() {
         }}/>
         <AddUserDialog dialogRef={addActorDialogRef} close={() => {
             addActorDialogRef.current!.close()
-        }} members={members} addedMembers={[]} addUser={(newMember: ActivityMember | ActivityMember) => {
+        }} students={members} parents={[]} teachers={[]} addedMembers={[]} addUser={(newMember: ActivityMember | ActivityMember) => {
             if(newMember instanceof ActivityMember){
                 setSelectedActor(newMember)
             }

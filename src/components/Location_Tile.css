@@ -1,0 +1,19 @@
+.location-tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #FF6B35;
+    border-radius: 10px;
+    width: 20vw;
+  }
+
+  @media screen and (max-width: 768px) {
+    .location-tile {
+      width: 80vw !important;
+    }
+
+    
+}

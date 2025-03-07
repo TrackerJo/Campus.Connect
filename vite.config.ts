@@ -2,7 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
-
+import dotenv from 'dotenv';
+dotenv.config();
 const root = resolve(__dirname, 'src')
 const outDir = resolve(__dirname, 'dist')
 
@@ -46,6 +47,10 @@ export default defineConfig({
         profiles: resolve(root, 'Profiles/index.html'),
         actorPrint: resolve(root, 'Activity/Shows/Show/Actor/Print/index.html'),
         activityEvents: resolve(root, 'Activity/Events/index.html'),
+        activityEventsPrint: resolve(root, 'Activity/Events/Print/index.html'),
+        child: resolve(root, 'Child/index.html'),
+        opportunities: resolve(root, 'Opportunities/index.html'),
+        company: resolve(root, 'Company/index.html'),
       }
     }
   }

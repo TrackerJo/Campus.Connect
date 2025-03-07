@@ -32,7 +32,7 @@ function CreateActivityDialog({dialogRef, close}: CreateActivityDialogProps){
                         alert("Failed to create activity")
                         return
                     }
-                    window.location.href = `/Campus.Connect/Activity/?activityId=${activity.id}`
+                    window.location.href = `/Activity/?activityId=${activity.id}`
 
 
                 }}>

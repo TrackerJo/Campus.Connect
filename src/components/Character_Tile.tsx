@@ -5,6 +5,11 @@ import { LegacyRef, useRef } from "react"
 import AssignActorDialog from "./Assign_Actor_Dialog"
 function CharacterTile({character, setCharacter, isCreate, removeCharacter, isAssign, characters, actors, hasCreatedSchedule} :CharacterTileProps){
     const dialogRef = useRef<HTMLDialogElement>(null)
+    console.log("CHARACTER TILE")
+    console.log(characters)
+    console.log(isCreate)
+    console.log(isAssign)
+    console.log(hasCreatedSchedule)
     return (
         <div className="CharacterTile" id={"character-tile-" + character.characterId}>
             <div className="header">
@@ -34,24 +39,25 @@ function CharacterTile({character, setCharacter, isCreate, removeCharacter, isAs
                             }
                         </div>
                        
-                    </>
-                    : hasCreatedSchedule ?  <select name="characters" id="characters" value={character.characterId} onChange={(val) => {
+                    </>:
+                    // : hasCreatedSchedule ?  <select name="characters" id="characters" value={character.characterId} onChange={(val) => {
+                    //     if(val.target.value == "null") return
+                    //     setCharacter(characters.find((e) => e.characterId == parseInt(val.target.value))!)
+                    // }}>
+                    //     <option value={"null"}>Select a character</option>
+                    //     {characters.filter((c => c.actor != null)).map((c, index) => {
+                    //         return <option value={c.characterId} key={index}>{c.name}</option>
+                    //     })}
+                    //     </select> :
+                    //Dropdown for selecting existing characters
+                    <select name="characters" id="characters" value={character.characterId} onChange={(val) => {
                         if(val.target.value == "null") return
                         setCharacter(characters.find((e) => e.characterId == parseInt(val.target.value))!)
                     }}>
                         <option value={"null"}>Select a character</option>
-                        {characters.filter((c => c.actor != null)).map((c, index) => {
-                            return <option value={c.characterId} key={index}>{c.name}</option>
-                        })}
-                        </select>:
-                    //Dropdown for selecting existing characters
-                    <select name="characters" id="characters" value={character.name} onChange={(val) => {
-                        if(val.target.value == "null") return
-                        setCharacter(characters.find((e) => e.name == val.target.value)!)
-                    }}>
-                        <option value={"null"}>Select a character</option>
                         {characters.map((c, index) => {
-                            return <option value={c.name} key={index}>{c.name}</option>
+                            console.log(c)
+                            return <option value={c.characterId} key={index}>{c.name}</option>
                         })}
                         </select>
                     }

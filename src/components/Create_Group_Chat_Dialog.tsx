@@ -1,6 +1,6 @@
 import "./Create_Group_Chat_Dialog.css";
 
-import { Activity, ActivityGC, ActivityGroup, ActivityMember, CreateGroupChatDialogProps, TheaterActivity } from "../constants";
+import { Activity, ActivityGC, ActivityGroup, ActivityMember, ActivityTeacher, CreateGroupChatDialogProps, TheaterActivity } from "../constants";
 import { useEffect, useRef, useState } from "react";
 import { createActivityGroupChat, getActivity } from "../api/db";
 import AddUserDialog from "./Add_User_Dialog";
@@ -16,6 +16,9 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
 
     const [activity, setActivity] = useState<Activity | TheaterActivity | null>(null)
     const [members, setMembers] = useState<(ActivityMember)[]>([])
+    const [parents, setParents] = useState<(ActivityMember)[]>([])
+    const [students, setStudents] = useState<(ActivityMember)[]>([])
+    const [teachers, setTeachers] = useState<(ActivityTeacher)[]>([])
     const [addedMembers, setAddedMembers] = useState<(ActivityMember)[]>([])
     const [activityGroups, setActivityGroups] = useState<(ActivityGroup)[]>([])
 
@@ -33,11 +36,17 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
                 if(activity instanceof TheaterActivity){
                    
 
-                    setMembers([...activity.parents, ...activity.students])
+                    setMembers([...activity.parents, ...activity.students, ...activity.teachers.map((teacher) => teacher.toActivityMember())])
+                    setStudents(activity.students)
+                    setParents(activity.parents)
+                    setTeachers(activity.teachers)
                     setActivityGroups(activity.groups)
 
                 } else {
-                    setMembers([...activity.parents, ...activity.students])
+                    setMembers([...activity.parents, ...activity.students, ...activity.teachers.map((teacher) => teacher.toActivityMember())])
+                    setStudents(activity.students)
+                    setParents(activity.parents)
+                    setTeachers(activity.teachers)
                     setActivityGroups(activity.groups)
                 }
             }
@@ -99,7 +108,7 @@ function CreateGroupChatDialog({ close, dialogRef, activityId, refresh }: Create
                     </button>
                 </div>
             </dialog>
-            <AddUserDialog members={members} dialogRef={addMemberDialogRef} addedMembers={addedMembers} close={() => { 
+            <AddUserDialog students={students} parents={parents} teachers={teachers} dialogRef={addMemberDialogRef} addedMembers={addedMembers} close={() => { 
                 addMemberDialogRef.current!.close()
             }} addUser={(newMember: ActivityMember | ActivityMember) => {
                 

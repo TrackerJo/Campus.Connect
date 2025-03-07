@@ -11,7 +11,7 @@ import {
     ConflictForm,
     ConflictResponse,
     Event,
-    EventType, hexToInt,
+    EventType,
     Message,
 
     Resource,
@@ -28,7 +28,17 @@ import {
     ShowGroup,
     EnsembleSection,
     FullCast,
-    NotificationUser
+    NotificationUser,
+    Company,
+    Opportunity,
+    opportunityTypeFromString,
+    OpportunityType,
+    Job,
+    OneTimeVolunteer,
+    RecurringVolunteer,
+    ActivityGroup,
+    Company,
+    EmployerData
 } from "../constants";
 import { getCurrentUserId } from "./auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -39,6 +49,9 @@ const functions = getFunctions(app);
 const db = getFirestore(app);
 
 const schoolsCollection = collection(db, "schools");
+const companiesCollection = collection(db, "companies");
+const employersCollection = collection(db, "employers");
+const opportunitiesCollection = collection(db, "opportunities");
 
 export const getSchool = async (schoolId: string) => {
     const schoolDoc = doc(schoolsCollection, schoolId);
@@ -53,6 +66,17 @@ export const getSchools = async () => {
         schools.push(doc.data());
     });
     return schools;
+}
+
+export const getCompanies = async () => {
+    const companiesSnapshot = await getDocs(companiesCollection);
+    const companies: Company[] = [];
+    companiesSnapshot.forEach((doc) => {
+        const data = doc.data();
+        data.id = doc.id;
+        companies.push(Company.fromMap(data));
+    });
+    return companies;
 }
 
 export const getIfUserIsInSchool = async (schoolId: string, userId: string, accountType: "student" | "teacher") => {
@@ -128,6 +152,7 @@ export async function editShow(show: Show): Promise<void> {
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), show.activityId);
     const showDoc = doc(collection(activityDoc, "shows"), show.id);
+    show.lastUpdated = Date.now();
     await updateDoc(showDoc, show.toMap());
 }
 
@@ -222,6 +247,7 @@ export async function editShowTemplate(showTemplate: Show): Promise<void> {
 
 
     const showTemplateDoc = doc(collection(db, "showTemplates"), showTemplate.templateId);
+    showTemplate.lastUpdated = Date.now();
     await updateDoc(showTemplateDoc, showTemplate.toMap());
 }
 
@@ -324,7 +350,8 @@ export async function deleteActivityTheaterEvent(theaterEvent: TheaterEvent) {
     const activityDoc = doc(collection(schoolDoc, "activities"), theaterEvent.activityId);
     const eventDoc = doc(collection(activityDoc, "events"), theaterEvent.id);
     await updateDoc(eventDoc, {
-        deleted: true
+        deleted: true,
+        lastUpdated: Date.now()
     });
     await httpsCallable(functions, "startDeleteActivityEvent")({
         activityId: theaterEvent.activityId,
@@ -341,7 +368,8 @@ export async function deleteActivityEvent(activityEvent: ActivityEvent) {
     const activityDoc = doc(collection(schoolDoc, "activities"), activityEvent.activityId);
     const eventDoc = doc(collection(activityDoc, "events"), activityEvent.id);
     await updateDoc(eventDoc, {
-        deleted: true
+        deleted: true,
+        lastUpdated: Date.now()
     });
     await httpsCallable(functions, "startDeleteActivityEvent")({
         activityId: activityEvent.activityId,
@@ -372,10 +400,23 @@ export async function saveActivityShowConflictForm(activityId: string, showId: s
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     const showDoc = doc(collection(activityDoc, "shows"), showId);
     await updateDoc(showDoc, {
-        conflictForm: conflictForm.toMap()
+        conflictForm: conflictForm.toMap(),
+        lastUpdated: Date.now()
     });
     await httpsCallable(functions, "addConflictFormDeadline")({activityId: activityId, showId: showId, schoolId: schoolId, deadline: conflictForm.deadline.toISOString()    });
 
+}
+
+export async function updateActivityShowConflictForm(activityId: string, showId: string, conflictForm: ConflictForm) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const showDoc = doc(collection(activityDoc, "shows"), showId);
+    await updateDoc(showDoc, {
+        conflictForm: conflictForm.toMap(),
+        lastUpdated: Date.now()
+    });
 }
 
 export async function getCurrentUserAsActor(): Promise<ActivityMember | null> {
@@ -483,7 +524,8 @@ export async function joinActivity(activityCode: string): Promise<Activity | The
         if(accountType == "student") {
             await updateDoc(activityDoc.ref, {
                 studentUids: [...activityDoc.data().studentUids, userId],
-                students: [...activityDoc.data().students, ActivityMember.fromMap(userSnap.data()).toMap()]
+                students: [...activityDoc.data().students, ActivityMember.fromMap(userSnap.data()).toMap()],
+                lastUpdated: Date.now()
                     
             });
             return TheaterActivity.fromMap(activityDoc.data());
@@ -494,7 +536,8 @@ export async function joinActivity(activityCode: string): Promise<Activity | The
             console.log(activityMember.toMap());
             await updateDoc(activityDoc.ref, {
                 teacherUids: [...activityDoc.data().teacherUids, userId],
-                teachers: [...activityDoc.data().teachers, activityMember.toMap()]
+                teachers: [...activityDoc.data().teachers, activityMember.toMap()],
+                lastUpdated: Date.now()
             });
             return TheaterActivity.fromMap(activityDoc.data());
         }
@@ -503,14 +546,16 @@ export async function joinActivity(activityCode: string): Promise<Activity | The
             const activityMember = ActivityMember.fromBlank(userSnap.data().fullname, userSnap.data().gender, userSnap.data().email, userSnap.data().phoneNumber, userSnap.data().uid, userSnap.data().FCMToken);
             await updateDoc(activityDoc.ref, {
                 studentUids: [...activityDoc.data().studentUids, userId],
-                students: [...activityDoc.data().students, activityMember.toMap()]
+                students: [...activityDoc.data().students, activityMember.toMap()],
+                lastUpdated: Date.now()
             });
             return Activity.fromMap(activityDoc.data());
         } else {
             const activityMember = ActivityTeacher.fromBlank(userSnap.data().fullname, userSnap.data().email, userSnap.data().phoneNumber, userSnap.data().uid, userSnap.data().FCMToken);
             await updateDoc(activityDoc.ref, {
                 teacherUids: [...activityDoc.data().teacherUids, userId],
-                teachers: [...activityDoc.data().teachers, activityMember.toMap()]
+                teachers: [...activityDoc.data().teachers, activityMember.toMap()],
+                lastUpdated: Date.now()
             });
             return Activity.fromMap(activityDoc.data());
         }
@@ -525,7 +570,8 @@ export async function updateUserGender(gender: "male" | "female") {
     const schoolDoc = doc(db, "schools", schoolId);
     const userDoc = doc(collection(schoolDoc, accountType == "student" ? "students" : "teachers"), userId);
     await updateDoc(userDoc, {
-        gender: gender
+        gender: gender,
+        lastUpdated: Date.now()
     });
 }
 
@@ -537,7 +583,8 @@ export async function updateUserPhoneNumber(phoneNumber: string) {
     const schoolDoc = doc(db, "schools", schoolId);
     const userDoc = doc(collection(schoolDoc, accountType == "student" ? "students" : "teachers"), userId);
     await updateDoc(userDoc, {
-        phoneNumber: phoneNumber
+        phoneNumber: phoneNumber,
+        lastUpdated: Date.now()
     });
 }
 
@@ -547,6 +594,7 @@ export async function editActivityTheaterEvent(theaterEvent: TheaterEvent) {
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), theaterEvent.activityId);
     const eventDoc = doc(collection(activityDoc, "events"), theaterEvent.id);
+    theaterEvent.lastUpdated = Date.now();
     await updateDoc(eventDoc, theaterEvent.toMap());
 }
 
@@ -556,7 +604,9 @@ export async function editActivityEvent(activityEvent: ActivityEvent) {
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), activityEvent.activityId);
     const eventDoc = doc(collection(activityDoc, "events"), activityEvent.id);
-    await updateDoc(eventDoc, activityEvent.toMap());
+    activityEvent.lastUpdated = Date.now();
+    await deleteActivityEvent(activityEvent);
+    await addActivityEvent(activityEvent);
 }
 
 export async function getAllUserEvents(): Promise<(Event | ActivityEvent | TheaterEvent)[]> {
@@ -577,7 +627,9 @@ export async function getAllUserEvents(): Promise<(Event | ActivityEvent | Theat
     console.log(activitiesSnapshot);
     for (const activityDoc of activitiesSnapshot.docs) {
         const eventsSnapshots: QuerySnapshot[] = [];
-
+        if(activityDoc.data().deleted == true){
+            continue;
+        }
         if(accountType == "student"){
             console.log("Getting events for student");
             eventsSnapshots.push(await getDocs(query(collection(activityDoc.ref, "events"), where("targetUids", "array-contains", userId))));
@@ -590,6 +642,7 @@ export async function getAllUserEvents(): Promise<(Event | ActivityEvent | Theat
         for (const eventsSnapshot of eventsSnapshots) {
             for (const eventDoc of eventsSnapshot.docs) {
                 const event = eventDoc.data();
+                if(event.deleted) continue;
                 console.log(event);
                 if (event.type == "activity-theater-event") {
                     events.push(TheaterEvent.fromMap(event));
@@ -624,6 +677,7 @@ export async function getActivityEvents(activityId: string) : Promise<(ActivityE
     for (const eventsSnapshot of eventsSnapshots) {
         for (const eventDoc of eventsSnapshot.docs) {
             const event = eventDoc.data();
+            if(event.deleted) continue;
             console.log(event);
             event["id"] = eventDoc.id;
             console.log(event);
@@ -658,7 +712,8 @@ export async function updateTheaterActivityRehearsalLocation(activityId: string,
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     await updateDoc(activityDoc, {
-        rehearsalLocations: theatherLocations.map((location) => location.toMap())
+        rehearsalLocations: theatherLocations.map((location) => location.toMap()),
+        lastUpdated: Date.now()
     });
 
 }
@@ -820,6 +875,17 @@ export async function getUserData(): Promise<StudentData | TeacherData | null> {
     return TeacherData.fromMap(userSnap.data());
 }
 
+export async function getParentMap(userId: string): Promise<DocumentData | null> {
+
+
+
+    
+    const userDoc = doc(collection(db, "parents"), userId);
+    const userSnap = await getDoc(userDoc);
+    if (!userSnap.exists()) return null;
+    return userSnap.data(); 
+}
+
 export async function sendActivityGCMessage(activityId: string, gcId: string,message: Message,activityName: string, recipientData?: ActivityMember ) {
     if(message.message == "") return;
     const schoolId = localStorage.getItem("schoolId");
@@ -849,7 +915,8 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
         const messageRef = await addDoc(messagesCol, message.toMap());
         message.messageId = messageRef.id;
         await updateDoc(messageRef, {
-            messageId: messageRef.id
+            messageId: messageRef.id,
+            lastUpdated: Date.now()
         });
         //Send email
         sendGroupChatMessage(message, [NotificationUser.fromBlank(recipientData.userId, recipientData.email)], gc, activityName);
@@ -862,7 +929,8 @@ export async function sendActivityGCMessage(activityId: string, gcId: string,mes
     const ref = await addDoc(messagesCol, message.toMap());
     message.messageId = ref.id;
     await updateDoc(ref, {
-        messageId: ref.id
+        messageId: ref.id,
+        lastUpdated: Date.now()
     });
 
     //Send email
@@ -933,7 +1001,8 @@ export async function addActivityShowResource(activityId: string, showId: string
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     const showDoc = doc(collection(activityDoc, "shows"), showId);
    updateDoc(showDoc, {
-         resources: arrayUnion(resource.toMap())
+         resources: arrayUnion(resource.toMap()),
+         lastUpdated: Date.now()
     });
 }
 
@@ -944,7 +1013,8 @@ export async function deleteActivityShowResource(activityId: string, showId: str
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     const showDoc = doc(collection(activityDoc, "shows"), showId);
     updateDoc(showDoc, {
-        resources: arrayRemove(resource.toMap())
+        resources: arrayRemove(resource.toMap()),
+        lastUpdated: Date.now()
     });
 }
 
@@ -966,7 +1036,21 @@ export async function getSchoolUsingCode(type: "student" | "teacher", code: stri
     return schoolSnap.docs[0].data();
 }
 
-export async function createUser(type: "student" | "teacher", user: StudentData | TeacherData) {
+export async function createUser(type: "student" | "teacher" | "employer", user: StudentData | TeacherData | EmployerData) {
+   if(type == "employer"){
+         await setDoc(doc(db, "employers", user.uid), user.toMap());
+         const companyId = localStorage.getItem("companyId");
+            if (!companyId) return;
+            const companyDoc = doc(db, "companies", companyId);
+            await updateDoc(companyDoc, {
+                employerUids: arrayUnion(user.uid),
+                employers: arrayUnion(user.toMap()),
+                lastUpdated: Date.now()
+            });
+            return;
+
+   }
+   
     const schoolId = localStorage.getItem("schoolId");
 
     if (!schoolId) return;
@@ -985,11 +1069,12 @@ export async function createUser(type: "student" | "teacher", user: StudentData 
     }
     await updateDoc(schoolDoc, {
         [type + "Uids"]: arrayUnion(user.uid),
-        [type + "s"]: arrayUnion(activityUser.toMap())
+        [type + "s"]: arrayUnion(activityUser.toMap()),
+        lastUpdated: Date.now()
     });
 }
 
-function createActivityJoinCode(name: string): string {
+export function createActivityJoinCode(name: string): string {
     const now = new Date();
     const millisecondsSinceEpoch = now.getTime().toString();
     const firstChar = name.charCodeAt(0);
@@ -1008,32 +1093,58 @@ export async function createActivity(activityName: string, activityType: "theate
     const activitiesCol = collection(schoolDoc, "activities");
 
     const joinCode = createActivityJoinCode(activityName);
+    console.log(joinCode);
     const defaultTheaterEventTypes: EventType[] = [
         EventType.fromMap({
             name: "Rehearsal",
-            color: hexToInt("#FF0000")
+            color: {
+                red: 255,
+                green: 0,
+                blue: 0,
+                alpha: 255
+            }
         }),
         EventType.fromMap({
             name: "Performance",
-            color: hexToInt("#00FF00")
+            color: {
+                red: 0,
+                green: 255,
+                blue: 0,
+                alpha: 255
+            }
         }),
     ];
 
     const defaultEventTypes: EventType[] = [
         EventType.fromMap({
             name: "Practice",
-            color: hexToInt("#FF0000")
+            color: {
+                red: 255,
+                green: 0,
+                blue: 0,
+                alpha: 255
+            }
         }),
         EventType.fromMap({
             name: "Game",
-            color: hexToInt("#00FF00")
+            color: {
+                red: 0,
+                green: 255,
+                blue: 0,
+                alpha: 255
+            }
         }),
         ];
 
     const defautTheaterLocations: TheaterLocation[] = [
         TheaterLocation.fromMap({
             name: "Auditorium",
-            color: hexToInt("#0000FF")
+            color: {
+                red: 0,
+                green: 0,
+                blue: 255,
+                alpha: 255
+            }
         }),
 
     ];
@@ -1049,6 +1160,7 @@ export async function createActivity(activityName: string, activityType: "theate
     } else {
         activity = Activity.fromBlank(activityName, "", joinCode, [],[],[],[teacher], defaultLocations, defaultEventTypes, defaultLocation, "type", Date.now(), "activity");
     }
+    console.log(activity.toMap());
     const ref =await addDoc(activitiesCol, activity.toMap());
     activity.id = ref.id;
     await updateDoc(ref, {
@@ -1107,7 +1219,8 @@ export async function fixTeachers() {
         teachers = teachers.filter((teacher) => teacher.uid != teacherData.uid);
         teachers.push(teacher.toMap());
         await updateDoc(schoolDoc, {
-            teachers: teachers
+            teachers: teachers,
+            lastUpdated: Date.now()
         });
         const activitiesCol = collection(schoolDoc, "activities");
         const activitiesSnap = await getDocs(query(activitiesCol, where("teacherUids", "array-contains", teacherData.uid)));
@@ -1117,7 +1230,8 @@ export async function fixTeachers() {
             teachers = teachers.filter((teacher) => teacher.uid != teacherData.uid);
             teachers.push(teacher.toMap());
             await updateDoc(doc.ref, {
-                teachers: teachers
+                teachers: teachers,
+                lastUpdated: Date.now()
             });
         });
     };
@@ -1154,7 +1268,8 @@ export async function addLocationToActivity(activityId: string, location: Locati
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     await updateDoc(activityDoc, {
-        locations: arrayUnion(location.toMap())
+        locations: arrayUnion(location.toMap()),
+        lastUpdated: Date.now()
     });
 }
 
@@ -1163,7 +1278,8 @@ export async function addLocationToSavedLocations(location: Location) {
     if (!schoolId) return;
     const schoolDoc = doc(db, "schools", schoolId);
     await updateDoc(schoolDoc, {
-        savedLocations: arrayUnion(location.toMap())
+        savedLocations: arrayUnion(location.toMap()),
+        lastUpdated: Date.now()
     });
 }
 
@@ -1173,7 +1289,8 @@ export async function addEventTypeToActivity(activityId: string, eventType: Even
     const schoolDoc = doc(db, "schools", schoolId);
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     await updateDoc(activityDoc, {
-        eventTypes: arrayUnion(eventType.toMap())
+        eventTypes: arrayUnion(eventType.toMap()),
+        lastUpdated: Date.now()
     });
 }
 
@@ -1184,7 +1301,8 @@ export async function setActivityShowCreatingSchedule(activityId: string, showId
     const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
     const showDoc = doc(collection(activityDoc, "shows"), showId);
     await updateDoc(showDoc, {
-        isCreatingSchedule: true
+        isCreatingSchedule: true,
+        lastUpdated: Date.now()
     });
 }
 
@@ -1203,7 +1321,8 @@ export async function createCustomUser(user: StudentData, activityId: string) {
 
     await updateDoc(schoolDoc, {
         ["studentUids"]: arrayUnion(user.uid),
-        ["students"]: arrayUnion(activityUser.toMap())
+        ["students"]: arrayUnion(activityUser.toMap()),
+        lastUpdated: Date.now()
     });
 
     const userId = activityUser.userId;
@@ -1221,7 +1340,8 @@ export async function createCustomUser(user: StudentData, activityId: string) {
 
             await updateDoc(activityDoc.ref, {
                 studentUids: [...activityDoc.data().studentUids, userId],
-                students: [...activityDoc.data().students, activityUser.toMap()]
+                students: [...activityDoc.data().students, activityUser.toMap()],
+                lastUpdated: Date.now()
                     
             });
             return TheaterActivity.fromMap(activityDoc.data());
@@ -1231,7 +1351,8 @@ export async function createCustomUser(user: StudentData, activityId: string) {
 
             await updateDoc(activityDoc.ref, {
                 studentUids: [...activityDoc.data().studentUids, userId],
-                students: [...activityDoc.data().students, activityUser.toMap()]
+                students: [...activityDoc.data().students, activityUser.toMap()],
+                lastUpdated: Date.now()
             });
             return Activity.fromMap(activityDoc.data());
        
@@ -1364,6 +1485,7 @@ export async function editShowEventsCharacters(show: Show) {
         }
         event.targets = targets;
         event.lastUpdated = Date.now();
+
         await updateDoc(doc.ref, event.toMap());
     }
 }
@@ -1543,6 +1665,466 @@ export async function getAllUserShows(): Promise<Show[]> {
     }
     return shows;
 }
+
+export async function acceptParentChildRequest( parentUid: string) {
+
+    const userId = localStorage.getItem("userId");
+
+   const parentDoc = doc(collection(db, "parents"), parentUid);
+    const parentSnap = await getDoc(parentDoc);
+    if (!parentSnap.exists()) return null;
+    const parentData = parentSnap.data();
+    const requestedChildren = parentData.requestedChildren;
+    const children = parentData.children;
+    const child = requestedChildren.find((child) => child.uid == userId);
+    if (!child) return null;
+    requestedChildren.splice(requestedChildren.indexOf(child), 1);
+    children.push(child);
+    await updateDoc(parentDoc, {
+        requestedChildren: requestedChildren,
+        children: children,
+        "lastUpdated": Date.now()
+    });
+}
+
+export async function editActivityLocation(activityId: string, newLocation: Location, oldLocation: Location) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const activitySnap = await getDoc(activityDoc);
+    if (!activitySnap.exists()) return;
+    const activityData = activitySnap.data();
+    const locations = activityData.locations as DocumentData[];
+    for (let i = 0; i < locations.length; i++) {
+        const location = Location.fromMap(locations[i]);
+        if (location.name == oldLocation.name) {
+            locations[i] = newLocation.toMap();
+        }
+    }
+    let defaultLocation = Location.fromMap(activityData.defaultLocation);
+    if(defaultLocation.name == oldLocation.name){
+        defaultLocation = newLocation
+    } 
+    await updateDoc(activityDoc, {
+        locations: locations,
+        defaultLocation: defaultLocation.toMap(),
+        lastUpdated: Date.now()
+    });
+    const eventsQuery = query(collection(activityDoc, "events"), where("location", "==", oldLocation.toMap()));
+    const eventsSnap = await getDocs(eventsQuery);
+    eventsSnap.docs.forEach(async (doc) => {
+        if(doc.data().deleted == true){
+            return;
+        }
+        //check type of event
+        const event = doc.data();
+        if(event.type == "activity-theater-event"){
+            const theaterEvent = TheaterEvent.fromMap(event);
+            theaterEvent.id = doc.id;
+            await deleteActivityTheaterEvent(theaterEvent);
+            theaterEvent.location = newLocation;
+            theaterEvent.lastUpdated = Date.now();
+            await addActivityTheaterEvent(theaterEvent);
+        } else {
+            const activityEvent = ActivityEvent.fromMap(event);
+            activityEvent.id = doc.id;
+            await deleteActivityEvent(activityEvent);
+            activityEvent.location = newLocation;
+            activityEvent.lastUpdated = Date.now();
+            await addActivityEvent(activityEvent);
+        }
+    })
+
+
+}
+
+export async function editActivityRehearsalLocation(activityId: string, newLocation: TheaterLocation, oldLocation: TheaterLocation) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const activitySnap = await getDoc(activityDoc);
+    if (!activitySnap.exists()) return;
+    const activityData = activitySnap.data();
+    if(activityData.type != "theater") return;
+    const locations = activityData.rehearsalLocations as DocumentData[];
+    for (let i = 0; i < locations.length; i++) {
+        const location = TheaterLocation.fromMap(locations[i]);
+        if (location.name == oldLocation.name) {
+            locations[i] = newLocation.toMap();
+        }
+    }
+    
+    await updateDoc(activityDoc, {
+        rehearsalLocations: locations,
+
+        lastUpdated: Date.now()
+    });
+    const eventsQuery = query(collection(activityDoc, "events"), where("rehearsalLocation", "==", oldLocation.toMap()));
+    const eventsSnap = await getDocs(eventsQuery);
+    eventsSnap.docs.forEach(async (doc) => {
+        if(doc.data().deleted == true){
+            return;
+        }
+        //check type of event
+        const event = doc.data();
+        if(event.type == "activity-theater-event"){
+            const theaterEvent = TheaterEvent.fromMap(event);
+            theaterEvent.id = doc.id;
+            await deleteActivityTheaterEvent(theaterEvent);
+            theaterEvent.rehearsalLocation = newLocation;
+            theaterEvent.lastUpdated = Date.now();
+            await addActivityTheaterEvent(theaterEvent);
+        } 
+    });
+
+
+}
+
+export async function editActivityName(activityId: string, newName: string) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const activitySnap = await getDoc(activityDoc);
+    if (!activitySnap.exists()) return;
+    const activityData = activitySnap.data();
+    
+    
+    await updateDoc(activityDoc, {
+        name: newName,
+
+        lastUpdated: Date.now()
+    });
+    const eventsQuery = collection(activityDoc, "events");
+    const eventsSnap = await getDocs(eventsQuery);
+    eventsSnap.docs.forEach(async (doc) => {
+        if(doc.data().deleted == true){
+            return;
+        }
+        //check type of event
+        const event = doc.data();
+        if(event.type == "activity-theater-event"){
+            const theaterEvent = TheaterEvent.fromMap(event);
+            theaterEvent.id = doc.id;
+            await deleteActivityTheaterEvent(theaterEvent);
+            theaterEvent.activityName = newName;
+            theaterEvent.lastUpdated = Date.now();
+            await addActivityTheaterEvent(theaterEvent);
+        }  else {
+            const activityEvent = ActivityEvent.fromMap(event);
+            activityEvent.id = doc.id;
+            await deleteActivityEvent(activityEvent);
+            activityEvent.activityName = newName;
+            activityEvent.lastUpdated = Date.now();
+            await addActivityEvent(activityEvent);
+        }
+    })
+
+
+}
+
+export async function editActivityEventType(activityId: string, newEventType: EventType, oldEventType: EventType, isTheater: boolean) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const activitySnap = await getDoc(activityDoc);
+    if (!activitySnap.exists()) return;
+    const activityData = activitySnap.data();
+    const eventTypes = activityData.eventTypes as DocumentData[];
+    for (let i = 0; i < eventTypes.length; i++) {
+        const eventType = EventType.fromMap(eventTypes[i]);
+        if (eventType.name == oldEventType.name) {
+            eventTypes[i] = newEventType.toMap();
+        }
+    }
+    
+    await updateDoc(activityDoc, {
+        eventTypes: eventTypes,
+
+        lastUpdated: Date.now()
+    });
+    const eventsQuery = query(collection(activityDoc, "events"), where(isTheater ? "activityEventType": "eventType", "==", oldEventType.toMap()));
+    const eventsSnap = await getDocs(eventsQuery);
+    eventsSnap.docs.forEach(async (doc) => {
+        if(doc.data().deleted == true){
+            return;
+        }
+        //check type of event
+        const event = doc.data();
+        if(event.type == "activity-theater-event"){
+            const theaterEvent = TheaterEvent.fromMap(event);
+            theaterEvent.id = doc.id;
+            await deleteActivityTheaterEvent(theaterEvent);
+            theaterEvent.activityEventType = newEventType;
+            theaterEvent.lastUpdated = Date.now();
+
+            await addActivityTheaterEvent(theaterEvent);
+        } else {
+            const activityEvent = ActivityEvent.fromMap(event);
+            activityEvent.id = doc.id;
+            await deleteActivityEvent(activityEvent);
+            activityEvent.eventType = newEventType;
+            activityEvent.lastUpdated = Date.now();
+            await addActivityEvent(activityEvent);
+        }
+    });
+
+
+}
+
+export async function editActivityGroup(activityId: string, newActivityGroup: ActivityGroup, oldActivityGroup: ActivityGroup) {
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    console.log("Editing group");
+    console.log(newActivityGroup);
+    console.log(activityId);
+
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+    const activitySnap = await getDoc(activityDoc);
+    if (!activitySnap.exists()) return;
+    const activityData = activitySnap.data();
+
+    const activityGroups = activityData.groups as DocumentData[];
+    for (let i = 0; i < activityGroups.length; i++) {
+        const activityGroup = ActivityGroup.fromMap(activityGroups[i]);
+        if (activityGroup.groupName == oldActivityGroup.groupName) {
+            activityGroups[i] = newActivityGroup.toMap();
+        }
+    }
+    
+    await updateDoc(activityDoc, {
+        groups: activityGroups,
+
+        lastUpdated: Date.now()
+    });
+    const eventsQuery = query(collection(activityDoc, "events"), where("groupNames", "array-contains", oldActivityGroup.groupName));
+    const eventsSnap = await getDocs(eventsQuery);
+    eventsSnap.docs.forEach(async (doc) => {
+        if(doc.data().deleted == true){
+            return;
+        }
+        //check type of event
+        const event = doc.data();
+        if(event.type != "activity-theater-event"){
+           
+            const activityEvent = ActivityEvent.fromMap(event);
+            activityEvent.id = doc.id;
+            console.log("deleting event");
+            await deleteActivityEvent(activityEvent);
+            activityEvent.groupNames = activityEvent.groupNames.map((groupName) => groupName == oldActivityGroup.groupName ? newActivityGroup.groupName : groupName);
+            activityEvent.groupTargets = activityEvent.groupTargets.map((groupTarget) => groupTarget.groupName == oldActivityGroup.groupName ? newActivityGroup : groupTarget);
+            const targets: ActivityMember[] = [];
+            for(const groupTarget of activityEvent.groupTargets){
+                for(const member of groupTarget.groupMembers){
+                    if(targets.find((e) => e.userId == member.userId) != undefined){
+                        continue
+                    }
+                    targets.push(member);
+                }
+            }
+            activityEvent.targets = targets;
+            activityEvent.lastUpdated = Date.now();
+            console.log("adding event");
+            await addActivityEvent(activityEvent);
+        }
+
+
+    });
+    
+
+    const groupChatsQuery = query(collection(activityDoc, "groupChats"), where("name", "==", oldActivityGroup.groupName), where("generalTarget", "==", "group"));
+    const groupChatsSnap = await getDocs(groupChatsQuery);
+    for(const doc of groupChatsSnap.docs){
+        const gc = ActivityGC.fromMap(doc.data());
+        gc.name = newActivityGroup.groupName;
+        gc.members = newActivityGroup.groupMembers.map((member) => member.toGroupChatMember());
+        gc.lastUpdated = Date.now();
+        await updateDoc(doc.ref, gc.toMap());
+    }
+}
+
+export async function addActivityGroup(activityId: string, group: ActivityGroup): Promise<ActivityGroup> {
+
+    const schoolId = localStorage.getItem("schoolId");
+    if (!schoolId) return;
+    const schoolDoc = doc(db, "schools", schoolId);
+    const activityDoc = doc(collection(schoolDoc, "activities"), activityId);
+   
+
+
+    await updateDoc(activityDoc, {
+        groups: arrayUnion(group.toMap()),
+
+        lastUpdated: Date.now()
+    });
+    const activityGC = ActivityGC.fromBlank(
+group.groupName,
+"",
+group.groupMembers.map((member) => member.toGroupChatMember()),
+
+
+"group",
+activityId,
+Date.now());
+await createActivityGroupChat(activityGC);
+        return group;
+
+}
+
+export async function getCompanyOpportunities(): Promise<Opportunity[]> {
+    const companyId = localStorage.getItem("companyId");
+    if (!companyId) return [];
+   const opportunitiesQuery = query(opportunitiesCollection, where("companyId", "==", companyId));
+   const opportunitiesSnap = await getDocs(opportunitiesQuery);
+    const opportunities: Opportunity[] = [];
+    opportunitiesSnap.forEach((doc) => {
+        const data = doc.data();
+        if(data.deleted) return;
+        data.id = doc.id;
+        const opportunityType = opportunityTypeFromString( data.type);
+        if(opportunityType == OpportunityType.Job){
+            opportunities.push(Job.fromMap(data));
+        } else if(opportunityType == OpportunityType.OneTimeVolunteer){
+            opportunities.push(OneTimeVolunteer.fromMap(data));
+        } else if(opportunityType == OpportunityType.RecurringVolunteer){
+            opportunities.push(RecurringVolunteer.fromMap(data));
+        }
+
+    });
+    return opportunities;
+}
+
+export async function getOpportunities(): Promise<Opportunity[]> {
+
+
+
+   const opportunitiesSnap = await getDocs(opportunitiesCollection);
+    const opportunities: Opportunity[] = [];
+    opportunitiesSnap.forEach((doc) => {
+        const data = doc.data();
+        if(data.deleted) return;
+        data.id = doc.id;
+        const opportunityType = opportunityTypeFromString( data.type);
+        if(opportunityType == OpportunityType.Job){
+            opportunities.push(Job.fromMap(data));
+        } else if(opportunityType == OpportunityType.OneTimeVolunteer){
+            opportunities.push(OneTimeVolunteer.fromMap(data));
+        } else if(opportunityType == OpportunityType.RecurringVolunteer){
+            opportunities.push(RecurringVolunteer.fromMap(data));
+        }
+
+    });
+    return opportunities;
+}
+
+export async function updateOpportunity(opportunity: Opportunity, justApplied: boolean) {
+    if(!justApplied && opportunity instanceof OneTimeVolunteer){
+        await httpsCallable(functions, "deleteCloudTask")({
+            "taskId": opportunity.taskId,
+          });
+        const result = await httpsCallable(functions, "startRemoveVolunteerOpportunity")({
+            "opportunityId": opportunity.id,
+            "date": opportunity.eventDate.getDateStart().getTime(),
+          });
+          opportunity.taskId = result.data as string;
+    }
+    
+    const opportunityDoc = doc(opportunitiesCollection, opportunity.id);
+    await updateDoc(opportunityDoc, opportunity.toMap());
+}
+
+export async function getCompany(): Promise<Company | null> {
+    const companyId = localStorage.getItem("companyId");
+    if (!companyId) return null;
+    const companyDoc = doc(companiesCollection, companyId);
+    const companySnap = await getDoc(companyDoc);
+    if (!companySnap.exists()) return null;
+    return Company.fromMap(companySnap.data());
+}
+
+export async function deleteCloudTask(taskId: string) {
+    await httpsCallable(functions, "deleteCloudTask")({
+        "taskId": taskId,
+      });
+    }
+
+
+export async function addOpportunity(opportunity: Opportunity): Promise<Opportunity> {
+    if(opportunity instanceof OneTimeVolunteer){
+
+         
+          
+          const result = await httpsCallable(functions, "startRemoveVolunteerOpportunity")({
+            "opportunityId": opportunity.id,
+            "date": opportunity.eventDate.getDateStart().getTime(),
+          });
+          opportunity.taskId = result.data as string;
+
+    }
+    
+    const ref = await addDoc(opportunitiesCollection, opportunity.toMap());
+    opportunity.id = ref.id;
+    return opportunity;
+}
+
+export async function deleteOpportunity(opportunity: Opportunity) {
+    if(opportunity instanceof OneTimeVolunteer){
+        console.log(opportunity.taskId);
+        await httpsCallable(functions, "deleteCloudTask")({
+            "taskId": opportunity.taskId,
+          });
+    }
+    const opportunityDoc = doc(opportunitiesCollection, opportunity.id);
+    await updateDoc(opportunityDoc, {
+        deleted: true,
+        lastUpdated: Date.now()
+    });
+
+    await httpsCallable(functions, "startDeleteOpportunity")({
+        "opportunityId": opportunity.id,
+      });
+}
+
+export async function createCompany(company: Company): Promise<Company> {
+    const ref = await addDoc(companiesCollection, company.toMap());
+    company.id = ref.id;
+    return company;
+}
+
+export async function joinCompany(companyId: string, employer: EmployerData) {
+    const companyDoc = doc(companiesCollection, companyId);
+    await updateDoc(companyDoc, {
+        employers: arrayUnion(employer.toMap()),
+        employerUids: arrayUnion(employer.uid),
+        lastUpdated: Date.now()
+    });
+
+}
+
+export async function updateCompany(company: Company) {
+    const companyDoc = doc(companiesCollection, company.id);
+    await updateDoc(companyDoc, company.toMap());
+}
+
+export async function updateCompanyName(companyId: string, newName: string) {
+    const opportunitiesQuery = query(opportunitiesCollection, where("companyId", "==", companyId));
+    const opportunitiesSnap = await getDocs(opportunitiesQuery);
+    opportunitiesSnap.forEach(async (doc) => {
+        const opportunity = doc.data();
+        if(opportunity.deleted) return;
+        opportunity.companyName = newName;
+        await updateDoc(doc.ref, opportunity);
+    });
+}
+
 
 // export async function fixEventDates(){
 //     const schoolId = localStorage.getItem("schoolId");

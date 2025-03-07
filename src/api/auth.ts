@@ -1,16 +1,17 @@
-import { browserLocalPersistence, createUserWithEmailAndPassword, getAuth, onAuthStateChanged, setPersistence, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { browserLocalPersistence, createUserWithEmailAndPassword, getAuth, onAuthStateChanged, sendPasswordResetEmail, setPersistence, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { app, secondaryApp } from "./init";
 
 const auth = getAuth(app);
 
 const secondaryAuth = getAuth(secondaryApp);
 
-export async function login(email: string, password: string, schoolId: string){
+export async function login(email: string, password: string, schoolId: string, companyId: string){
     return setPersistence(auth, browserLocalPersistence).then( async () => {
         try{
             await signInWithEmailAndPassword(auth, email, password);
             console.log(auth.currentUser);
             localStorage.setItem("schoolId", schoolId);
+            localStorage.setItem("companyId", companyId);
             localStorage.setItem("userId", auth.currentUser!.uid!);
             return true;
         } catch (e){
@@ -94,7 +95,30 @@ export async function createUserAccount(email: string, password: string): Promis
 
 
             return userCredential.user.uid;
-            });
+            }).catch((e) => {
+
+                console.log(e.code);
+                if(e.code === "auth/email-already-in-use"){
+                    alert("An account with this email already exists");
+                }else if(e.code === "auth/invalid-email"){
+                        alert("Invalid email");
+                    } else if(e.code === "auth/weak-password"){
+                        alert("Password is too weak");
+                    }
+                    
+                return "";
+            }
+        );
        
 
+}
+
+export async function sendPasswordReset(email: string): Promise<boolean>{
+     return sendPasswordResetEmail(auth, email).then(() => {
+        return true;
+    }).catch((e) => {
+        console.log(e);
+        return false;
+    }
+    );
 }

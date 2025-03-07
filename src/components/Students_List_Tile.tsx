@@ -52,7 +52,7 @@ function StudentListTile({students, activityId, isTeacher}: StudentListTileProps
             </div>
             {isTeacher && <button className="ActionBtn" onClick={() => {
                 createCustomDialogRef.current?.showModal()
-            }}>Add Student</button>}
+            }}>Create Student</button>}
         </div>
         <CreateCustomUserDialog close={() => {
             createCustomDialogRef.current?.close()

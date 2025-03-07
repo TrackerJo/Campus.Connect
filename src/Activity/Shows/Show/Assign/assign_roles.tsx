@@ -22,8 +22,8 @@ import './assign_roles.css'
 
 
 
-import { Act, ActivityMember, Character, Dance, Ensemble, EnsembleSection, Show, ShowGroup, Song } from '../../../../constants'
-import ActTile from '../../../../components/Act_Tile'
+import {  ActivityMember, Character, Ensemble, EnsembleSection, Show, ShowGroup } from '../../../../constants'
+
 import CharacterTile from '../../../../components/Character_Tile'
 import ShowGroupTile from '../../../../components/Show_Group_Tile'
 
@@ -51,6 +51,7 @@ function App() {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [hasShowGroup, setHasShowGroup] = useState<boolean>(false)
     const [loadingShow, setLoadingShow] = useState<boolean>(true)
+    const [currentSection, setCurrentSection] = useState<"Characters" | "Show Groups"| "Ensemble">("Characters")
 
 
     async function assginRoles(){
@@ -287,8 +288,24 @@ function App() {
           
         </div>
         <div className='center'>
-            <h2>Assign Characters</h2>
-            <div className='characters' id='create-characters'>
+        <div className='sections'>
+                <h2 className={'section ' + (currentSection == "Characters" ? "selected" : "")}  onClick={() => {
+                    setCurrentSection("Characters")
+                    
+                }}>Characters</h2>
+                {hasShowGroup && <h2 className={'section ' + (currentSection == "Show Groups" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Show Groups")
+                    
+                }}>Show Groups</h2>}
+                {show?.hasEnsemble && <h2 className={'section ' + (currentSection == "Ensemble" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Ensemble")
+                    
+                }}>Ensemble</h2>}
+                
+
+            </div>
+
+           {currentSection == "Characters" &&  <div className='characters' id='create-characters'>
                 {characters.map((character, index) => {
                     return <CharacterTile key={index} character={character} actors={actors} characters={[]} isAssign={true} setCharacter={(newCharacter) => {
                         setCharacters((prev) => {
@@ -301,9 +318,9 @@ function App() {
                     }} isCreate={false}/>
                 })}
                 
-            </div>
-            { hasShowGroup && <>
-            <h2>Assign Show Groups</h2>
+            </div>}
+            { hasShowGroup && currentSection == "Show Groups" && <>
+
             <div className='showGroups' id='create-showGroups'>
                 {showGroups.map((showGroup, index) => {
 
@@ -331,8 +348,8 @@ function App() {
                
             </div></>}
             {
-                show?.hasEnsemble && <>
-                 <h2>Assign Ensemble</h2>
+                show?.hasEnsemble && currentSection == "Ensemble" && <>
+
             <div className='ensemble' id='create-ensemble'>
                {
                      ensemble.map((actor, index) => {

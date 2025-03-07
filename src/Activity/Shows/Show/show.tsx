@@ -22,7 +22,7 @@ import DashboardTile from '../../../components/Dashboard_Tile'
 import { Show } from '../../../constants'
 import { getActivityShow, setActivityShowCreatingSchedule } from '../../../api/db'
 import { isLoggedIn } from '../../../api/auth'
-import ConfirmCreateScheduleDialog from '../../../components/Confirm_Create_Schedule_Dialog'
+
 
 
 
@@ -37,7 +37,7 @@ function App() {
     const [show, setShow] = useState<Show | null>()
     const [accountType, setAccountType] = useState<"student" | "teacher">("student")
     const [loadingInfo, setLoadingInfo] = useState(true)
-    const confirmDialogRef = useRef<HTMLDialogElement>(null)
+
 
 
     useEffect(() => {
@@ -93,13 +93,15 @@ function App() {
                     localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
                     window.location.href = `/Activity/Shows/Show/Assign/?activityId=${activityId}&showId=${showId}`
                 } }/></> : <></>}
-                { accountType == "teacher" && show?.canCreateSchedule && <DashboardTile title={"Create/Edit Schedule"} description={"Create/Edit the rehersal schedule"} onClick={() => {
+                { accountType == "teacher" && show?.canCreateSchedule && <DashboardTile title={"Create/Edit Schedule"} description={"Create/Edit the rehersal schedule"} onClick={async () => {
                     //Save show to local storage
                     if(show?.isCreatingSchedule){
                          localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
                         window.location.href = `/Activity/Shows/Show/CreateSchedule/?activityId=${activityId}&showId=${showId}`
                     } else{
-                        confirmDialogRef.current?.showModal()
+                        await setActivityShowCreatingSchedule(activityId, showId)
+                        localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
+                        window.location.href = `/Activity/Shows/Show/CreateSchedule/?activityId=${activityId}&showId=${showId}`
                     }
                     
                 } }/>}
@@ -146,15 +148,7 @@ function App() {
         </div>
         </>
         }
-        <ConfirmCreateScheduleDialog dialogRef={confirmDialogRef} close={() => {
-            confirmDialogRef.current?.close()
-        }} confirmed={async () => {
-            confirmDialogRef.current?.close()
-            await setActivityShowCreatingSchedule(activityId, showId)
-            localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
-            window.location.href = `/Activity/Shows/Show/CreateSchedule/?activityId=${activityId}&showId=${showId}`
-        }}/>
-        
+       
         </>
     )
 }
