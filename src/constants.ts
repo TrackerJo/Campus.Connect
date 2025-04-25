@@ -23,18 +23,18 @@ export type CalendarProps = {
     isCreating?: boolean;
     canPaste: boolean;
     canCopy: boolean;
-    
+
 };
 
 export type MobileCalendarProps = {
     events: CalendarEvent[];
     eventClick: (eventId: string) => void;
-    
+
 };
 
 export type Day = {
     day: Date;
-   
+
     title: string;
 }
 
@@ -61,7 +61,7 @@ export type CustomContextMenuProps = {
     items: ContextMenuItem[];
     top: number;
     left: number;
-    
+
 };
 
 export type DashboardTileProps = {
@@ -69,7 +69,7 @@ export type DashboardTileProps = {
     title: string;
     description: string;
     onClick: () => void;
-    
+
 };
 
 export type ActTileProps = {
@@ -89,14 +89,14 @@ export type ActTileProps = {
     moveDown: () => void;
 
 
-    
+
 };
 
 export type SceneTileProps = {
     scene: Scene;
     setScene: (scene: Scene) => void;
     isCreate: boolean;
-    removeScene: () => void;    
+    removeScene: () => void;
     isAssign: boolean;
     characters: Character[];
     showGroups: ShowGroup[];
@@ -107,13 +107,14 @@ export type SceneTileProps = {
     moveUp: () => void;
     moveDown: () => void;
 
-    
+
 };
 
 export type SceneDisplayTileProps = {
     scene: Scene;
     onClick: (scene: Scene) => void;
-    
+    showCharacters: boolean;
+
 };
 
 export type ActDisplayTileProps = {
@@ -145,7 +146,7 @@ export type CharacterTileProps = {
     actors: ActivityMember[];
     hasCreatedSchedule?: boolean;
 
-    
+
 };
 
 export type CharacterDisplayTileProps = {
@@ -189,7 +190,7 @@ export type EnsembleSectionProps = {
     isGroupChatCreate: boolean;
     onAddEnsemble: () => void;
 
-    
+
 };
 
 export type ActorTileProps = {
@@ -203,7 +204,7 @@ export type EnsembleSectionDisplayTileProps = {
     canDelete: boolean;
     isMini: boolean;
     onDelete: () => void;
-    
+
 };
 
 export type ShowGroupTileProps = {
@@ -218,8 +219,16 @@ export type ShowGroupTileProps = {
     hasCreatedSchedule?: boolean;
     actors: ActivityMember[];
 
-    
+
 };
+
+export type ImportEventTileProps = {
+    remove: () => void;
+    edit: (newEvent: ActivityEvent) => void;
+    event: ActivityEvent;
+    activity: Activity;
+
+}
 
 export type LocationTileProps = {
     location: Location;
@@ -241,8 +250,8 @@ export type ShowGroupDisplayTileProps = {
     canClick: boolean;
     showCharacters: boolean;
     onClick: () => void;
-    onDelete: () => void;  
-    
+    onDelete: () => void;
+
 };
 
 export type SongTileProps = {
@@ -256,7 +265,7 @@ export type SongTileProps = {
     hasEnsemble: boolean;
     hasCreatedSchedule?: boolean;
 
-    
+
 };
 
 export type FullCastTileProps = {
@@ -275,19 +284,21 @@ export type DanceTileProps = {
     hasEnsemble: boolean;
     hasCreatedSchedule?: boolean;
 
-    
+
 };
 
-export type SongDisplayTileProps = { 
+export type SongDisplayTileProps = {
     song: Song;
     onClick: () => void;
-    
+    showCharacters: boolean;
+
 };
 
 export type DanceDisplayTileProps = {
     dance: Dance;
     onClick: () => void;
-    
+    showCharacters: boolean;
+
 };
 
 
@@ -306,7 +317,7 @@ export type ExportScheduleDialogProps = {
 
     dialogRef: LegacyRef<HTMLDialogElement>;
     activity: Activity;
-    close: () => void;  
+    close: () => void;
     events: (ActivityEvent)[];
 }
 
@@ -339,6 +350,14 @@ export type JoinActivityDialogProps = {
     close: () => void;
 }
 
+export type AttendeesDialogProps = {
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    close: () => void;
+    attendees: (ActivityMember)[];
+
+
+}
+
 export type CreateActivityDialogProps = {
     dialogRef: LegacyRef<HTMLDialogElement>;
     close: () => void;
@@ -351,6 +370,8 @@ export type OpportunityTileProps = {
     onEdit: () => void;
     onRemove: () => void;
     onApply: () => void;
+    onRSVP: () => void;
+    onViewAttendees: () => void;
 }
 
 export type CalendarHoverEventTileProps = {
@@ -372,27 +393,35 @@ export type SimpleConflictResponseDateDisplayTileProps = {
 export type AddRehearsalLocationDialogProps = {
     addRehearsalLocation: (rehearsalLocation: TheaterLocation) => void;
     close: () => void;
-    dialogRef: LegacyRef<HTMLDialogElement>;    
+    dialogRef: LegacyRef<HTMLDialogElement>;
 
 }
 
 export type AddLocationDialogProps = {
     addLocation: (location: Location) => void;
     close: () => void;
-    dialogRef: LegacyRef<HTMLDialogElement>;    
+    dialogRef: LegacyRef<HTMLDialogElement>;
     savedLocations: Location[];
+    existingLocations: Location[];
 }
 
 export type AddEventTypeDialogProps = {
     addEventType: (eventType: EventType) => void;
     close: () => void;
-    dialogRef: LegacyRef<HTMLDialogElement>;   
-    eventTypes: EventType[]; 
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    eventTypes: EventType[];
 }
 
 export type GroupChatDisplayTileProps = {
     groupChat: ActivityGC;
     onClick: () => void;
+}
+
+export type EditResourceDialogProps = {
+    editResource: (resource: Resource) => void;
+    close: () => void;
+    dialogRef: LegacyRef<HTMLDialogElement>;
+    resource: Resource | undefined;
 }
 
 export type MessageTileProps = {
@@ -408,17 +437,17 @@ export type CreateGroupChatDialogProps = {
     activityId: string;
     close: () => void;
     dialogRef: LegacyRef<HTMLDialogElement>;
-    refresh: () => void;    
+    refresh: () => void;
 }
 
 export type AddUserDialogProps = {
     students: ActivityMember[];
-    parents: ActivityMember[];
+    parents: ActivityParent[];
     teachers: ActivityTeacher[];
     addedMembers: (ActivityMember)[];
     close: () => void;
     dialogRef: LegacyRef<HTMLDialogElement>;
-    addUser: (users: (ActivityMember | ActivityMember)) => void;
+    addUser: (users: (ActivityMember)) => void;
 }
 
 export type AddFromPlayDialogProps = {
@@ -479,7 +508,7 @@ export type BroadcastMessageDialogProps = {
     activityName: string;
 }
 
-export type AddResourceDialogProps = { 
+export type AddResourceDialogProps = {
     addResource: (resource: Resource) => Promise<void>;
     close: () => void;
     dialogRef: LegacyRef<HTMLDialogElement>;
@@ -490,13 +519,15 @@ export type ResourceTileProps = {
     resource: Resource;
     canRemove: boolean;
     removeResource: () => void;
+    canEdit: boolean;
+    editResource: (newResource: Resource) => Promise<void>;
 }
 
 export type EditLocationDialogProps = {
     editLocation: (location: Location) => void;
     close: () => void;
     dialogRef: LegacyRef<HTMLDialogElement>;
-    location: Location | undefined; 
+    location: Location | undefined;
 }
 
 export type EditGroupDialogProps = {
@@ -506,7 +537,7 @@ export type EditGroupDialogProps = {
     group: ActivityGroup | undefined;
     groups: ActivityGroup[];
     activityStudents: ActivityMember[];
-    activityParents: ActivityMember[];
+    activityParents: ActivityParent[];
 }
 
 export type CreateGroupDialogProps = {
@@ -515,7 +546,7 @@ export type CreateGroupDialogProps = {
     dialogRef: LegacyRef<HTMLDialogElement>;
     groups: ActivityGroup[];
     activityStudents: ActivityMember[];
-    activityParents: ActivityMember[];
+    activityParents: ActivityParent[];
 }
 
 
@@ -524,10 +555,12 @@ export interface Place {
     place_id: string;
     lat?: number;
     lng?: number;
-  }
+}
 export type LocationSearchTileProps = {
     onSelect: (place: Place) => void;
-}   
+    address: string;
+    setAddress: (address: string) => void;
+}
 
 export type AddAdditionalDayDialogProps = {
     dialogRef: LegacyRef<HTMLDialogElement>;
@@ -548,7 +581,7 @@ export type StudentDisplayTileProps = {
 }
 
 export type StudentInfoDialogProps = {
-    student: ActivityMember ;
+    student: ActivityMember;
     close: () => void;
     dialogRef: LegacyRef<HTMLDialogElement>;
     activityId: string;
@@ -575,7 +608,7 @@ export class Activity {
     id: string;
     joinCode: string;
     students: ActivityMember[];
-    parents: ActivityMember[];
+    parents: ActivityParent[];
     groups: ActivityGroup[];
     teachers: ActivityTeacher[];
     locations: Location[];
@@ -600,7 +633,7 @@ export class Activity {
         this.lastUpdated = 0;
     }
 
-    public static fromBlank(name: string, id: string, joinCode: string, students: ActivityMember[], parents: ActivityMember[], groups: ActivityGroup[], teachers: ActivityTeacher[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, showBy: string, lastUpdated: number, type: "activity" | "theater"): Activity {
+    public static fromBlank(name: string, id: string, joinCode: string, students: ActivityMember[], parents: ActivityParent[], groups: ActivityGroup[], teachers: ActivityTeacher[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, showBy: string, lastUpdated: number, type: "activity" | "theater"): Activity {
         const activity = new Activity();
         activity.name = name;
         activity.id = id;
@@ -619,26 +652,26 @@ export class Activity {
         return activity;
 
     }
-    
+
 
     toMap(): object {
         return {
-        "name": this.name,
-        "id": this.id,
-        "type": this.type,
-        "students": this.students.map((e) => e.toMap()),
-        "parents": this.parents.map((e) => e.toMap()),
-        "groups": this.groups.map((e) => e.toMap()),
-        "joinCode": this.joinCode,
-        "teachers": this.teachers.map((e) => e.toMap()),
-        "locations": this.locations.map((e) => e.toMap()),
-        "teacherUids": this.teachers.map((e) => e.userId),
-        "studentUids": this.students.map((e) => e.userId),
-        "parentUids": this.parents.map((e) => e.userId),
-        "defaultLocation": this.defaultLocation.toMap(),
-        "showBy": this.showBy,
-        "eventTypes": this.eventTypes.map((e) => e.toMap()),
-        "lastUpdated": this.lastUpdated,
+            "name": this.name,
+            "id": this.id,
+            "type": this.type,
+            "students": this.students.map((e) => e.toMap()),
+            "parents": this.parents.map((e) => e.toMap()),
+            "groups": this.groups.map((e) => e.toMap()),
+            "joinCode": this.joinCode,
+            "teachers": this.teachers.map((e) => e.toMap()),
+            "locations": this.locations.map((e) => e.toMap()),
+            "teacherUids": this.teachers.map((e) => e.userId),
+            "studentUids": this.students.map((e) => e.userId),
+            "parentUids": this.parents.map((e) => e.userId),
+            "defaultLocation": this.defaultLocation.toMap(),
+            "showBy": this.showBy,
+            "eventTypes": this.eventTypes.map((e) => e.toMap()),
+            "lastUpdated": this.lastUpdated,
         };
     }
 
@@ -649,31 +682,31 @@ export class Activity {
         activity.type = map.type;
         activity.joinCode = map.joinCode;
         const students = map.students;
-        const formattedStudents: ActivityMember[] =  [];
+        const formattedStudents: ActivityMember[] = [];
         for (const student of students) {
             formattedStudents.push(ActivityMember.fromMap(student));
         }
         activity.students = formattedStudents;
         const parents = map.parents;
-        const formattedParents: ActivityMember[] =  [];
+        const formattedParents: ActivityParent[] = [];
         for (const parent of parents) {
-            formattedParents.push(ActivityMember.fromMap(parent));
+            formattedParents.push(ActivityParent.fromMap(parent));
         }
         activity.parents = formattedParents;
         const groups = map.groups;
-        const formattedGroups: ActivityGroup[] =  [];
+        const formattedGroups: ActivityGroup[] = [];
         for (const group of groups) {
             formattedGroups.push(ActivityGroup.fromMap(group));
         }
         activity.groups = formattedGroups;
         const locations = map.locations;
-        const formattedLocations: Location[] =  [];
+        const formattedLocations: Location[] = [];
         for (const location of locations) {
             formattedLocations.push(Location.fromMap(location));
         }
         activity.locations = formattedLocations;
         const teachers = map.teachers;
-        const formattedTeachers: ActivityTeacher[] =  [];
+        const formattedTeachers: ActivityTeacher[] = [];
         for (const teacher of teachers) {
             formattedTeachers.push(ActivityTeacher.fromMap(teacher));
         }
@@ -681,7 +714,7 @@ export class Activity {
         activity.showBy = map.showBy;
         activity.lastUpdated = map.lastUpdated;
         const eventTypes = map.eventTypes;
-        const formattedEventTypes: EventType[] =  [];
+        const formattedEventTypes: EventType[] = [];
         for (const eventType of eventTypes) {
             formattedEventTypes.push(EventType.fromMap(eventType));
         }
@@ -697,7 +730,7 @@ export class TheaterActivity {
     id: string;
     joinCode: string;
     students: ActivityMember[];
-    parents: ActivityMember[];
+    parents: ActivityParent[];
     groups: ActivityGroup[];
     teachers: ActivityTeacher[];
     locations: Location[];
@@ -724,7 +757,7 @@ export class TheaterActivity {
         this.lastUpdated = 0;
     }
 
-    public static fromBlank(name: string, id: string, joinCode: string, students: ActivityMember[], parents: ActivityMember[], groups: ActivityGroup[], teachers: ActivityTeacher[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, rehearsalLocations: TheaterLocation[],showBy: string, lastUpdated: number): TheaterActivity {
+    public static fromBlank(name: string, id: string, joinCode: string, students: ActivityMember[], parents: ActivityParent[], groups: ActivityGroup[], teachers: ActivityTeacher[], locations: Location[], eventTypes: EventType[], defaultLocation: Location, rehearsalLocations: TheaterLocation[], showBy: string, lastUpdated: number): TheaterActivity {
         const activityTheater = new TheaterActivity();
         activityTheater.name = name;
         activityTheater.id = id;
@@ -743,27 +776,27 @@ export class TheaterActivity {
         return activityTheater;
 
     }
-    
+
 
     toMap(): object {
         return {
-        "name": this.name,
-        "id": this.id,
-        "type": this.type,
-        "students": this.students.map((e) => e.toMap()),
-        "parents": this.parents.map((e) => e.toMap()),
-        "groups": this.groups.map((e) => e.toMap()),
-        "joinCode": this.joinCode,
-        "teachers": this.teachers.map((e) => e.toMap()),
-        "teacherUids": this.teachers.map((e) => e.userId),
-        "studentUids": this.students.map((e) => e.userId),
-        "parentUids": this.parents.map((e) => e.userId),
-        "locations": this.locations.map((e) => e.toMap()),
-        "defaultLocation": this.defaultLocation.toMap(),
-        "showBy": this.showBy,
-        "eventTypes": this.eventTypes.map((e) => e.toMap()),
-        "rehearsalLocations": this.rehearsalLocations.map((e) => e.toMap()),
-        "lastUpdated": this.lastUpdated,
+            "name": this.name,
+            "id": this.id,
+            "type": this.type,
+            "students": this.students.map((e) => e.toMap()),
+            "parents": this.parents.map((e) => e.toMap()),
+            "groups": this.groups.map((e) => e.toMap()),
+            "joinCode": this.joinCode,
+            "teachers": this.teachers.map((e) => e.toMap()),
+            "teacherUids": this.teachers.map((e) => e.userId),
+            "studentUids": this.students.map((e) => e.userId),
+            "parentUids": this.parents.map((e) => e.userId),
+            "locations": this.locations.map((e) => e.toMap()),
+            "defaultLocation": this.defaultLocation.toMap(),
+            "showBy": this.showBy,
+            "eventTypes": this.eventTypes.map((e) => e.toMap()),
+            "rehearsalLocations": this.rehearsalLocations.map((e) => e.toMap()),
+            "lastUpdated": this.lastUpdated,
         };
     }
 
@@ -774,37 +807,37 @@ export class TheaterActivity {
         activity.type = map.type;
         activity.joinCode = map.joinCode;
         const students = map.students;
-        const formattedStudents: ActivityMember[] =  [];
+        const formattedStudents: ActivityMember[] = [];
         for (const student of students) {
             formattedStudents.push(ActivityMember.fromMap(student));
         }
         activity.students = formattedStudents;
         const parents = map.parents;
-        const formattedParents: ActivityMember[] =  [];
+        const formattedParents: ActivityParent[] = [];
         for (const parent of parents) {
-            formattedParents.push(ActivityMember.fromMap(parent));
+            formattedParents.push(ActivityParent.fromMap(parent));
         }
         activity.parents = formattedParents;
         const groups = map.groups;
-        const formattedGroups: ActivityGroup[] =  [];
+        const formattedGroups: ActivityGroup[] = [];
         for (const group of groups) {
             formattedGroups.push(ActivityGroup.fromMap(group));
         }
         activity.groups = formattedGroups;
         const locations = map.locations;
-        const formattedLocations: Location[] =  [];
+        const formattedLocations: Location[] = [];
         for (const location of locations) {
             formattedLocations.push(Location.fromMap(location));
         }
         activity.locations = formattedLocations;
         const rehersalLocations = map.rehearsalLocations;
-        const formattedRehersalLocations: TheaterLocation[] =  [];
+        const formattedRehersalLocations: TheaterLocation[] = [];
         for (const rehersalLocation of rehersalLocations) {
             formattedRehersalLocations.push(TheaterLocation.fromMap(rehersalLocation));
         }
         activity.rehearsalLocations = formattedRehersalLocations
         const teachers = map.teachers;
-        const formattedTeachers: ActivityTeacher[] =  [];
+        const formattedTeachers: ActivityTeacher[] = [];
         for (const teacher of teachers) {
             formattedTeachers.push(ActivityTeacher.fromMap(teacher));
         }
@@ -812,7 +845,7 @@ export class TheaterActivity {
         activity.showBy = map.showBy;
         activity.lastUpdated = map.lastUpdated;
         const eventTypes = map.eventTypes;
-        const formattedEventTypes: EventType[] =  [];
+        const formattedEventTypes: EventType[] = [];
         for (const eventType of eventTypes) {
             formattedEventTypes.push(EventType.fromMap(eventType));
         }
@@ -840,8 +873,8 @@ export class TheaterLocation {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "color": this.color.toMap(),
+            "name": this.name,
+            "color": this.color.toMap(),
         };
     }
 
@@ -876,16 +909,16 @@ export class Location {
     }
 
 
-     toMap(): object {
+    toMap(): object {
         return {
-        "name": this.name,
-        "address": this.address,
-        "location": this.location,
-        "isSchool": this.isSchool ?? false,
+            "name": this.name,
+            "address": this.address,
+            "location": this.location,
+            "isSchool": this.isSchool ?? false,
         };
     }
 
-   public static fromMap( map: DocumentData): Location {
+    public static fromMap(map: DocumentData): Location {
         const location = new Location();
         location.name = map.name;
         location.address = map.address;
@@ -896,7 +929,7 @@ export class Location {
 }
 
 export class ActivityGroup {
-   groupName: string;
+    groupName: string;
     groupMembers: ActivityMember[];
     groupColor: Color;
 
@@ -916,9 +949,9 @@ export class ActivityGroup {
 
     toMap(): object {
         return {
-        "groupName": this.groupName,
-        "groupMembers": this.groupMembers.map((e) => e.toMap()),
-        "groupColor": this.groupColor.toMap(),
+            "groupName": this.groupName,
+            "groupMembers": this.groupMembers.map((e) => e.toMap()),
+            "groupColor": this.groupColor.toMap(),
         };
     }
 
@@ -926,7 +959,7 @@ export class ActivityGroup {
         const group = new ActivityGroup();
         group.groupName = map.groupName;
         const groupMembers = map.groupMembers;
-        const formattedGroupMembers: ActivityMember[] =  [];
+        const formattedGroupMembers: ActivityMember[] = [];
         for (const groupMember of groupMembers) {
             formattedGroupMembers.push(ActivityMember.fromMap(groupMember));
         }
@@ -941,7 +974,7 @@ export class ActivityGroup {
 export class EventType {
     name: string;
     color: Color;
-  
+
     constructor() {
         this.name = "";
         this.color = Color.fromBlank(0, 0, 0, 0);
@@ -956,8 +989,8 @@ export class EventType {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "color": this.color.toMap(),
+            "name": this.name,
+            "color": this.color.toMap(),
         };
     }
 
@@ -970,11 +1003,11 @@ export class EventType {
 }
 
 export class EventDate {
-    date: Date; 
+    date: Date;
     from: Date;
     to: Date;
 
-  
+
     constructor() {
         this.date = new Date();
         this.from = new Date();
@@ -989,20 +1022,20 @@ export class EventDate {
         return eventDate;
     }
 
-     static formatDate(date: Date): string {
+    static formatDate(date: Date): string {
 
         const month = date.getMonth() + 1;
         const day = date.getDate();
         const year = date.getFullYear();
-        return`${month}-${day}-${year}`;
+        return `${month}-${day}-${year}`;
     }
-  
-    toMap():object {
-      return {
-        "date": EventDate.formatDate(this.date),
-        "from": this.from.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }),
-        "to": this.to.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }),
-    };
+
+    toMap(): object {
+        return {
+            "date": EventDate.formatDate(this.date),
+            "from": this.from.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }),
+            "to": this.to.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }),
+        };
     }
 
     getDateStart(): Date {
@@ -1011,8 +1044,8 @@ export class EventDate {
         date.setMinutes(this.from.getMinutes());
         return date;
     }
-   
-  
+
+
     static _parseTime(time: any): Date {
         if (typeof time === 'string') {
             const timePattern = /(\d{1,2}):(\d{2})\s?(AM|PM)/i;
@@ -1038,9 +1071,9 @@ export class EventDate {
         throw new Error('Invalid time format');
 
     }
-   
-  
-    public static fromMap(map: DocumentData): EventDate {   
+
+
+    public static fromMap(map: DocumentData): EventDate {
         const eventDate = new EventDate();
         const splitDate = map.date.split('-');
         const year = parseInt(splitDate[2], 10);
@@ -1048,12 +1081,12 @@ export class EventDate {
         const day = parseInt(splitDate[1], 10);
         eventDate.date = new Date(year, month - 1, day);
 
-        
+
         eventDate.from = this._parseTime(map.from);
         eventDate.to = this._parseTime(map.to);
         return eventDate;
     }
-  }
+}
 
 export class Event {
     name: string;
@@ -1075,7 +1108,7 @@ export class Event {
         this.lastUpdated = 0;
         this.dateFilter = '';
         this.id = null;
-        
+
     }
 
     public static fromBlank(name: string, info: string, location: Location, date: EventDate, type: string, lastUpdated: number): Event {
@@ -1087,20 +1120,24 @@ export class Event {
         event.type = type;
         event.lastUpdated = lastUpdated;
         //format date.date to yyyy-mm-dd
-        const dateFilter = date.date.toISOString().split('T')[0];
+        const month = date.date.getMonth() + 1; // getMonth() returns 0-11
+        const day = date.date.getDate();
+        const year = date.date.getFullYear();
+
+        const dateFilter = `${month}-${day}-${year}`;
         event.dateFilter = dateFilter;
         return event;
     }
 
     toMap(): object {
         return {
-        "name": this.name,
-        "info": this.info,
-        "location": this.location.toMap(),
-        "date": this.date.toMap(),
-        "dateFilter": this.dateFilter,
-        "type": this.type,
-        "lastUpdated": this.lastUpdated,
+            "name": this.name,
+            "info": this.info,
+            "location": this.location.toMap(),
+            "date": this.date.toMap(),
+            "dateFilter": this.dateFilter,
+            "type": this.type,
+            "lastUpdated": this.lastUpdated,
         };
     }
 
@@ -1116,13 +1153,13 @@ export class Event {
         return event;
     }
 }
-  
+
 export class ActivityEvent {
     activityId: string;
     groupNames: string[];
     targets: ActivityMember[];
     generalTarget: string;
-    eventType: EventType;
+    eventType?: EventType;
     groupTargets: ActivityGroup[];
     hasSchoolEvent: boolean;
     schoolEventId: string;
@@ -1130,7 +1167,7 @@ export class ActivityEvent {
     activityName: string;
     name: string;
     info: string;
-    location: Location;
+    location?: Location;
     date: EventDate;
     type: string;
     lastUpdated: number;
@@ -1185,7 +1222,11 @@ export class ActivityEvent {
         activityEvent.date = date;
         activityEvent.type = type;
         activityEvent.lastUpdated = lastUpdated;
-        const dateFilter = date.date.toISOString().split('T')[0];
+        const month = date.date.getMonth() + 1; // getMonth() returns 0-11
+        const day = date.date.getDate();
+        const year = date.date.getFullYear();
+
+        const dateFilter = `${month}-${day}-${year}`;
         activityEvent.dateFilter = dateFilter;
         activityEvent.activityId = activityId;
         activityEvent.groupNames = groupNames;
@@ -1204,25 +1245,25 @@ export class ActivityEvent {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "info": this.info,
-        "location": this.location.toMap(),
-        "date": this.date.toMap(),
-        
-        "targets":this.targets.map((e) => e.toMap()),
-        "generalTarget": this.generalTarget,
-        "eventType": this.eventType.toMap(),
-        "activityName":this.activityName,
-        "groupTargets": this.groupTargets.map((e) => e.toMap()),
-        "type": "activity",
-        "groupNames": this.groupNames,
-        "dateFilter": this.dateFilter,
-        "hasSchoolEvent": this.hasSchoolEvent,
-        "schoolEventId": this.schoolEventId,
-        "activityId": this.activityId,
-        "lastUpdated": this.lastUpdated,
-        "targetUids": this.targets.map((e) => e.userId),
-        "conflicts": this.conflicts.map((e) => e.toMap()),
+            "name": this.name,
+            "info": this.info,
+            "location": this.location.toMap(),
+            "date": this.date.toMap(),
+
+            "targets": this.targets.map((e) => e.toMap()),
+            "generalTarget": this.generalTarget,
+            "eventType": this.eventType.toMap(),
+            "activityName": this.activityName,
+            "groupTargets": this.groupTargets.map((e) => e.toMap()),
+            "type": "activity",
+            "groupNames": this.groupNames,
+            "dateFilter": this.dateFilter,
+            "hasSchoolEvent": this.hasSchoolEvent,
+            "schoolEventId": this.schoolEventId,
+            "activityId": this.activityId,
+            "lastUpdated": this.lastUpdated,
+            "targetUids": this.targets.map((e) => e.userId),
+            "conflicts": this.conflicts.map((e) => e.toMap()),
         };
     }
 
@@ -1235,18 +1276,18 @@ export class ActivityEvent {
         activityEvent.location = Location.fromMap(map.location);
         activityEvent.date = EventDate.fromMap(map.date);
         const targets = map.targets;
-        const formattedTargets: ActivityMember[] =  [];
+        const formattedTargets: ActivityMember[] = [];
         for (const target of targets) {
-        formattedTargets.push(ActivityMember.fromMap(target));
+            formattedTargets.push(ActivityMember.fromMap(target));
         }
         activityEvent.targets = formattedTargets;
         activityEvent.generalTarget = map.generalTarget;
         activityEvent.eventType = EventType.fromMap(map.eventType);
         activityEvent.activityName = map.activityName;
         const groupTargets = map.groupTargets;
-        const formattedGroupTargets: ActivityGroup[] =  [];
+        const formattedGroupTargets: ActivityGroup[] = [];
         for (const groupTarget of groupTargets) {
-        formattedGroupTargets.push(ActivityGroup.fromMap(groupTarget));
+            formattedGroupTargets.push(ActivityGroup.fromMap(groupTarget));
         }
         activityEvent.groupTargets = formattedGroupTargets;
         activityEvent.groupNames = map.groupNames;
@@ -1256,9 +1297,9 @@ export class ActivityEvent {
         activityEvent.activityId = map.activityId;
         activityEvent.lastUpdated = map.lastUpdated;
         const conflicts = map.conflicts;
-        const formattedConflicts: ActivityConflict[] =  [];
+        const formattedConflicts: ActivityConflict[] = [];
         for (const conflict of conflicts) {
-        formattedConflicts.push(ActivityConflict.fromMap(conflict));
+            formattedConflicts.push(ActivityConflict.fromMap(conflict));
         }
         activityEvent.conflicts = formattedConflicts;
         return activityEvent;
@@ -1296,15 +1337,15 @@ class ActivityConflict {
         return activityConflict;
     }
 
-    toMap():object {
+    toMap(): object {
         return {
-        "userId": this.userId,
-        "type": this.type,
-        "start": this.start != null ? this.start.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
-        "end": this.end != null ? this.end.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
-        "reason": this.reason,
-        "status": this.status,
-        "userName":this.userName,
+            "userId": this.userId,
+            "type": this.type,
+            "start": this.start != null ? this.start.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
+            "end": this.end != null ? this.end.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
+            "reason": this.reason,
+            "status": this.status,
+            "userName": this.userName,
         };
     }
 
@@ -1360,13 +1401,13 @@ export class ActivityGC {
         return activityGC;
     }
 
-    toMap():object {
+    toMap(): object {
         return {
-        "name": this.name,
-        "id": this.id,
-        "members": this.members.map((e) => e.toMap()),
-        "generalTarget": this.generalTarget,
-        "activityId": this.activityId,
+            "name": this.name,
+            "id": this.id,
+            "members": this.members.map((e) => e.toMap()),
+            "generalTarget": this.generalTarget,
+            "activityId": this.activityId,
             "lastUpdated": this.lastUpdated,
         };
     }
@@ -1376,7 +1417,7 @@ export class ActivityGC {
         activityGC.name = map.name;
         activityGC.id = map.id;
         const members = map.members;
-        const formattedMembers: GroupChatMember[] =  [];
+        const formattedMembers: GroupChatMember[] = [];
         for (const member of members) {
             formattedMembers.push(GroupChatMember.fromMap(member));
         }
@@ -1399,7 +1440,7 @@ export class Message {
     messageId: string;
     timeSent: Date;
     readBy: string[];
-    
+
     constructor() {
         this.message = '';
         this.senderUid = '';
@@ -1428,15 +1469,15 @@ export class Message {
 
     toMap(): object {
         return {
-        "message": this.message,
-        "senderUid": this.senderUid,
-        "senderName": this.senderName,
+            "message": this.message,
+            "senderUid": this.senderUid,
+            "senderName": this.senderName,
 
-        "gcId": this.gcId,
-        "activityId": this.activityId,
-        "messageId": this.messageId,
-        "timeSent": this.timeSent,
-        "readBy": this.readBy,
+            "gcId": this.gcId,
+            "activityId": this.activityId,
+            "messageId": this.messageId,
+            "timeSent": this.timeSent,
+            "readBy": this.readBy,
             "lastUpdated": this.timeSent.getTime(),
         };
     }
@@ -1454,7 +1495,7 @@ export class Message {
         message.readBy = map.readBy;
         return message;
     }
-  }
+}
 
 export class TheaterEvent {
     name: string;
@@ -1474,6 +1515,9 @@ export class TheaterEvent {
     theaterEventType: string;
     activityEventType: EventType;
     rehearsalLocation: TheaterLocation;
+    scene?: Scene;
+    song?: Song;
+    dance?: Dance;
 
 
     constructor() {
@@ -1494,6 +1538,9 @@ export class TheaterEvent {
         this.activityName = '';
         this.activityEventType = new EventType();
         this.rehearsalLocation = new TheaterLocation();
+        this.scene = undefined;
+        this.song = undefined;
+        this.dance = undefined;
     }
 
     public static fromBlank(
@@ -1511,7 +1558,10 @@ export class TheaterEvent {
         targets: ActivityMember[],
         theaterEventType: string,
         activityEventType: EventType,
-        rehearsalLocation: TheaterLocation
+        rehearsalLocation: TheaterLocation,
+        scene?: Scene,
+        song?: Song,
+        dance?: Dance
     ): TheaterEvent {
         const theaterEvent = new TheaterEvent();
         theaterEvent.name = name;
@@ -1520,7 +1570,11 @@ export class TheaterEvent {
         theaterEvent.date = date;
         theaterEvent.type = type;
         theaterEvent.lastUpdated = lastUpdated;
-        const dateFilter = date.date.toISOString().split('T')[0];
+        const month = date.date.getMonth() + 1; // getMonth() returns 0-11
+        const day = date.date.getDate();
+        const year = date.date.getFullYear();
+
+        const dateFilter = `${month}-${day}-${year}`;
         theaterEvent.dateFilter = dateFilter;
         theaterEvent.activityId = activityId;
         theaterEvent.showId = showId;
@@ -1531,29 +1585,41 @@ export class TheaterEvent {
         theaterEvent.activityName = activityName;
         theaterEvent.showName = showName;
         theaterEvent.activityEventType = activityEventType;
+        theaterEvent.scene = scene;
+        theaterEvent.song = song;
+        theaterEvent.dance = dance;
         return theaterEvent;
     }
 
     toMap(): object {
+        const newCharacters = [];
+        for (const character of this.characters) {
+            if (character != undefined) {
+                newCharacters.push(character.toMap());
+            }
+        }
         return {
-        "name": this.name,
-        "info": this.info,
-        "location": this.location.toMap(),
-        "date": this.date.toMap(),
-        "type": this.type,
-        "lastUpdated": this.lastUpdated,
-        "dateFilter": this.dateFilter,
-        "activityId": this.activityId,
-        "activityName": this.activityName,
-        "showId": this.showId,
-        "showName": this.showName,
-        "characters": this.characters.map((e) => e.toMap()),
-        "targets": this.targets.map((e) => e.toMap()),
-        "targetUids": this.targets.map((e) => e.userId),
-        "id": this.id,
-        "theaterEventType": this.theaterEventType,
-        "activityEventType": this.activityEventType.toMap(),
-        "rehearsalLocation": this.rehearsalLocation.toMap(),
+            "name": this.name,
+            "info": this.info,
+            "location": this.location.toMap(),
+            "date": this.date.toMap(),
+            "type": this.type,
+            "lastUpdated": this.lastUpdated,
+            "dateFilter": this.dateFilter,
+            "activityId": this.activityId,
+            "activityName": this.activityName,
+            "showId": this.showId,
+            "showName": this.showName,
+            "characters": newCharacters,
+            "targets": this.targets.map((e) => e.toMap()),
+            "targetUids": this.targets.map((e) => e.userId),
+            "id": this.id,
+            "theaterEventType": this.theaterEventType,
+            "activityEventType": this.activityEventType.toMap(),
+            "rehearsalLocation": this.rehearsalLocation.toMap(),
+            "scene": this.scene ? this.scene.toMap() : null,
+            "song": this.song ? this.song.toMap() : null,
+            "dance": this.dance ? this.dance.toMap() : null,
         };
     }
 
@@ -1570,11 +1636,11 @@ export class TheaterEvent {
         theaterEvent.showId = map.showId;
         theaterEvent.theaterEventType = map.theaterEventType;
         const characters = map.characters;
-        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] =  [];
+        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] = [];
         for (const character of characters) {
             if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
-            }  else if (character.type === "ShowGroup") {
+            } else if (character.type === "ShowGroup") {
                 formattedCharacters.push(ShowGroup.fromMap(character));
             } else if (character.type === "EnsembleSection") {
                 formattedCharacters.push(EnsembleSection.fromMap(character));
@@ -1584,7 +1650,7 @@ export class TheaterEvent {
         }
         theaterEvent.characters = formattedCharacters;
         const targets = map.targets;
-        const formattedTargets: ActivityMember[] =  [];
+        const formattedTargets: ActivityMember[] = [];
         for (const target of targets) {
             formattedTargets.push(ActivityMember.fromMap(target));
         }
@@ -1594,6 +1660,9 @@ export class TheaterEvent {
         theaterEvent.showName = map.showName;
         theaterEvent.activityEventType = EventType.fromMap(map.activityEventType);
         theaterEvent.rehearsalLocation = TheaterLocation.fromMap(map.rehearsalLocation);
+        theaterEvent.scene = map.scene ? Scene.fromMap(map.scene) : undefined;
+        theaterEvent.song = map.song ? Song.fromMap(map.song) : undefined;
+        theaterEvent.dance = map.dance ? Dance.fromMap(map.dance) : undefined;
         return theaterEvent;
     }
 
@@ -1640,7 +1709,7 @@ export class Show {
         this.templateId = "";
     }
 
-    public static fromBlank(name: string, id: string, activityId: string, templateId: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[],dances: Dance[], canCreateSchedule: boolean,hasEnsemble: boolean,conflictForm: ConflictForm | null,resources: Resource[],formStatus: "open" | "closed", isCreatingSchedule: boolean,lastUpdated: number): Show {
+    public static fromBlank(name: string, id: string, activityId: string, templateId: string, layout: Act[], characters: Character[], ensemble: Ensemble | null, showGroups: ShowGroup[], songs: Song[], dances: Dance[], canCreateSchedule: boolean, hasEnsemble: boolean, conflictForm: ConflictForm | null, resources: Resource[], formStatus: "open" | "closed", isCreatingSchedule: boolean, lastUpdated: number): Show {
         const show = new Show();
         show.name = name;
         show.id = id;
@@ -1664,23 +1733,23 @@ export class Show {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "id": this.id,
-        "activityId": this.activityId,
-        "layout": this.layout.map((e) => e.toMap()),
-        "characters": this.characters.map((e) => e.toMap()),
-        "ensemble": this.ensemble ? this.ensemble.toMap() : "null",
-        "showGroups": this.showGroups.map((e) => e.toMap()),
-        "songs": this.songs.map((e) => e.toMap()),
-        "dances": this.dances.map((e) => e.toMap()),
-        "canCreateSchedule": this.canCreateSchedule,
-        "hasEnsemble": this.hasEnsemble,
-        "conflictForm": this.conflictForm ? this.conflictForm.toMap() : "null",
-        "resources": this.resources.map((e) => e.toMap()),
-        "isCreatingSchedule": this.isCreatingSchedule,
-        "formStatus": this.formStatus,
-        "lastUpdated": this.lastUpdated,
-        "templateId": this.templateId,
+            "name": this.name,
+            "id": this.id,
+            "activityId": this.activityId,
+            "layout": this.layout.map((e) => e.toMap()),
+            "characters": this.characters.map((e) => e.toMap()),
+            "ensemble": this.ensemble ? this.ensemble.toMap() : "null",
+            "showGroups": this.showGroups.map((e) => e.toMap()),
+            "songs": this.songs.map((e) => e.toMap()),
+            "dances": this.dances.map((e) => e.toMap()),
+            "canCreateSchedule": this.canCreateSchedule,
+            "hasEnsemble": this.hasEnsemble,
+            "conflictForm": this.conflictForm ? this.conflictForm.toMap() : "null",
+            "resources": this.resources.map((e) => e.toMap()),
+            "isCreatingSchedule": this.isCreatingSchedule,
+            "formStatus": this.formStatus,
+            "lastUpdated": this.lastUpdated,
+            "templateId": this.templateId,
         };
     }
 
@@ -1690,22 +1759,22 @@ export class Show {
         show.id = map.id;
         show.activityId = map.activityId;
         const layout = map.layout;
-        const formattedLayout: Act[] =  [];
+        const formattedLayout: Act[] = [];
         for (const act of layout) {
             formattedLayout.push(Act.fromMap(act));
         }
         show.layout = formattedLayout;
         const characters = map.characters;
-        const formattedCharacters: Character[] =  [];
+        const formattedCharacters: Character[] = [];
         for (const character of characters) {
             formattedCharacters.push(Character.fromMap(character));
         }
         //Sort Characters by name
         formattedCharacters.sort((a, b) => a.name.localeCompare(b.name));
         show.characters = formattedCharacters;
-        show.ensemble = map.ensemble != "null" &&  map.ensemble ? Ensemble.fromMap(map.ensemble) : null;
+        show.ensemble = map.ensemble != "null" && map.ensemble ? Ensemble.fromMap(map.ensemble) : null;
         const showGroups = map.showGroups;
-        const formattedShowGroups: ShowGroup[] =  [];
+        const formattedShowGroups: ShowGroup[] = [];
         for (const showGroup of showGroups) {
             formattedShowGroups.push(ShowGroup.fromMap(showGroup));
         }
@@ -1713,7 +1782,7 @@ export class Show {
         formattedShowGroups.sort((a, b) => a.name.localeCompare(b.name));
         show.showGroups = formattedShowGroups;
         const songs = map.songs;
-        const formattedSongs: Song[] =  [];
+        const formattedSongs: Song[] = [];
         for (const song of songs) {
             formattedSongs.push(Song.fromMap(song));
         }
@@ -1721,7 +1790,7 @@ export class Show {
         formattedSongs.sort((a, b) => a.name.localeCompare(b.name));
         show.songs = formattedSongs;
         const dances = map.dances;
-        const formattedDances: Dance[] =  [];
+        const formattedDances: Dance[] = [];
         for (const dance of dances) {
             formattedDances.push(Dance.fromMap(dance));
         }
@@ -1730,11 +1799,14 @@ export class Show {
         show.dances = formattedDances
         show.canCreateSchedule = map.canCreateSchedule;
         show.lastUpdated = map.lastUpdated;
-        show.conflictForm = map.conflictForm != "null" &&  map.conflictForm ? ConflictForm.fromMap(map.conflictForm) : null;
+        show.conflictForm = map.conflictForm != "null" && map.conflictForm ? ConflictForm.fromMap(map.conflictForm) : null;
         show.hasEnsemble = map.hasEnsemble;
         const resources = map.resources;
-        const formattedResources: Resource[] =  [];
+        const formattedResources: Resource[] = [];
         for (const resource of resources) {
+            console.log("FROM MAP RESOURCE");
+            console.log(resource);
+            console.log(Resource.fromMap(resource));
             formattedResources.push(Resource.fromMap(resource));
         }
         show.resources = formattedResources;
@@ -1744,7 +1816,7 @@ export class Show {
         return show;
     }
 
-    
+
 }
 
 export class Act {
@@ -1771,9 +1843,9 @@ export class Act {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "scenes": this.scenes.map((e) => e.toMap()),
-        "actId": this.actId,
+            "name": this.name,
+            "scenes": this.scenes.map((e) => e.toMap()),
+            "actId": this.actId,
 
         };
     }
@@ -1782,7 +1854,7 @@ export class Act {
         const act = new Act();
         act.name = map.name;
         const scenes = map.scenes;
-        const formattedScenes: Scene[] =  [];
+        const formattedScenes: Scene[] = [];
         for (const scene of scenes) {
             formattedScenes.push(Scene.fromMap(scene));
         }
@@ -1808,7 +1880,7 @@ export class Scene {
         this.sceneId = 0;
     }
 
-    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection| FullCast)[], sceneId: number): Scene {
+    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[], sceneId: number): Scene {
         const scene = new Scene();
         scene.name = name;
         scene.characters = characters;
@@ -1819,9 +1891,9 @@ export class Scene {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "characters": this.characters.map((e) => e.toMap()),
-        "sceneId": this.sceneId,
+            "name": this.name,
+            "characters": this.characters.map((e) => e.toMap()),
+            "sceneId": this.sceneId,
 
         };
     }
@@ -1830,11 +1902,11 @@ export class Scene {
         const scene = new Scene();
         scene.name = map.name;
         const characters = map.characters;
-        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] =  [];
+        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] = [];
         for (const character of characters) {
             if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
-            }  else if (character.type === "ShowGroup") {
+            } else if (character.type === "ShowGroup") {
                 formattedCharacters.push(ShowGroup.fromMap(character));
             } else if (character.type === "EnsembleSection") {
                 formattedCharacters.push(EnsembleSection.fromMap(character));
@@ -1847,7 +1919,7 @@ export class Scene {
 
         return scene;
     }
-    
+
 
 }
 
@@ -1876,9 +1948,9 @@ export class Dance {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "characters": this.characters.map((e) => e.toMap()),
-        "danceId": this.danceId,
+            "name": this.name,
+            "characters": this.characters.map((e) => e.toMap()),
+            "danceId": this.danceId,
 
         };
     }
@@ -1887,11 +1959,11 @@ export class Dance {
         const dance = new Dance();
         dance.name = map.name;
         const characters = map.characters;
-        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] =  [];
+        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] = [];
         for (const character of characters) {
             if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
-            }  else if (character.type === "ShowGroup") {
+            } else if (character.type === "ShowGroup") {
                 formattedCharacters.push(ShowGroup.fromMap(character));
             } else if (character.type === "EnsembleSection") {
                 formattedCharacters.push(EnsembleSection.fromMap(character));
@@ -1919,7 +1991,7 @@ export class Song {
         this.songId = 0;
     }
 
-    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[],songId: number): Song {
+    public static fromBlank(name: string, characters: (Character | ShowGroup | EnsembleSection | FullCast)[], songId: number): Song {
         const song = new Song();
         song.name = name;
         song.characters = characters;
@@ -1930,11 +2002,11 @@ export class Song {
 
     toMap(): object {
         //print all types of characters
-        
+
         return {
-        "name": this.name,
-        "characters": this.characters.map((e) => e.toMap()),
-        "songId": this.songId,
+            "name": this.name,
+            "characters": this.characters.map((e) => e.toMap()),
+            "songId": this.songId,
 
         };
     }
@@ -1943,11 +2015,11 @@ export class Song {
         const song = new Song();
         song.name = map.name;
         const characters = map.characters;
-        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] =  [];
+        const formattedCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] = [];
         for (const character of characters) {
             if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
-            }  else if (character.type === "ShowGroup") {
+            } else if (character.type === "ShowGroup") {
                 formattedCharacters.push(ShowGroup.fromMap(character));
             } else if (character.type === "EnsembleSection") {
                 formattedCharacters.push(EnsembleSection.fromMap(character));
@@ -1962,7 +2034,7 @@ export class Song {
     }
 }
 
-export class NotificationUser  {
+export class NotificationUser {
     userId: string;
     email: string;
 
@@ -2009,11 +2081,11 @@ export class GroupChatMember {
 
     toMap(): object {
         return {
-        "fullname": this.name,
-        "email": this.email,
-        "phoneNumber": this.phone,
+            "fullname": this.name,
+            "email": this.email,
+            "phoneNumber": this.phone,
 
-        "uid": this.userId,
+            "uid": this.userId,
 
         };
     }
@@ -2063,12 +2135,12 @@ export class ActivityMember {
 
     toMap(): object {
         return {
-        "fullname": this.name,
-        "gender": this.gender,
-        "email": this.email,
-        "phoneNumber": this.phone,
+            "fullname": this.name,
+            "gender": this.gender,
+            "email": this.email,
+            "phoneNumber": this.phone,
 
-        "uid": this.userId,
+            "uid": this.userId,
 
         };
     }
@@ -2096,6 +2168,79 @@ export class ActivityMember {
 
 }
 
+export class ActivityParent {
+    name: string;
+
+    email: string;
+    phone: string;
+
+    userId: string;
+    childrenInActivity: string[];
+
+
+    constructor() {
+        this.name = "";
+        this.childrenInActivity = [];
+        this.email = "";
+        this.phone = "";
+
+
+        this.userId = "";
+    }
+
+    public static fromBlank(name: string, email: string, phone: string, userId: string, childrenInActivity: string[]): ActivityParent {
+        const actor = new ActivityParent();
+        actor.name = name;
+        actor.childrenInActivity = childrenInActivity;
+        actor.email = email;
+        actor.phone = phone;
+
+        actor.userId = userId;
+
+        return actor;
+    }
+
+    toMap(): object {
+        return {
+            "fullname": this.name,
+
+            "email": this.email,
+            "phoneNumber": this.phone,
+            "children": this.childrenInActivity,
+
+            "uid": this.userId,
+
+        };
+    }
+
+    toGroupChatMember(): GroupChatMember {
+        return GroupChatMember.fromBlank(this.name, this.email, this.phone, "", this.userId);
+    }
+
+    public static fromMap(map: DocumentData): ActivityParent {
+        const actor = new ActivityParent();
+        actor.name = map.fullname ?? map.name;
+
+        actor.email = map.email;
+        actor.phone = map.phoneNumber ?? map.phone;
+        actor.childrenInActivity = map.children;
+        actor.userId = map.uid ?? map.userId;
+
+        return actor;
+    }
+
+    toActivityMember(): ActivityMember {
+
+        return ActivityMember.fromBlank(this.name, "male", this.email, this.phone, "", this.userId);
+    }
+
+
+
+
+
+
+}
+
 export class ActivityTeacher {
     name: string;
     email: string;
@@ -2113,7 +2258,7 @@ export class ActivityTeacher {
         this.userId = "";
     }
 
-    public static fromBlank(name: string,  email: string, phone: string, FCMToken: string, userId: string): ActivityTeacher {
+    public static fromBlank(name: string, email: string, phone: string, FCMToken: string, userId: string): ActivityTeacher {
         const actor = new ActivityTeacher();
         actor.name = name;
         actor.email = email;
@@ -2126,11 +2271,11 @@ export class ActivityTeacher {
 
     toMap(): object {
         return {
-        "fullname": this.name,
-        "email": this.email,
-        "phoneNumber": this.phone,
+            "fullname": this.name,
+            "email": this.email,
+            "phoneNumber": this.phone,
 
-        "uid": this.userId,
+            "uid": this.userId,
 
         };
     }
@@ -2163,7 +2308,7 @@ export class Character {
     characterId: number;
     type: string;
     hasCreatedSchedule: boolean;
-    
+
 
     constructor() {
         this.name = "";
@@ -2183,10 +2328,10 @@ export class Character {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "actor": this.actor ? this.actor.toMap() : "null",
-        "characterId": this.characterId,
-        "type": this.type,
+            "name": this.name,
+            "actor": this.actor ? this.actor.toMap() : "null",
+            "characterId": this.characterId,
+            "type": this.type,
         };
     }
 
@@ -2203,14 +2348,14 @@ export class Character {
 }
 function isEmpty(obj) {
     for (const prop in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, prop)) {
-        return false;
-      }
+        if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+            return false;
+        }
     }
-  
+
     return true
-  }
-export class Ensemble{
+}
+export class Ensemble {
     actors: ActivityMember[];
     lastUpdated: number;
 
@@ -2228,15 +2373,15 @@ export class Ensemble{
 
     toMap(): object {
         return {
-        "actors": this.actors.map((e) => e.toMap()),
-        "lastUpdated": this.lastUpdated,
+            "actors": this.actors.map((e) => e.toMap()),
+            "lastUpdated": this.lastUpdated,
         };
     }
 
     public static fromMap(map: DocumentData): Ensemble {
         const ensemble = new Ensemble();
         const actors = map.actors;
-        const formattedActors: ActivityMember[] =  [];
+        const formattedActors: ActivityMember[] = [];
         for (const actor of actors) {
             formattedActors.push(ActivityMember.fromMap(actor));
         }
@@ -2258,7 +2403,7 @@ export class FullCast {
 
     toMap(): object {
         return {
-        "type": this.type,
+            "type": this.type,
         };
     }
 
@@ -2300,15 +2445,15 @@ export class EnsembleSection {
 
     toMap(): object {
         return {
-        "includeAll": this.includeAll,
-        "includeMale": this.includeMale,
-        "includeFemale": this.includeFemale,
-        "includeCustom": this.includeCustom,
-        "customActors": this.customActors.map((e) => e.toMap()) ?? [],
-        "type": this.type,
+            "includeAll": this.includeAll,
+            "includeMale": this.includeMale,
+            "includeFemale": this.includeFemale,
+            "includeCustom": this.includeCustom,
+            "customActors": this.customActors.map((e) => e.toMap()) ?? [],
+            "type": this.type,
 
         };
-    
+
     }
 
     public static fromMap(map: DocumentData): EnsembleSection {
@@ -2318,7 +2463,7 @@ export class EnsembleSection {
         ensembleSection.includeFemale = map.includeFemale;
         ensembleSection.includeCustom = map.includeCustom;
         const customActors = map.customActors;
-        const formattedCustomActors: ActivityMember[] =  [];
+        const formattedCustomActors: ActivityMember[] = [];
 
         for (const customActor of customActors) {
             formattedCustomActors.push(ActivityMember.fromMap(customActor));
@@ -2347,7 +2492,7 @@ export class ShowGroup {
         this.type = "ShowGroup";
     }
 
-    public static fromBlank(name: string, characters: (Character  | EnsembleSection)[],showGroupId: number ): ShowGroup {
+    public static fromBlank(name: string, characters: (Character | EnsembleSection)[], showGroupId: number): ShowGroup {
         const showGroup = new ShowGroup();
         showGroup.name = name;
         showGroup.characters = characters;
@@ -2357,10 +2502,10 @@ export class ShowGroup {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "characters": this.characters.map((e) => e.toMap()),
-        "showGroupId": this.showGroupId,
-        "type": this.type,
+            "name": this.name,
+            "characters": this.characters.map((e) => e.toMap()),
+            "showGroupId": this.showGroupId,
+            "type": this.type,
         };
     }
 
@@ -2368,7 +2513,7 @@ export class ShowGroup {
         const showGroup = new ShowGroup();
         showGroup.name = map.name;
         const characters = map.characters;
-        const formattedCharacters: (Character  | EnsembleSection)[] =  [];
+        const formattedCharacters: (Character | EnsembleSection)[] = [];
         for (const character of characters) {
             if (character.type === "Character") {
                 formattedCharacters.push(Character.fromMap(character));
@@ -2380,13 +2525,13 @@ export class ShowGroup {
         showGroup.showGroupId = map.showGroupId;
         return showGroup;
     }
-    
+
 }
 
 export class ConflictDate {
     date: EventDate;
     moreInfo: string;
-    
+
     constructor() {
         this.date = new EventDate();
         this.moreInfo = "";
@@ -2401,8 +2546,8 @@ export class ConflictDate {
 
     toMap(): object {
         return {
-        "date": this.date.toMap(),
-        "moreInfo": this.moreInfo,
+            "date": this.date.toMap(),
+            "moreInfo": this.moreInfo,
         };
     }
 
@@ -2428,7 +2573,7 @@ export class ConflictForm {
 
     }
 
-    public static fromBlank(dates: ConflictDate[], deadline: Date,lastUpdated: number): ConflictForm {
+    public static fromBlank(dates: ConflictDate[], deadline: Date, lastUpdated: number): ConflictForm {
         const conflictForm = new ConflictForm();
         conflictForm.dates = dates;
         conflictForm.deadline = deadline;
@@ -2439,17 +2584,17 @@ export class ConflictForm {
 
     toMap(): object {
         return {
-        "dates": this.dates.map((e) => e.toMap()),
-        "deadline": this.deadline,
+            "dates": this.dates.map((e) => e.toMap()),
+            "deadline": this.deadline,
 
-        "lastUpdated": this.lastUpdated,
+            "lastUpdated": this.lastUpdated,
         };
     }
 
     public static fromMap(map: DocumentData): ConflictForm {
         const conflictForm = new ConflictForm();
         const dates = map.dates;
-        const formattedDates: ConflictDate[] =  [];
+        const formattedDates: ConflictDate[] = [];
         for (const date of dates) {
             formattedDates.push(ConflictDate.fromMap(date));
         }
@@ -2496,11 +2641,11 @@ export class ConflictResponseDate {
 
     toMap(): object {
         return {
-        "date": this.date.toISOString(),
-        "from": this.from != null ? this.from.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
-        "to": this.to != null ? this.to.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
-        "canAttend": this.canAttend,
-        "note": this.note,
+            "date": this.date.toISOString(),
+            "from": this.from != null ? this.from.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
+            "to": this.to != null ? this.to.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }) : "",
+            "canAttend": this.canAttend,
+            "note": this.note,
         };
     }
 
@@ -2567,20 +2712,20 @@ export class ConflictResponse {
 
     toMap(): object {
         return {
-        "dates": this.dates.map((e) => e.toMap()),
-        "id": this.id,
-        "actor": this.actor.toMap(),
-        "lastUpdated": this.lastUpdated,
-        "submitterId": this.actor.userId,
-        "activityId": this.activityId,
-        "showId": this.showId,
+            "dates": this.dates.map((e) => e.toMap()),
+            "id": this.id,
+            "actor": this.actor.toMap(),
+            "lastUpdated": this.lastUpdated,
+            "submitterId": this.actor.userId,
+            "activityId": this.activityId,
+            "showId": this.showId,
         };
     }
 
     public static fromMap(map: DocumentData): ConflictResponse {
         const conflictResponse = new ConflictResponse();
         const dates = map.dates;
-        const formattedDates: ConflictResponseDate[] =  [];
+        const formattedDates: ConflictResponseDate[] = [];
         for (const date of dates) {
             formattedDates.push(ConflictResponseDate.fromMap(date));
         }
@@ -2615,8 +2760,8 @@ export class FBFile {
 
     toMap(): object {
         return {
-        "name": this.name,
-        "url": this.url,
+            "name": this.name,
+            "url": this.url,
         };
     }
 
@@ -2634,6 +2779,8 @@ export class Resource {
     type: "link" | "image" | "video";
     link?: string;
     file?: FBFile;
+    showId: string;
+    activityId: string;
 
     constructor() {
         this.name = "";
@@ -2641,6 +2788,8 @@ export class Resource {
         this.type = "link";
         this.link = "";
         this.file = new FBFile();
+        this.showId = "";
+        this.activityId = "";
     }
 
     public static fromBlank(name: string, description: string, type: "link" | "image" | "video", link: string, file?: FBFile): Resource {
@@ -2650,18 +2799,19 @@ export class Resource {
         resource.type = type;
         resource.link = link;
         resource.file = file;
+
         return resource;
     }
 
     toMap(): object {
         return {
-        "name": this.name,
-        "description": this.description,
-        "resourceType": this.type,
-        "link": this.link,
-        "type": this.type,
-        "file":  this.file != undefined ? this.file.toMap(): "null",
-        "id": "",
+            "name": this.name,
+            "description": this.description,
+            "resourceType": this.type,
+            "link": this.link,
+            "type": this.type,
+            "file": this.file != undefined ? this.file.toMap() : "null",
+            "id": "",
         };
     }
 
@@ -2689,15 +2839,15 @@ export class StudentData {
     phoneNumber: string;
     driverStatus: string;
     gender: "male" | "female";
-  
+
     searchKey: string;
     fullname: string;
     email: string;
-    distanceToSchoolMembers: {[key: string]: number};
+    distanceToSchoolMembers: { [key: string]: number };
     homeLocation: Location;
 
     accountType: string;
-  
+
     constructor() {
         this.uid = "";
         this.schoolId = "";
@@ -2715,7 +2865,7 @@ export class StudentData {
         this.homeLocation = new Location();
     }
 
-    public static fromBlank(uid: string, schoolId: string, rideShareStatus: string, distanceToSchool: number, FCMToken: string, accountType: string, phoneNumber: string, gender: "male" | "female", driverStatus: string, searchKey: string, fullname: string, email: string, distanceToSchoolMembers: {[key: string]: number}, homeLocation: Location): StudentData {
+    public static fromBlank(uid: string, schoolId: string, rideShareStatus: string, distanceToSchool: number, FCMToken: string, accountType: string, phoneNumber: string, gender: "male" | "female", driverStatus: string, searchKey: string, fullname: string, email: string, distanceToSchoolMembers: { [key: string]: number }, homeLocation: Location): StudentData {
         const studentData = new StudentData();
         studentData.uid = uid;
         studentData.schoolId = schoolId;
@@ -2736,20 +2886,20 @@ export class StudentData {
 
     toMap(): object {
         return {
-        "uid": this.uid,
-        "schoolId": this.schoolId,
-        "rideShareStatus": this.rideShareStatus,
-        "distanceToSchool": this.distanceToSchool,
-        "FCMToken": this.FCMToken,
-        "accountType": this.accountType,
-        "phoneNumber": this.phoneNumber,
-        "driverStatus": this.driverStatus,
-        "searchKey": this.searchKey,
-        "fullname": this.fullname,
-        "email": this.email,
-        "distanceToSchoolMembers": this.distanceToSchoolMembers,
-        "homeLocation": this.homeLocation.toMap(),
-        "gender": this.gender,
+            "uid": this.uid,
+            "schoolId": this.schoolId,
+            "rideShareStatus": this.rideShareStatus,
+            "distanceToSchool": this.distanceToSchool,
+            "FCMToken": this.FCMToken,
+            "accountType": this.accountType,
+            "phoneNumber": this.phoneNumber,
+            "driverStatus": this.driverStatus,
+            "searchKey": this.searchKey,
+            "fullname": this.fullname,
+            "email": this.email,
+            "distanceToSchoolMembers": this.distanceToSchoolMembers,
+            "homeLocation": this.homeLocation.toMap(),
+            "gender": this.gender,
         };
     }
 
@@ -2775,22 +2925,22 @@ export class StudentData {
         studentData.gender = map.gender ?? "";
         return studentData;
     }
-  }
+}
 
 
-  
+
 export class TeacherData {
     uid: string;
     schoolId: string;
-  
+
     FCMToken: string;
     phoneNumber: string;
     searchKey: string;
     fullname: string;
     email: string;
-  
+
     accountType: string;
-    
+
     constructor() {
         this.uid = "";
         this.schoolId = "";
@@ -2802,7 +2952,7 @@ export class TeacherData {
         this.phoneNumber = "";
     }
 
-    public static fromBlank(uid: string, schoolId: string, phoneNumber: string,FCMToken: string, accountType: string, searchKey: string, fullname: string, email: string): TeacherData {
+    public static fromBlank(uid: string, schoolId: string, phoneNumber: string, FCMToken: string, accountType: string, searchKey: string, fullname: string, email: string): TeacherData {
         const teacherData = new TeacherData();
         teacherData.uid = uid;
         teacherData.schoolId = schoolId;
@@ -2817,14 +2967,14 @@ export class TeacherData {
 
     toMap(): object {
         return {
-        "uid": this.uid,
-        "schoolId": this.schoolId,
-        "FCMToken": this.FCMToken,
-        "accountType": this.accountType,
-        "searchKey": this.searchKey,
-        "fullname": this.fullname,
-        "email": this.email,
-        "phoneNumber": this.phoneNumber,
+            "uid": this.uid,
+            "schoolId": this.schoolId,
+            "FCMToken": this.FCMToken,
+            "accountType": this.accountType,
+            "searchKey": this.searchKey,
+            "fullname": this.fullname,
+            "email": this.email,
+            "phoneNumber": this.phoneNumber,
         };
     }
 
@@ -2840,9 +2990,9 @@ export class TeacherData {
         teacherData.phoneNumber = map.phoneNumber;
         return teacherData;
     }
-  }
+}
 
-  export class Color {
+export class Color {
     red: number;
     green: number;
     blue: number;
@@ -2872,33 +3022,33 @@ export class TeacherData {
     toMap(): object {
 
         return {
-        "red": this.red,
-        "green": this.green,
-        "blue": this.blue,
-        "alpha": this.alpha,
+            "red": this.red,
+            "green": this.green,
+            "blue": this.blue,
+            "alpha": this.alpha,
         };
     }
 
     toHex(): string {
-        
-            // Ensure all values are within the valid range (0–255)
-            if (
-              this.red < 0 || this.red > 255 ||
-              this.green < 0 || this.green > 255 ||
-              this.blue < 0 || this.blue > 255 ||
-              this.alpha < 0 || this.alpha > 255
-            ) {
-              throw new RangeError("RGBA values must be in the range 0–255.");
-            }
-          
-            // Convert each value to a 2-digit hexadecimal and concatenate
-            const redHex = this.red.toString(16).padStart(2, "0");
-            const greenHex = this.green.toString(16).padStart(2, "0");
-            const blueHex = this.blue.toString(16).padStart(2, "0");
-            const alphaHex = this.alpha.toString(16).padStart(2, "0");
-          
-            return `#${alphaHex}${redHex}${greenHex}${blueHex}`;
-          }
+
+        // Ensure all values are within the valid range (0–255)
+        if (
+            this.red < 0 || this.red > 255 ||
+            this.green < 0 || this.green > 255 ||
+            this.blue < 0 || this.blue > 255 ||
+            this.alpha < 0 || this.alpha > 255
+        ) {
+            throw new RangeError("RGBA values must be in the range 0–255.");
+        }
+
+        // Convert each value to a 2-digit hexadecimal and concatenate
+        const redHex = this.red.toString(16).padStart(2, "0");
+        const greenHex = this.green.toString(16).padStart(2, "0");
+        const blueHex = this.blue.toString(16).padStart(2, "0");
+        const alphaHex = this.alpha.toString(16).padStart(2, "0");
+
+        return `#${alphaHex}${redHex}${greenHex}${blueHex}`;
+    }
 
     public static fromMap(map: DocumentData): Color {
         const color = new Color();
@@ -2909,14 +3059,14 @@ export class TeacherData {
         return color;
     }
 
-     toRBGAString(): string {
+    toRBGAString(): string {
         return `rgba(${this.red}, ${this.green}, ${this.blue}, ${this.alpha})`;
     }
-  }
+}
 
 // export function intToHexColor(value: number) {
 //     let hexString;
-    
+
 //     if (value > 0xFFFFFF) {
 //         // Handle ARGB (32-bit with alpha)
 //         let alpha = ((value >> 24) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
@@ -2937,29 +3087,29 @@ export class TeacherData {
 export function intToHexColor(value: number): string {
     let radix = 16;
     if (radix < 2 || radix > 36) {
-      throw new RangeError("Radix argument must be between 2 and 36.");
+        throw new RangeError("Radix argument must be between 2 and 36.");
     }
-  
+
     // Handle 0 case
     if (value === 0) return "0";
-  
+
     const isNegative = value < 0;
     let absValue = Math.abs(value);
     let result = "";
-  
+
     // Convert the number to the desired radix
     while (absValue > 0) {
-      const digit = absValue % radix;
-      result = (digit < 10 ? digit.toString() : String.fromCharCode(87 + digit)) + result;
-      absValue = Math.floor(absValue / radix);
+        const digit = absValue % radix;
+        result = (digit < 10 ? digit.toString() : String.fromCharCode(87 + digit)) + result;
+        absValue = Math.floor(absValue / radix);
     }
-  
+
     // Add negative sign for negative numbers
 
     return isNegative ? `-${result}` : "#" + result;
-  }
-  
-  
+}
+
+
 
 export function addAlpha(color, opacity) {
     // coerce values so it is between 0 and 1.
@@ -2982,64 +3132,66 @@ export function hexToInt(hex: string) {
 function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } {
     // Remove the leading '#' if present
     if (hex.startsWith("#")) {
-      hex = hex.slice(1);
+        hex = hex.slice(1);
     }
-  
+
     // Handle shorthand hex (#RGB or #ARGB) by expanding it
     if (hex.length === 3 || hex.length === 4) {
-      hex = hex
-        .split("")
-        .map((char) => char + char)
-        .join("");
+        hex = hex
+            .split("")
+            .map((char) => char + char)
+            .join("");
     }
-  
+
     // Parse the color components based on length
     let r = 0, g = 0, b = 0, a = 255; // Default alpha to 255 (fully opaque)
     if (hex.length === 6) {
-      // #RRGGBB format
-      r = parseInt(hex.slice(0, 2), 16);
-      g = parseInt(hex.slice(2, 4), 16);
-      b = parseInt(hex.slice(4, 6), 16);
+        // #RRGGBB format
+        r = parseInt(hex.slice(0, 2), 16);
+        g = parseInt(hex.slice(2, 4), 16);
+        b = parseInt(hex.slice(4, 6), 16);
     } else if (hex.length === 8) {
-      // #AARRGGBB format
-      a = parseInt(hex.slice(0, 2), 16);
-      r = parseInt(hex.slice(2, 4), 16);
-      g = parseInt(hex.slice(4, 6), 16);
-      b = parseInt(hex.slice(6, 8), 16);
+        // #AARRGGBB format
+        a = parseInt(hex.slice(0, 2), 16);
+        r = parseInt(hex.slice(2, 4), 16);
+        g = parseInt(hex.slice(4, 6), 16);
+        b = parseInt(hex.slice(6, 8), 16);
     } else {
-      throw new Error("Invalid hex color format.");
+        throw new Error("Invalid hex color format.");
     }
-  
+
     return { r, g, b, a };
-  }
-  
-  export function hexToColor(hex: string): Color {
+}
+
+export function hexToColor(hex: string): Color {
     const { r, g, b, a } = hexToRGBA(hex);
     return Color.fromBlank(r, g, b, a);
-  }
-  
-  export enum ShiftType {
+}
+
+export enum ShiftType {
     Weekdays = "weekdays",
     Weekends = "weekends",
     All = "all"
-  }
-  
-  function shiftTypeFromString(type: string): ShiftType {
+}
+
+function shiftTypeFromString(type: string): ShiftType {
     return Object.values(ShiftType).find(e => e === type) as ShiftType;
-  }
-  
-  export enum OpportunityType {
+}
+
+export enum OpportunityType {
     Job = "job",
     OneTimeVolunteer = "oneTimeVolunteer",
     RecurringVolunteer = "recurringVolunteer"
-  }
-  
-  export function opportunityTypeFromString(type: string): OpportunityType {
+}
+
+export function opportunityTypeFromString(type: string): OpportunityType {
     return Object.values(OpportunityType).find(e => e === type) as OpportunityType;
-  }
-  
-  
-  export class Opportunity {
+}
+
+
+
+
+export class Opportunity {
     id: string;
     lastUpdated: number;
     companyName: string;
@@ -3051,195 +3203,179 @@ function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } 
     applicants: ActivityMember[];
     type: OpportunityType;
     applicationLink: string;
-  
+    creatorId: string;
+
     constructor({
-      id,
-      lastUpdated,
-      companyName,
-      companyId,
-      position,
-      location,
-      description,
-      isAvailable,
-      applicants,
-      type,
-      applicationLink,
+        id,
+        lastUpdated,
+        companyName,
+        companyId,
+        position,
+        location,
+        description,
+        isAvailable,
+        applicants,
+        type,
+        applicationLink,
+        creatorId,
     }: {
-      id: string;
-      lastUpdated: number;
-      companyName: string;
-      companyId: string;
-      position: string;
-      location: Location;
-      description: string;
-      isAvailable: boolean;
-      applicants: ActivityMember[];
-      type: OpportunityType;
-      applicationLink: string;
+        id: string;
+        lastUpdated: number;
+        companyName: string;
+        companyId: string;
+        position: string;
+        location: Location;
+        description: string;
+        isAvailable: boolean;
+        applicants: ActivityMember[];
+        type: OpportunityType;
+        applicationLink: string;
+        creatorId: string;
     }) {
-      this.id = id;
-      this.lastUpdated = lastUpdated;
-      this.companyName = companyName;
-      this.position = position;
-      this.companyId = companyId;
-      this.location = location;
-      this.description = description;
-      this.isAvailable = isAvailable;
-      this.applicants = applicants;
-      this.type = type;
-      this.applicationLink = applicationLink;
+        this.id = id;
+        this.lastUpdated = lastUpdated;
+        this.companyName = companyName;
+        this.position = position;
+        this.companyId = companyId;
+        this.location = location;
+        this.description = description;
+        this.isAvailable = isAvailable;
+        this.applicants = applicants;
+        this.type = type;
+        this.applicationLink = applicationLink;
+        this.creatorId = creatorId;
     }
-  
+
     toMap(): Record<string, any> {
-      return {
-        id: this.id,
-        lastUpdated: this.lastUpdated,
-        companyName: this.companyName,
-        companyId: this.companyId,
-        position: this.position,
-        location: this.location.toMap(),
-        description: this.description,
-        isAvailable: this.isAvailable,
-        applicants: this.applicants.map(e => e.toMap()),
-        type: this.type,
-        applicationLink: this.applicationLink,
-      };
+        return {
+            id: this.id,
+            lastUpdated: this.lastUpdated,
+            companyName: this.companyName,
+            companyId: this.companyId,
+            position: this.position,
+            location: this.location.toMap(),
+            description: this.description,
+            isAvailable: this.isAvailable,
+            applicants: this.applicants.map(e => e.toMap()),
+            type: this.type,
+            applicationLink: this.applicationLink,
+            creatorId: this.creatorId,
+        };
     }
-  
+
     static fromMap(data: DocumentData): Opportunity {
-      return new Opportunity({
-        id: data.id,
-        lastUpdated: data.lastUpdated,
-        companyName: data.companyName,
-        companyId: data.companyId,
-        position: data.position,
-        location: Location.fromMap(data.location),
-        description: data.description,
-        type: opportunityTypeFromString(data.type),
-        isAvailable: data.isAvailable,
-        applicationLink: data.applicationLink,
-        applicants: (data.applicants as never[]).map(e => ActivityMember.fromMap(e)),
-      });
+        return new Opportunity({
+            id: data.id,
+            lastUpdated: data.lastUpdated,
+            companyName: data.companyName,
+            companyId: data.companyId,
+            position: data.position,
+            location: Location.fromMap(data.location),
+            description: data.description,
+            type: opportunityTypeFromString(data.type),
+            isAvailable: data.isAvailable,
+            applicationLink: data.applicationLink,
+            creatorId: data.creatorId,
+            applicants: (data.applicants as never[]).map(e => ActivityMember.fromMap(e)),
+        });
     }
-  }
-  
-  export class Job extends Opportunity {
+}
+
+export class Job extends Opportunity {
     hourlyRate: number;
     shiftType: ShiftType;
-  
+
     constructor({
-      position,
-      companyName,
-      companyId,
-      location,
-      hourlyRate,
-      description,
-      shiftType,
-      id,
-      lastUpdated,
-      isAvailable,
-      applicationLink,
-      applicants,
-      type = OpportunityType.Job,
-    }: {
-      position: string;
-      companyName: string;
-      companyId: string;
-      location: Location;
-      hourlyRate: number;
-      description: string;
-      shiftType: ShiftType;
-      id: string;
-      lastUpdated: number;
-      isAvailable: boolean;
-      applicationLink: string;
-      applicants: ActivityMember[];
-      type?: OpportunityType;
-    }) {
-      super({
         position,
         companyName,
         companyId,
         location,
+        hourlyRate,
         description,
+        shiftType,
         id,
         lastUpdated,
         isAvailable,
         applicationLink,
-        type,
         applicants,
-      });
-      this.hourlyRate = hourlyRate;
-      this.shiftType = shiftType;
+        creatorId,
+        type = OpportunityType.Job,
+    }: {
+        position: string;
+        companyName: string;
+        companyId: string;
+        location: Location;
+        hourlyRate: number;
+        description: string;
+        shiftType: ShiftType;
+        id: string;
+        lastUpdated: number;
+        isAvailable: boolean;
+        applicationLink: string;
+        applicants: ActivityMember[];
+        type?: OpportunityType;
+        creatorId: string;
+    }) {
+        super({
+            position,
+            companyName,
+            companyId,
+            location,
+            description,
+            id,
+            lastUpdated,
+            isAvailable,
+            applicationLink,
+            type,
+            applicants,
+            creatorId,
+        });
+        this.hourlyRate = hourlyRate;
+        this.shiftType = shiftType;
     }
-  
+
     toMap(): Record<string, any> {
-      return {
-        position: this.position,
-        companyName: this.companyName,
-        companyId: this.companyId,
-        location: this.location.toMap(),
-        hourlyRate: this.hourlyRate,
-        description: this.description,
-        shiftType: this.shiftType,
-        id: this.id,
-        lastUpdated: this.lastUpdated,
-        isAvailable: this.isAvailable,
-        applicationLink: this.applicationLink,
-        applicants: this.applicants.map(e => e.toMap()),
-        type: this.type,
-      };
+        return {
+            position: this.position,
+            companyName: this.companyName,
+            companyId: this.companyId,
+            location: this.location.toMap(),
+            hourlyRate: this.hourlyRate,
+            description: this.description,
+            shiftType: this.shiftType,
+            id: this.id,
+            lastUpdated: this.lastUpdated,
+            isAvailable: this.isAvailable,
+            applicationLink: this.applicationLink,
+            applicants: this.applicants.map(e => e.toMap()),
+            type: this.type,
+            creatorId: this.creatorId,
+        };
     }
-  
+
     static fromMap(data: DocumentData): Job {
-      return new Job({
-        position: data.position,
-        companyName: data.companyName,
-        companyId: data.companyId,
-        location: Location.fromMap(data.location),
-        hourlyRate: data.hourlyRate,
-        description: data.description,
-        shiftType: shiftTypeFromString(data.shiftType),
-        id: data.id,
-        lastUpdated: data.lastUpdated,
-        isAvailable: data.isAvailable,
-        applicationLink: data.applicationLink,
-        applicants: (data.applicants as never[]).map(e => ActivityMember.fromMap(e)),
-      });
+        return new Job({
+            position: data.position,
+            companyName: data.companyName,
+            companyId: data.companyId,
+            location: Location.fromMap(data.location),
+            hourlyRate: data.hourlyRate,
+            description: data.description,
+            shiftType: shiftTypeFromString(data.shiftType),
+            id: data.id,
+            lastUpdated: data.lastUpdated,
+            isAvailable: data.isAvailable,
+            applicationLink: data.applicationLink,
+            creatorId: data.creatorId,
+            applicants: (data.applicants as never[]).map(e => ActivityMember.fromMap(e)),
+        });
     }
-  }
-  
-  export class Volunteer extends Opportunity {
+}
+
+export class Volunteer extends Opportunity {
     volunteers: ActivityMember[];
-  
+
     constructor({
-      position,
-      companyName,
-      companyId,
-      location,
-      description,
-      id,
-      lastUpdated,
-      isAvailable,
-      applicationLink,
-      volunteers,
-      type = OpportunityType.RecurringVolunteer,
-      applicants,
-    }: {
-      position: string;
-      companyName: string;
-      companyId: string;
-      location: Location;
-      description: string;
-      id: string;
-      lastUpdated: number;
-      isAvailable: boolean;
-      applicationLink: string;
-      volunteers: ActivityMember[];
-      type?: OpportunityType;
-      applicants: ActivityMember[];
-    }) {
-      super({
         position,
         companyName,
         companyId,
@@ -3249,83 +3385,84 @@ function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } 
         lastUpdated,
         isAvailable,
         applicationLink,
-        type,
+        volunteers,
+        creatorId,
+        type = OpportunityType.RecurringVolunteer,
         applicants,
-      });
-      this.volunteers = volunteers;
+    }: {
+        position: string;
+        companyName: string;
+        companyId: string;
+        location: Location;
+        description: string;
+        id: string;
+        lastUpdated: number;
+        isAvailable: boolean;
+        applicationLink: string;
+        volunteers: ActivityMember[];
+        type?: OpportunityType;
+        creatorId: string;
+        applicants: ActivityMember[];
+    }) {
+        super({
+            position,
+            companyName,
+            companyId,
+            location,
+            description,
+            id,
+            lastUpdated,
+            isAvailable,
+            applicationLink,
+            type,
+            applicants,
+            creatorId,
+        });
+        this.volunteers = volunteers;
     }
-  
+
     toMap(): Record<string, any> {
-      return {
-        position: this.position,
-        companyName: this.companyName,
-        companyId: this.companyId,
-        location: this.location.toMap(),
-        description: this.description,
-        id: this.id,
-        lastUpdated: this.lastUpdated,
-        isAvailable: this.isAvailable,
-        applicationLink: this.applicationLink,
-        volunteers: this.volunteers.map(e => e.toMap()),
-        type: this.type,
-        applicants: this.applicants.map(e => e.toMap()),
-      };
+        return {
+            position: this.position,
+            companyName: this.companyName,
+            companyId: this.companyId,
+            location: this.location.toMap(),
+            description: this.description,
+            id: this.id,
+            lastUpdated: this.lastUpdated,
+            isAvailable: this.isAvailable,
+            applicationLink: this.applicationLink,
+            volunteers: this.volunteers.map(e => e.toMap()),
+            type: this.type,
+            creatorId: this.creatorId,
+            applicants: this.applicants.map(e => e.toMap()),
+        };
     }
-  
+
     static fromMap(data: DocumentData): Volunteer {
-      return new Volunteer({
-        position: data.position,
-        companyName: data.companyName,
-        companyId: data.companyId,
-        location: Location.fromMap(data.location),
-        description: data.description,
-        id: data.id,
-        lastUpdated: data.lastUpdated,
-        isAvailable: data.isAvailable,
-        applicationLink: data.applicationLink,
-        type: opportunityTypeFromString(data.type),
-        applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
-        volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
-      });
+        return new Volunteer({
+            position: data.position,
+            companyName: data.companyName,
+            companyId: data.companyId,
+            location: Location.fromMap(data.location),
+            description: data.description,
+            id: data.id,
+            lastUpdated: data.lastUpdated,
+            isAvailable: data.isAvailable,
+            applicationLink: data.applicationLink,
+            creatorId: data.creatorId,
+            type: opportunityTypeFromString(data.type),
+            applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
+            volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
+        });
     }
-  }
-  
-  export class OneTimeVolunteer extends Volunteer {
+}
+
+export class OneTimeVolunteer extends Volunteer {
     eventDate: EventDate;
     taskId: string;
-  
+
     constructor({
-      position,
-      companyName,
-      companyId,
-      location,
-      description,
-      id,
-      lastUpdated,
-      isAvailable,
-      applicationLink,
-      volunteers,
-      applicants,
-      eventDate,
-      taskId,
-      type = OpportunityType.OneTimeVolunteer,
-    }: {
-      position: string;
-      companyName: string;
-      companyId: string;
-      location: Location;
-      description: string;
-      id: string;
-      lastUpdated: number;
-      isAvailable: boolean;
-      applicationLink: string;
-      volunteers: ActivityMember[];
-      applicants: ActivityMember[];
-      eventDate: EventDate;
-      taskId: string;
-      type?: OpportunityType;
-    }) {
-      super({
         position,
         companyName,
         companyId,
@@ -3336,85 +3473,92 @@ function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } 
         isAvailable,
         applicationLink,
         volunteers,
-        type,
         applicants,
-      });
-      this.eventDate = eventDate;
-      this.taskId = taskId;
+        eventDate,
+        creatorId,
+        taskId,
+        type = OpportunityType.OneTimeVolunteer,
+    }: {
+        position: string;
+        companyName: string;
+        companyId: string;
+        location: Location;
+        description: string;
+        id: string;
+        lastUpdated: number;
+        isAvailable: boolean;
+        applicationLink: string;
+        volunteers: ActivityMember[];
+        applicants: ActivityMember[];
+        eventDate: EventDate;
+        taskId: string;
+        creatorId: string;
+        type?: OpportunityType;
+    }) {
+        super({
+            position,
+            companyName,
+            companyId,
+            location,
+            description,
+            id,
+            lastUpdated,
+            isAvailable,
+            applicationLink,
+            volunteers,
+            creatorId,
+            type,
+            applicants,
+        });
+        this.eventDate = eventDate;
+        this.taskId = taskId;
     }
-  
+
     toMap(): Record<string, any> {
-      return {
-        position: this.position,
-        companyName: this.companyName,
-        companyId: this.companyId,
-        location: this.location.toMap(),
-        description: this.description,
-        id: this.id,
-        lastUpdated: this.lastUpdated,
-        isAvailable: this.isAvailable,
-        applicationLink: this.applicationLink,
-        volunteers: this.volunteers.map(e => e.toMap()),
-        eventDate: this.eventDate.toMap(),
-        type: this.type,
-        taskId: this.taskId,
-        applicants: this.applicants.map(e => e.toMap()),
-      };
+        return {
+            position: this.position,
+            companyName: this.companyName,
+            companyId: this.companyId,
+            location: this.location.toMap(),
+            description: this.description,
+            id: this.id,
+            lastUpdated: this.lastUpdated,
+            isAvailable: this.isAvailable,
+            applicationLink: this.applicationLink,
+            volunteers: this.volunteers.map(e => e.toMap()),
+            eventDate: this.eventDate.toMap(),
+            type: this.type,
+            creatorId: this.creatorId,
+            taskId: this.taskId,
+            applicants: this.applicants.map(e => e.toMap()),
+        };
     }
-  
+
     static fromMap(data: DocumentData): OneTimeVolunteer {
-      return new OneTimeVolunteer({
-        position: data.position,
-        companyName: data.companyName,
-        companyId: data.companyId,
-        location: Location.fromMap(data.location),
-        description: data.description,
-        id: data.id,
-        lastUpdated: data.lastUpdated,
-        isAvailable: data.isAvailable,
-        applicationLink: data.applicationLink,
-        type: opportunityTypeFromString(data.type),
-        applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
-        volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
-        taskId: data.taskId,
-        eventDate: EventDate.fromMap(data.eventDate),
-      });
+        return new OneTimeVolunteer({
+            position: data.position,
+            companyName: data.companyName,
+            companyId: data.companyId,
+            location: Location.fromMap(data.location),
+            description: data.description,
+            id: data.id,
+            lastUpdated: data.lastUpdated,
+            isAvailable: data.isAvailable,
+            applicationLink: data.applicationLink,
+            creatorId: data.creatorId,
+            type: opportunityTypeFromString(data.type),
+            applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
+            volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
+            taskId: data.taskId,
+            eventDate: EventDate.fromMap(data.eventDate),
+        });
     }
-  }
-  
-  export class RecurringVolunteer extends Volunteer {
+}
+
+export class RecurringVolunteer extends Volunteer {
     shiftType: ShiftType;
-  
+
     constructor({
-      position,
-      companyName,
-      companyId,
-      location,
-      description,
-      id,
-      lastUpdated,
-      isAvailable,
-      applicationLink,
-      volunteers,
-      applicants,
-      shiftType,
-      type = OpportunityType.RecurringVolunteer,
-    }: {
-      position: string;
-      companyName: string;
-      companyId: string;
-      location: Location;
-      description: string;
-      id: string;
-      lastUpdated: number;
-      isAvailable: boolean;
-      applicationLink: string;
-      volunteers: ActivityMember[];
-      applicants: ActivityMember[];
-      shiftType: ShiftType;
-      type?: OpportunityType;
-    }) {
-      super({
         position,
         companyName,
         companyId,
@@ -3425,60 +3569,103 @@ function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } 
         isAvailable,
         applicationLink,
         volunteers,
-        type,
         applicants,
-      });
-      this.shiftType = shiftType;
+        shiftType,
+        creatorId,
+        type = OpportunityType.RecurringVolunteer,
+    }: {
+        position: string;
+        companyName: string;
+        companyId: string;
+        location: Location;
+        description: string;
+        id: string;
+        lastUpdated: number;
+        isAvailable: boolean;
+        applicationLink: string;
+        volunteers: ActivityMember[];
+        applicants: ActivityMember[];
+        shiftType: ShiftType;
+        type?: OpportunityType;
+        creatorId: string;
+    }) {
+        super({
+            position,
+            companyName,
+            companyId,
+            location,
+            description,
+            id,
+            lastUpdated,
+            isAvailable,
+            applicationLink,
+            volunteers,
+            type,
+            applicants,
+            creatorId,
+        });
+        this.shiftType = shiftType;
     }
-  
+
     toMap(): Record<string, any> {
-      return {
-        position: this.position,
-        companyName: this.companyName,
-        companyId: this.companyId,
-        location: this.location.toMap(),
-        description: this.description,
-        id: this.id,
-        lastUpdated: this.lastUpdated,
-        isAvailable: this.isAvailable,
-        applicationLink: this.applicationLink,
-        volunteers: this.volunteers.map(e => e.toMap()),
-        shiftType: this.shiftType,
-        type: this.type,
-        applicants: this.applicants.map(e => e.toMap()),
-      };
+        return {
+            position: this.position,
+            companyName: this.companyName,
+            companyId: this.companyId,
+            location: this.location.toMap(),
+            description: this.description,
+            id: this.id,
+            lastUpdated: this.lastUpdated,
+            isAvailable: this.isAvailable,
+            applicationLink: this.applicationLink,
+            volunteers: this.volunteers.map(e => e.toMap()),
+            shiftType: this.shiftType,
+            creatorId: this.creatorId,
+            type: this.type,
+            applicants: this.applicants.map(e => e.toMap()),
+        };
     }
-  
+
     static fromMap(data: DocumentData): RecurringVolunteer {
-      return new RecurringVolunteer({
-        position: data.position,
-        companyName: data.companyName,
-        companyId: data.companyId,
-        location: Location.fromMap(data.location),
-        description: data.description,
-        id: data.id,
-        lastUpdated: data.lastUpdated,
-        isAvailable: data.isAvailable,
-        applicationLink: data.applicationLink,
-        type: opportunityTypeFromString(data.type),
-        applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
-        volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
-        shiftType: shiftTypeFromString(data.shiftType),
-      });
+        return new RecurringVolunteer({
+            position: data.position,
+            companyName: data.companyName,
+            companyId: data.companyId,
+            location: Location.fromMap(data.location),
+            description: data.description,
+            id: data.id,
+            lastUpdated: data.lastUpdated,
+            isAvailable: data.isAvailable,
+            applicationLink: data.applicationLink,
+            creatorId: data.creatorId,
+            type: opportunityTypeFromString(data.type),
+            applicants: (data.applicants as any[]).map(e => ActivityMember.fromMap(e)),
+            volunteers: (data.volunteers as any[]).map(e => ActivityMember.fromMap(e)),
+            shiftType: shiftTypeFromString(data.shiftType),
+        });
     }
-  }
-  
-  export enum CompanyType {
+}
+
+export enum CompanyType {
     Job = "Job",
     Volunteer = "Volunteer"
-  }
-  
-  export function companyTypeFromString(type: string): CompanyType {
-    return Object.values(CompanyType).find(e => e === type) as CompanyType;
-  }
+}
 
-  
-  export class EmployerData {
+export function companyTypeFromString(type: string): CompanyType {
+    return Object.values(CompanyType).find(e => e === type) as CompanyType;
+}
+
+function companyTypeToString(type: CompanyType): string {
+    switch (type) {
+        case CompanyType.Job:
+            return "Job";
+        case CompanyType.Volunteer:
+            return "Volunteer";
+    }
+}
+
+
+export class EmployerData {
     uid: string;
     FCMToken: string;
     phoneNumber: string;
@@ -3486,71 +3673,71 @@ function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } 
     email: string;
     companyId: string;
     accountType: string;
-  
+
     constructor({
-      uid,
-      FCMToken,
-      accountType,
-      fullname,
-      email,
-      companyId,
-      phoneNumber,
+        uid,
+        FCMToken,
+        accountType,
+        fullname,
+        email,
+        companyId,
+        phoneNumber,
     }: {
-      uid: string;
-      FCMToken: string;
-      accountType: string;
-      fullname: string;
-      email: string;
-      companyId: string;
-      phoneNumber: string;
+        uid: string;
+        FCMToken: string;
+        accountType: string;
+        fullname: string;
+        email: string;
+        companyId: string;
+        phoneNumber: string;
     }) {
-      this.uid = uid;
-      this.FCMToken = FCMToken;
-      this.phoneNumber = phoneNumber;
-      this.accountType = accountType;
-      this.fullname = fullname;
-      this.companyId = companyId;
-      this.email = email;
+        this.uid = uid;
+        this.FCMToken = FCMToken;
+        this.phoneNumber = phoneNumber;
+        this.accountType = accountType;
+        this.fullname = fullname;
+        this.companyId = companyId;
+        this.email = email;
     }
-  
+
     static empty(): EmployerData {
-      return new EmployerData({
-        uid: "",
-        FCMToken: "",
-        accountType: "employer",
-        fullname: "",
-        email: "",
-        companyId: "",
-        phoneNumber: "",
-      });
+        return new EmployerData({
+            uid: "",
+            FCMToken: "",
+            accountType: "employer",
+            fullname: "",
+            email: "",
+            companyId: "",
+            phoneNumber: "",
+        });
     }
-  
+
     toMap(): { [key: string]: string } {
-      return {
-        "uid": this.uid,
-        "FCMToken": this.FCMToken,
-        "phoneNumber": this.phoneNumber,
-        "accountType": this.accountType,
-        "fullname": this.fullname,
-        "companyId": this.companyId,
-        "email": this.email,
-      };
+        return {
+            "uid": this.uid,
+            "FCMToken": this.FCMToken,
+            "phoneNumber": this.phoneNumber,
+            "accountType": this.accountType,
+            "fullname": this.fullname,
+            "companyId": this.companyId,
+            "email": this.email,
+        };
     }
-  
+
     static fromMap(map: DocumentData): EmployerData {
-      return new EmployerData({
-        uid: map.uid,
-        FCMToken: map.FCMToken,
-        phoneNumber: map.phoneNumber,
-        accountType: map.accountType,
-        fullname: map.fullname,
-        companyId: map.companyId,
-        email: map.email,
-      });
+        return new EmployerData({
+            uid: map.uid,
+            FCMToken: map.FCMToken,
+            phoneNumber: map.phoneNumber,
+            accountType: map.accountType,
+            fullname: map.fullname,
+            companyId: map.companyId,
+            email: map.email,
+        });
     }
-  }
-  
-  export class Company {
+}
+
+export class Company {
     id: string;
     name: string;
     location: Location;
@@ -3559,64 +3746,109 @@ function hexToRGBA(hex: string): { r: number; g: number; b: number; a: number } 
     joinCode: string;
     savedLocations: Location[];
     type: CompanyType;
-  
+
     constructor({
-      id,
-      name,
-      location,
-      lastUpdated,
-      employers,
-      joinCode,
-      savedLocations,
-      type,
+        id,
+        name,
+        location,
+        lastUpdated,
+        employers,
+        joinCode,
+        savedLocations,
+        type,
     }: {
-      id: string;
-      name: string;
-      location: Location;
-      lastUpdated: number;
-      employers: EmployerData[];
-      joinCode: string;
-      savedLocations: Location[];
-      type: CompanyType;
+        id: string;
+        name: string;
+        location: Location;
+        lastUpdated: number;
+        employers: EmployerData[];
+        joinCode: string;
+        savedLocations: Location[];
+        type: CompanyType;
     }) {
-      this.id = id;
-      this.name = name;
-      this.location = location;
-      this.lastUpdated = lastUpdated;
-      this.employers = employers;
-      this.joinCode = joinCode;
-      this.savedLocations = savedLocations;
-      this.type = type;
+        this.id = id;
+        this.name = name;
+        this.location = location;
+        this.lastUpdated = lastUpdated;
+        this.employers = employers;
+        this.joinCode = joinCode;
+        this.savedLocations = savedLocations;
+        this.type = type;
     }
-  
+
     toMap(): Record<string, any> {
-      return {
-        id: this.id,
-        name: this.name,
-        location: this.location.toMap(),
-        lastUpdated: this.lastUpdated,
-        employers: this.employers.map(e => e.toMap()),
-        joinCode: this.joinCode,
-        savedLocations: this.savedLocations.map(e => e.toMap()),
-        employerUids: this.employers.map(e => e.uid),
-        type: this.type,
-      };
+        return {
+            id: this.id,
+            name: this.name,
+            location: this.location.toMap(),
+            lastUpdated: this.lastUpdated,
+            employers: this.employers.map(e => e.toMap()),
+            joinCode: this.joinCode,
+            savedLocations: this.savedLocations.map(e => e.toMap()),
+            employerUids: this.employers.map(e => e.uid),
+            type: companyTypeToString(this.type),
+        };
     }
-  
-   
-  
-   
-  
+
+
+
+
+
     static fromMap(data: DocumentData): Company {
-      return new Company({
-        id: data.id,
-        name: data.name,
-        location: Location.fromMap(data.location),
-        lastUpdated: data.lastUpdated,
-        employers: (data.employers as any[]).map(e => EmployerData.fromMap(e)),
-        joinCode: data.joinCode,
-        savedLocations: (data.savedLocations as any[]).map(e => Location.fromMap(e)),
-        type: companyTypeFromString(data.type),
-      });
+        return new Company({
+            id: data.id,
+            name: data.name,
+            location: Location.fromMap(data.location),
+            lastUpdated: data.lastUpdated,
+            employers: (data.employers as any[]).map(e => EmployerData.fromMap(e)),
+            joinCode: data.joinCode,
+            savedLocations: (data.savedLocations as any[]).map(e => Location.fromMap(e)),
+            type: companyTypeFromString(data.type),
+        });
     }
-  }
+}
+
+export enum OpportunityNotificationType {
+    all = "all", volunteer = "volunteer", job = "job", none = "none"
+}
+function opportunityNotificationTypeFromString(type: string): OpportunityNotificationType {
+    return Object.values(OpportunityNotificationType).find(e => e === type) as OpportunityNotificationType;
+}
+
+
+
+export class OpportunityPreference {
+    homeLocation: Location;
+    notifications: OpportunityNotificationType;
+    userId: string;
+
+    constructor() {
+        this.homeLocation = new Location();
+        this.notifications = OpportunityNotificationType.all;
+        this.userId = "";
+    }
+
+    public static fromBlank(homeLocation: Location, notifications: OpportunityNotificationType, userId: string): OpportunityPreference {
+        const opportunityPreference = new OpportunityPreference();
+        opportunityPreference.homeLocation = homeLocation;
+        opportunityPreference.notifications = notifications;
+        opportunityPreference.userId = userId;
+        return opportunityPreference;
+    }
+
+    toMap(): object {
+        return {
+            "homeLocation": this.homeLocation.toMap(),
+            "notifications": this.notifications,
+            "userId": this.userId,
+        };
+    }
+
+    public static fromMap(map: DocumentData): OpportunityPreference {
+        const opportunityPreference = new OpportunityPreference();
+        opportunityPreference.homeLocation = Location.fromMap(map.homeLocation);
+        opportunityPreference.notifications = opportunityNotificationTypeFromString(map.notifications);
+        opportunityPreference.userId = map.userId;
+        return opportunityPreference;
+    }
+}

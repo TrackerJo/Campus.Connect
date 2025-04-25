@@ -50,6 +50,10 @@ function AddEventDateDialog({ dialogRef, close, addDate, eventDate}: AddEventDat
             <label htmlFor="">Date: </label>
             <input type="date" value={date?.toISOString().split('T')[0]} onChange={(val) => {
                 const date = new Date(val.target.value)
+                if(date == "Invalid Date"){
+                    setStartDate(new Date())
+                    return;
+                }
                 date.setHours(0, 0, 0, 0)
                 date.setDate(date.getDate() + 1)
                 setStartDate(date)

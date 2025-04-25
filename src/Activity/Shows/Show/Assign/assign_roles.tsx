@@ -63,7 +63,7 @@ function App() {
         }
         for (let i = 0; i < show.characters.length; i++) {
             const character = show.characters[i];
-            const newCharacter = characters.find((ch) => ch.name == character.name)
+            const newCharacter = characters.find((ch) => ch.characterId == character.characterId)
             if(newCharacter){
                 console.log("New Character")
                 console.log(newCharacter)
@@ -79,7 +79,7 @@ function App() {
             console.log("UPDATING SHOW GROUPS")
             const showGroup = show.showGroups[i];
             console.log("Show Group: " + showGroup.name)
-            const newShowGroup = showGroups.find((sg) => sg.name == showGroup.name)
+            const newShowGroup = showGroups.find((sg) => sg.showGroupId == showGroup.showGroupId)
             console.log("New Show Group: " + newShowGroup?.name)
             
             if(newShowGroup){
@@ -88,7 +88,7 @@ function App() {
                 for (let j = 0; j < showGroup.characters.length; j++) {
                     const character = showGroup.characters[j];
                     if(character instanceof Character){
-                        const newCharacter = characters.find((ch) => ch.name == character.name)
+                        const newCharacter = characters.find((ch) => ch.characterId == character.characterId)
                         if(newCharacter){
                             showGroup.characters[j] = newCharacter
                             if(newCharacter.actor == null){
@@ -108,17 +108,17 @@ function App() {
                 for (let c = 0; c < scene.characters.length; c++) {
                     const character = scene.characters[c];
                     if(character instanceof Character){
-                        const newCharacter = characters.find((ch) => ch.name == character.name)
+                        const newCharacter = characters.find((ch) => ch.characterId == character.characterId)
                         if(newCharacter){
                             scene.characters[c] = newCharacter
                         }
                     } else if(character instanceof ShowGroup){
-                        const newShowGroup = showGroups.find((sg) => sg.name == character.name)
+                        const newShowGroup = showGroups.find((sg) => sg.showGroupId == character.showGroupId)
                         if(newShowGroup){
                             for (let sc = 0; sc < newShowGroup.characters.length; sc++) {
                                 const sCharacter = newShowGroup.characters[sc];
                                 if(sCharacter instanceof Character){
-                                    const newCharacter = characters.find((ch) => ch.name == sCharacter.name)
+                                    const newCharacter = characters.find((ch) => ch.characterId == sCharacter.characterId)
                                     if(newCharacter){
                                         newShowGroup.characters[sc] = newCharacter
                                     }
@@ -143,17 +143,17 @@ function App() {
                 console.log(character)
                 console.log(typeof character)
                 if(character instanceof Character){
-                    const newCharacter = characters.find((ch) => ch.name == character.name)
+                    const newCharacter = characters.find((ch) => ch.characterId == character.characterId)
                     if(newCharacter){
                         song.characters[c] = newCharacter
                     }
                 } else if(character instanceof ShowGroup){
-                    const newShowGroup = showGroups.find((sg) => sg.name == character.name)
+                    const newShowGroup = showGroups.find((sg) => sg.showGroupId == character.showGroupId)
                     if(newShowGroup){
                         for (let sc = 0; sc < newShowGroup.characters.length; sc++) {
                             const sCharacter = newShowGroup.characters[sc];
                             if(sCharacter instanceof Character){
-                                const newCharacter = characters.find((ch) => ch.name == sCharacter.name)
+                                const newCharacter = characters.find((ch) => ch.characterId == sCharacter.characterId)
                                 if(newCharacter){
                                     newShowGroup.characters[sc] = newCharacter
                                 }
@@ -176,17 +176,17 @@ function App() {
             for (let c = 0; c < dance.characters.length; c++) {
                 const character = dance.characters[c];
                 if(character instanceof Character){
-                    const newCharacter = characters.find((ch) => ch.name == character.name)
+                    const newCharacter = characters.find((ch) => ch.characterId == character.characterId)
                     if(newCharacter){
                         dance.characters[c] = newCharacter
                     }
                 } else if(character instanceof ShowGroup){
-                    const newShowGroup = showGroups.find((sg) => sg.name == character.name)
+                    const newShowGroup = showGroups.find((sg) => sg.showGroupId == character.showGroupId)
                     if(newShowGroup){
                         for (let sc = 0; sc < newShowGroup.characters.length; sc++) {
                             const sCharacter = newShowGroup.characters[sc];
                             if(sCharacter instanceof Character){
-                                const newCharacter = characters.find((ch) => ch.name == sCharacter.name)
+                                const newCharacter = characters.find((ch) => ch.characterId == sCharacter.characterId)
                                 if(newCharacter){
                                     newShowGroup.characters[sc] = newCharacter
                                 }
@@ -216,7 +216,7 @@ function App() {
         console.log(show.toMap())
         console.log("Can create schedule")
         console.log(canCreateSchedule)
-        localStorage.setItem('show-' + showId, JSON.stringify(show))
+        localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
         await setActivityShow(activityId, showId, show)
         setIsLoading(false)
     }

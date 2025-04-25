@@ -1,10 +1,10 @@
-import { useRef, useState } from "react";
-import { AddResourceDialogProps, FBFile, Resource } from "../constants";
+import { useEffect, useRef, useState } from "react";
+import { EditResourceDialogProps, FBFile, Resource } from "../constants";
 
-import "./Add_Resource_Dialog.css"
-import { uploadFile } from "../api/storage";
+import "./Edit_Resource_Dialog.css"
+import { deleteFile, uploadFile } from "../api/storage";
 
-function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResourceDialogProps){
+function EditResourceDialog({editResource, dialogRef, close, resource}: EditResourceDialogProps){
     const [selectedType, setSelectedType] = useState<"link" | "image" | "video" | "unset">("unset")
     const [resourceName, setResourceName] = useState<string>("")
     const [resourceDescription, setResourceDescription] = useState<string>("")
@@ -12,35 +12,27 @@ function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResou
     const [resourceLink, setResourceLink] = useState<string>("")
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    useEffect(() => {
+        if(resource){
+            setResourceName(resource.name)
+            setResourceDescription(resource.description)
+            setSelectedType(resource.type)
+            console.log(resource.toMap())
+            if(resource.type == "link"){
+                setResourceLink(resource.link!)
+            }
+        }
+    }, [resource])
+        
+
 
     
 
     return (
         <dialog ref={dialogRef} >
-            <div className="AddResourceDiv">
-                <h2>Add Resource</h2>
-                {
-                    selectedType == "unset" ?
-                    <div className="ResourceTypeSelect">
-                        <h3>Resource Type</h3>
-                        <button className="ActionBtn" onClick={() => {
-                            setSelectedType("link")
-                        }}>
-                            Link
-                        </button>
-                        <button className="ActionBtn" onClick={() => {
-                            setSelectedType("image")
-                        }}>
-                            Image
-                        </button>
-                        <button className="ActionBtn" onClick={() => {
-                            setSelectedType("video")
-                        }}>
-                            Video
-                        </button>
-                    </div>
-                    :
-                    <>
+            <div className="EditResourceDiv">
+                <h2>Edit Resource</h2>
+                
                         <h3>Resource Name</h3>
                         <input type="text" className="ResourceNameInput" value={resourceName} onChange={(e) => {
                             setResourceName(e.target.value)
@@ -68,36 +60,45 @@ function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResou
                         {isLoading ? <div className="loader"></div> : <button className="ActionBtn" onClick={async () => {
                             setIsLoading(true)
                             if(selectedType == "link"){
-                                const resource = Resource.fromBlank(resourceName, resourceDescription, selectedType, resourceLink)
-                                await addResource(resource)
+                                console.log("Link")
+                                const newResource = Resource.fromBlank(resourceName, resourceDescription, selectedType, resourceLink)
+                                await editResource(newResource)
                             } else {
+                                console.log("File")
                                 const file = fileInputRef.current!.files![0]
-                                if(file == undefined) return
-                                const fileName = file.name.split(".")[0] + Date.now() + "." + file.name.split(".")[1]
-                                const schoolId = localStorage.getItem("schoolId")
-                                const url = await uploadFile(schoolId!, activityId, fileName, file)
-                                const fbFile = FBFile.fromBlank(fileName, url)
-                                const resource = Resource.fromBlank(resourceName, resourceDescription, selectedType, "", fbFile)
-                                await addResource(resource)
-                            }
-                            setSelectedType("unset")
-                            setResourceName("")
-                            setResourceDescription("")
-                            setResourceLink("")
+                                if(file == undefined) {
+                                    alert("Please select a file")
+                                    setIsLoading(false)
+                                    return
+                                }
 
+                                const fileName = file.name.split(".")[0] + Date.now() + "." + file.name.split(".")[1]
+                                if(fileName == resource!.file!.name){
+                                    const newResource = Resource.fromBlank(resourceName, resourceDescription, resource!.type, "", resource!.file)
+                                    newResource.activityId = resource!.activityId
+                                    newResource.showId = resource!.showId
+                                    await editResource(newResource)
+                                } else {
+                                const schoolId = localStorage.getItem("schoolId")!
+                                await deleteFile(schoolId, resource!.activityId, resource!.file!.name)
+                                const url = await uploadFile(schoolId!, resource!.activityId, fileName, file)
+                                const fbFile = FBFile.fromBlank(fileName, url)
+                                const newResource = Resource.fromBlank(resourceName, resourceDescription, resource!.type, "", fbFile)
+                                newResource.activityId = resource!.activityId
+                                newResource.showId = resource!.showId
+                                await editResource(newResource)
+                                }
+                            }
+                           
                             setIsLoading(false)
                         }}>
-                            Add Resource
+                            Save
                         </button>}
 
-                    </>
-                }
+                  
             <br />
             <button className="ActionBtn" onClick={() => {
-                setSelectedType("unset")
-                setResourceName("")
-                setResourceDescription("")
-                setResourceLink("")
+                
                 close()
             }
             }>
@@ -111,6 +112,6 @@ function AddResourceDialog({addResource, dialogRef, close, activityId}: AddResou
     );
 }
 
-export default AddResourceDialog;
+export default EditResourceDialog;
 
 

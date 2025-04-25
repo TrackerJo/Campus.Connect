@@ -110,6 +110,10 @@ function AddRecurringConflictDialog({ dialogRef, close, addConflicts}: AddRecurr
                 <input type="date" value={startDate.toISOString().slice(0, 10)} onChange={(e) => {
                     console.log(e.target.value)
                     const cdate = new Date(e.target.value)
+                    if(cdate == "Invalid Date"){
+                        setStartDate(new Date())
+                        return;
+                    }
                     cdate.setHours(0, 0, 0, 0)
                     cdate.setDate(cdate.getDate() + 1)
                     setStartDate(cdate)
@@ -119,6 +123,10 @@ function AddRecurringConflictDialog({ dialogRef, close, addConflicts}: AddRecurr
                 <input type="date" value={endDate.toISOString().slice(0, 10)} onChange={(e) => {
                     console.log(e.target.value)
                     const cdate = new Date(e.target.value)
+                    if(cdate == "Invalid Date"){
+                        setEndDate(new Date())
+                        return;
+                    }
                     cdate.setHours(0, 0, 0, 0)
                     cdate.setDate(cdate.getDate() + 1)
                     setEndDate(cdate)

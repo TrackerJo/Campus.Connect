@@ -9,9 +9,9 @@ const libraries: ["places"] = ["places"];
 
 
 
-function LocationSearchTile({onSelect}: LocationSearchTileProps) {
+function LocationSearchTile({onSelect, address, setAddress}: LocationSearchTileProps) {
   const { isLoaded } = useLoadScript({ googleMapsApiKey: import.meta.env.VITE_GOOGLE_API, libraries });
-  const [input, setInput] = useState("");
+
   const [predictions, setPredictions] = useState<Place[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [justSelected, setJustSelected] = useState(false);
@@ -21,14 +21,15 @@ function LocationSearchTile({onSelect}: LocationSearchTileProps) {
       setJustSelected(false)
       return
     }
-    if (!input) {
+    if (!address) {
       setPredictions([]);
       return;
     }
     
+    
     const fetchPredictions = async () => {
       const service = new google.maps.places.AutocompleteService();
-      service.getPlacePredictions({ input, types: ["geocode"] }, (result, status) => {
+      service.getPlacePredictions({ input: address, types: ["geocode"] }, (result, status) => {
         console.log(result);
         if (status === google.maps.places.PlacesServiceStatus.OK && result) {
           setPredictions(result.map(pred => ({ description: pred.description, place_id: pred.place_id })));
@@ -40,7 +41,7 @@ function LocationSearchTile({onSelect}: LocationSearchTileProps) {
     
     const timeout = setTimeout(fetchPredictions, 300);
     return () => clearTimeout(timeout);
-  }, [input]);
+  }, [address]);
 
   const handleSelect = async (place: Place) => {
     const service = new google.maps.places.PlacesService(document.createElement("div"));
@@ -59,7 +60,7 @@ function LocationSearchTile({onSelect}: LocationSearchTileProps) {
           lat: details.geometry?.location?.lat(),
           lng: details.geometry?.location?.lng(),
         });
-        setInput(details.formatted_address ?? "");
+        setAddress(details.formatted_address ?? "");
         setPredictions([]);
       }
     });
@@ -69,8 +70,8 @@ function LocationSearchTile({onSelect}: LocationSearchTileProps) {
     <div className="search-container">
       <input
         type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
         placeholder="Search for an address"
         className="search-input"
       />

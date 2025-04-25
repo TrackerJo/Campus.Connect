@@ -10,6 +10,10 @@ function ConflictDateTile({conflict, canDelete, onDelete, setConflict} :Conflict
                     <label htmlFor="Character">Date: </label>
                     <input type="date" value={conflict.date.date.toISOString().slice(0, 10)} onChange={(e) => {
                         const newDate = new Date(e.target.value)
+                        if(newDate == "Invalid Date"){
+                            setConflict(ConflictDate.fromBlank(EventDate.fromBlank(new Date(), conflict.date.from, conflict.date.to), conflict.moreInfo))
+                            return;
+                        }
                         newDate.setHours(0, 0, 0, 0)
                         setConflict(ConflictDate.fromBlank(EventDate.fromBlank(newDate, conflict.date.from, conflict.date.to), conflict.moreInfo))
                     }}/>

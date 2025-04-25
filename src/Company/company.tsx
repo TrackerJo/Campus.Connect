@@ -142,7 +142,7 @@ function App() {
                 Back
             </button>
         </div>
-        <AddLocationDialog dialogRef={addLocationDialogRef} savedLocations={[]} close={() => {
+       { company != null && <AddLocationDialog dialogRef={addLocationDialogRef} existingLocations={company!.savedLocations} savedLocations={[]} close={() => {
             addLocationDialogRef.current!.close()
         }} addLocation={async (newLocation) => {
             const newCompany = Company.fromMap(company!.toMap())
@@ -150,11 +150,13 @@ function App() {
             newCompany!.lastUpdated = Date.now()
             await updateCompany(newCompany!)
             setCompany(newCompany)
-            addLocationDialogRef.current!.close()
 
-        }} />
+
+
+        }} />}
         <EditLocationDialog dialogRef={editLocationDialogRef} location={editLocation} close={() => {
             editLocationDialogRef.current!.close()
+            setEditLocation(undefined)
         }
         } editLocation={async (newLocation) => {
             const newCompany = Company.fromMap(company!.toMap())
@@ -168,6 +170,7 @@ function App() {
             await updateCompany(newCompany!)
             setCompany(newCompany)
             editLocationDialogRef.current!.close()
+            setEditLocation(undefined)
         }
         } />
         <EditCompanyNameDialog dialogRef={editCompanyNameDialogRef} companyName={company?.name} close={() => {

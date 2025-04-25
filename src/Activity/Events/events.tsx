@@ -19,7 +19,7 @@ import { useRef, useState } from 'react'
 
 import './events.css'
 import { Activity, ActivityEvent, ActivityGroup, ActivityMember, addAlpha, CalendarEvent, ConflictResponse, Event, EventDate, EventType, intToHexColor, Location, StudentData, TeacherData, TheaterEvent } from '../../constants'
-import { addActivityEvent, deleteActivityEvent, editActivityEvent, getActivity, getActivityEvents, getAllUserEvents, getUserConflictFormResponse, getUserData } from '../../api/db'
+import { addActivityEvent, addLocationToActivity, deleteActivityEvent, editActivityEvent, getActivity, getActivityEvents, getAllUserEvents, getUserConflictFormResponse, getUserData } from '../../api/db'
 import Calendar from '../../components/Calendar'
 import { isLoggedIn, logout } from '../../api/auth'
 import BackIcon from '../../assets/arrow_backward.png'
@@ -28,6 +28,7 @@ import AddEventDateDialog from '../../components/Add_Event_Date_Dialog'
 import TrashIcon  from '../../assets/trash.png'
 import ExportScheduleDialog from '../../components/Export_Schedule_Dialog'
 import ImportScheduleDialog from '../../components/Import_Schedule_Dialog'
+import AddLocationDialog from '../../components/Add_Location_Dialog'
 
 
 
@@ -43,11 +44,12 @@ function App() {
         const [activity, setActivity] = useState<Activity | null>()
         const [currentView, setCurrentView] = useState<"students" | "parents">("students")
 
-        const [creationState, setCreationState] = useState<"date" | "info" | "multipleEvents">("date")
+        const [creationState, setCreationState] = useState<"date" | "info" | "multipleEvents" | "recurringEvent">("date")
         const [selectedDate, setSelectedDate] = useState<Date | null>(null)
         const [startTime, setStartTime] = useState<Date | null>(null)
         const [endTime, setEndTime] = useState<Date | null>(null)
-    
+        const [startDate, setStartDate] = useState<Date | null>(null)
+        const [endDate, setEndDate] = useState<Date | null>(null)
         const [name, setName] = useState<string>("")
         const [description, setDescription] = useState<string>("")
         const [startTimeString, setStartTimeString] = useState<string>("")
@@ -76,7 +78,10 @@ function App() {
         const addEventDateDialogRef = useRef<HTMLDialogElement>(null)
         const exportScheduleDialogRef = useRef<HTMLDialogElement>(null)
         const importScheduleDialogRef = useRef<HTMLDialogElement>(null)
+        const addLocationDialogRef = useRef<HTMLDialogElement>(null)
         const [isLoadingAddEvent, setIsLoadingAddEvent] = useState<boolean>(false)
+        const [repeatingDays, setRepeatingDays] = useState<number[]>([])
+
 
     useEffect(() => {
         isLoggedIn(() => {})
@@ -249,6 +254,10 @@ function App() {
             <label htmlFor="">Date: </label>
             <input type="date" value={selectedDate?.toISOString().split('T')[0]} onChange={(val) => {
                 const date = new Date(val.target.value)
+                if(date == "Invalid Date"){
+                    setSelectedDate(null)
+                    return;
+                }
                 date.setHours(0, 0, 0, 0)
                 date.setDate(date.getDate() + 1)
                 setSelectedDate(date)
@@ -283,7 +292,10 @@ function App() {
                 })
                 }
             </select>
-            
+            <button className='ActionBtn' onClick={() => {
+                addLocationDialogRef.current?.showModal()
+            }
+            }>Add New Location</button>
             <br />
             <label htmlFor="eventType">Event Type: </label>
             <select name="eventType" id="event-type" onChange={(e) => {
@@ -510,7 +522,9 @@ function App() {
                 })
                 }
             </select>
-            
+            <button className='ActionBtn' onClick={() => {
+                addLocationDialogRef.current?.showModal()
+            }}>Add New Location</button>
             <br />
             <label htmlFor="eventType">Event Type: </label>
             <select name="eventType" id="event-type" onChange={(e) => {
@@ -604,6 +618,313 @@ function App() {
                 console.log(endTime)
                 const newCalendarEvents: CalendarEvent[] = []
                 for(const date of eventDates){
+
+
+
+                const selectedEventType = eventType!
+                selectedEventType.color.setAlpha(255);
+                
+                const newEvent: ActivityEvent = ActivityEvent.fromBlank(name, description, location, date, "activity-event", Date.now(), activityId!,activityGroups.map((g) => g.groupName), members , inviteType, selectedEventType, activityGroups, hasSchoolEvent!, schoolEventId, [], activity!.name)
+
+
+               
+                    await addActivityEvent(newEvent)
+                    //Add to calendar
+                const startDate: Date = newEvent.date.from
+                const endDate: Date = newEvent.date.to
+                startDate.setDate(newEvent.date.date.getDate())
+                startDate.setMonth(newEvent.date.date.getMonth())
+                startDate.setFullYear(newEvent.date.date.getFullYear())
+                endDate.setDate(newEvent.date.date.getDate())
+                endDate.setMonth(newEvent.date.date.getMonth())
+                endDate.setFullYear(newEvent.date.date.getFullYear())
+                const calendarEvent: CalendarEvent = {
+                    title: newEvent.name,
+                    start: startDate.toISOString(),
+                    end: endDate.toISOString(),
+                    
+                    isAllDay: false,
+                    interactive: true,
+                    description: newEvent.info,
+                    color: newEvent.eventType.color.setAlpha(0.8).toRBGAString(),
+                    id: newEvent.id!,
+                    location: newEvent.location.name 
+                    
+                }
+                newCalendarEvents.push(calendarEvent)
+                setEvents([...events, newEvent])
+            }
+            setCalendarEvents([...calendarEvents, ...newCalendarEvents])
+
+                
+            setIsLoadingAddEvent(false)
+                //Reset all fields
+                setCreationState("date")
+                setSelectedDate(null)
+                setStartTime(null)
+                setEndTime(null)
+
+                setName("")
+                setDescription("")
+                setStartTimeString("")
+                setEndTimeString("")
+
+                setEventType(activity?.eventTypes[0])
+                setSelectedLocation(activity?.defaultLocation)
+                setMembers([])
+
+
+                setInviteType('students')
+                
+
+
+
+            }} className='ActionBtn'>{isEditing ? "Save" : "Submit"}</button>}
+
+            <button onClick={() => {
+                if(isEditing){
+                    setCreationState("date")
+                    setSelectedDate(null)
+                    setStartTime(null)
+                    setEndTime(null)
+
+                    setName("")
+                    setDescription("")
+                    setStartTimeString("")
+                    setEndTimeString("")
+                    setSelectedLocation(activity!.defaultLocation)
+                    setEventType(activity!.eventTypes[0])
+                    setSelectedLocation(activity?.defaultLocation)
+
+
+
+                    setIsEditing(false)
+                    return
+                }
+                setCreationState("date")
+                setDescription("")
+                setName("")
+                setInviteType('students')
+                
+            }} className='ActionBtn'>Back</button></>
+        )
+    }
+
+    function generateRecurringEvents(): EventDate[]{
+        if(repeatingDays.length == 0){
+            alert("Please select at least one day")
+            return []
+        }
+        if(startTime == undefined || endTime == undefined){
+            alert("Please fill out start time and end time")
+            return []
+        }
+        if(startDate == undefined || endDate == undefined){
+            alert("Please fill out start date and end date")
+            return []
+        }
+
+        const newEventDates: EventDate[] = []
+        const currentDate = new Date(startDate)
+        currentDate.setHours(0, 0, 0, 0)
+        const endingDate = new Date(endDate)
+        endingDate.setHours(0, 0, 0, 0)
+
+        console.log(repeatingDays)
+        console.log(currentDate)
+        console.log(endingDate)
+        while(currentDate <= endingDate){
+            console.log(currentDate)
+            console.log(currentDate.getDay())
+            if(repeatingDays.includes(currentDate.getDay())){
+                console.log("Adding")
+                const newEventDate = EventDate.fromBlank(new Date(currentDate), startTime!, endTime!)
+                newEventDates.push(newEventDate)
+            }
+            currentDate.setDate(currentDate.getDate() + 1)
+        }
+
+        console.log(newEventDates)
+        return newEventDates
+
+        
+    }
+
+    function addRecurringEventScreen(){
+        return (
+            <><h2 className='mode'>Enter Event Information</h2>
+            <label htmlFor="Name">Name: </label>
+            <input type="text" value={name} onChange={(val) => {
+                setName(val.target.value)
+            }}/>
+            <br />
+            <label htmlFor="Description">Description: </label>
+            <textarea value={description} onChange={(val) => {
+                setDescription(val.target.value)
+            }}/>
+            <br />
+            
+            <label htmlFor="">Repeats Every</label>
+            <br />
+            <div className='repeating-days'>
+                {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day, index) => {
+                    return <label key={index} className="custom-checkbox" onClick={(e) => {
+                        console.log(e.target.tagName)
+                        if(e.target.tagName == "INPUT" || e.target.tagName == "SPAN"){
+                            return
+                        }
+                        if(repeatingDays.includes(index)){
+                            setRepeatingDays(repeatingDays.filter((d) => d != index))
+                        }
+                        else{
+                            setRepeatingDays([...repeatingDays, index])
+                        }
+                    }}>
+
+                        <input type="checkbox" checked={repeatingDays.includes(index)} onChange={(e) => {
+                            if(!repeatingDays.includes(index)){
+                                setRepeatingDays([...repeatingDays, index])
+                            } else{
+                                setRepeatingDays(repeatingDays.filter((d) => d != index))
+                            }
+                        }}/>
+                        <span className="checkmark"></span>
+                        <span className='spacer'> </span>
+                        <label htmlFor={day}>{day}</label>
+                    </label>
+
+                })}
+            </div>
+            <br />
+            <label htmlFor="">Start Date: </label>
+            <input type="date" value={startDate?.toISOString().split('T')[0] ?? ""} onChange={(val) => {
+                try{
+                const date = new Date(val.target.value)
+                if(date == "Invalid Date"){
+                    setStartDate(null)
+                    return;
+                }
+                date.setHours(0, 0, 0, 0)
+                date.setDate(date.getDate() +1 )
+                console.log(date)
+                setStartDate(date)
+                } catch(e){
+                    setStartDate(null)
+                    console.log(e)
+                }
+                
+
+
+               
+            }}/>
+            <br />
+             <label htmlFor="">End Date: </label>
+            <input type="date" value={endDate?.toISOString().split('T')[0]} onChange={(val) => {
+                const date = new Date(val.target.value)
+                if(date == "Invalid Date"){
+                    setEndDate(null)
+                    return;
+                }
+                date.setHours(0, 0, 0, 0)
+                date.setDate(date.getDate() + 1)
+                setEndDate(date)
+                //change start time date and end time date
+               
+
+
+
+               
+            }}/>
+            <br />
+
+            <label htmlFor="StartTime">Start Time: </label>
+            <input type="time" value={startTimeString} onChange={handleStartTimeChange}/>    
+            <br />
+            <label htmlFor="EndTime">End Time: </label>
+            <input type="time" value={endTimeString} onChange={handleEndTimeChange}/>
+            <br />
+            <label htmlFor="location">Location: </label>
+            <select name="location" id="location" onChange={(e) => {
+                setSelectedLocation(activity?.locations.find((location) => location.name == e.target.value))
+            }}>
+                {activity?.locations.map((location, index) => {
+                    return <option value={location.name} key={index} selected={selectedLocation?.name == location.name}>{location.name + " (" + location.address + ")"}</option>
+                })
+                }
+            </select>
+            <button className='ActionBtn' onClick={() => {
+                addLocationDialogRef.current?.showModal()
+            }}>Add New Location</button>
+            <br />
+            <label htmlFor="eventType">Event Type: </label>
+            <select name="eventType" id="event-type" onChange={(e) => {
+                setEventType(activity?.eventTypes.find((type) => type.name == e.target.value))
+            }}>
+                {activity?.eventTypes.map((type, index) => {
+                    return <option value={type.name} key={index} selected={eventType?.name == type.name}>{type.name}</option>
+                })
+                }
+            </select>
+            <br />
+            <label htmlFor="inviteType">Invite Type: </label>
+            <select name="inviteType" id="invite-type" onChange={(e) => {
+                setInviteType(e.target.value as "students" | "parents" | "groups" | "custom")
+            }}>
+                <option value="students" selected={inviteType == "students"}>Students</option>
+                <option value="parents" selected={inviteType == "parents"}>Parents</option>
+                <option value="groups" selected={inviteType == "groups"}>Groups</option>
+                <option value="custom" selected={inviteType == "custom"}>Custom</option>
+            </select>
+            {inviteType == "groups" ? <><br />
+            <label htmlFor="groups">Groups: </label>
+            <div className="groups">
+                {activity!.groups.map((group, index) => {
+                    return <div className="group" key={group.groupName}>
+                         <label className="custom-checkbox">
+                        
+                                                        <input type="checkbox" id="ensemble" checked={activityGroups.find((g) => g.groupName == group.groupName) != undefined} onChange={(e) => {
+                                                              if(e.target.checked){
+                                                                setActivityGroups([...activityGroups, group])
+                                                                setMembers([...members, ...group.groupMembers])
+                                                            } else{
+                                                                setActivityGroups(activityGroups.filter((g) => g.groupName != group.groupName))
+                                                                setMembers(members.filter((member) => !group.groupMembers.includes(member)))
+                                                            }
+                                                        }}/>
+                                                        <span className="checkmark"> </span>
+                                                    </label>
+                        
+                        <label htmlFor={group.groupName}>{group.groupName}</label>
+                    </div>
+                })}
+
+            </div>
+            </> : <></>}
+            {inviteType == "custom" ? customInviteView() : <></>}
+            <br />
+           
+             <br />
+            {isLoadingAddEvent ? <div className="loader"></div>  : <button onClick={async () => {
+                setIsLoadingAddEvent(true)
+                console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation},Event Type: ${eventType}`)
+                if(name == "" ||  startTime == undefined || endTime == undefined || selectedLocation == undefined ||  eventType == undefined){
+                    alert("Please fill out all fields")
+                    console.log(`Name: ${name}, Description: ${description}, Start Time: ${startTime}, End Time: ${endTime}, Selected Location: ${selectedLocation},  Event Type: ${eventType}`)
+                    setIsLoadingAddEvent(false)
+                    return
+                }
+                
+                console.log("Submit")
+                const location: Location = selectedLocation != undefined ? selectedLocation : activity!.locations[0]
+                console.log(startTime)
+                console.log(endTime)
+                const newCalendarEvents: CalendarEvent[] = []
+                const repeatingEventDates = generateRecurringEvents()
+                if(repeatingEventDates.length == 0){
+                    setIsLoadingAddEvent(false)
+                    return
+                }
+                for(const date of repeatingEventDates){
 
 
 
@@ -895,6 +1216,10 @@ function App() {
                                 setCreationState("multipleEvents")
                                 setEventType(activity!.eventTypes[0])
                             }}>Add Multiple Events</button>
+                            <button className='ActionBtn' onClick={(e) => {
+                                setCreationState("recurringEvent")
+                                setEventType(activity!.eventTypes[0])
+                            }}>Add Recurring Event</button>
                             <button className={"ActionBtn"} onClick={() => {
                                 localStorage.setItem('events', JSON.stringify(events.map((event) => event.toMap())))
                                 
@@ -912,7 +1237,7 @@ function App() {
             }}>
                 Import from CSV
             </button></div> 
-           {accountType == "teacher" ?  creationState == "multipleEvents" ? addMultipleEventScreen() : creationState == "date" ?<></> : addEventScreen() : <> <Calendar canPaste={false} canCopy={false} copyEvent={()=>{}}  pasteEvent={()=>{}} viewEvent={(event) => {}} canViewConflicts={false} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
+           {accountType == "teacher" ?  creationState == "multipleEvents" ? addMultipleEventScreen() : creationState == "date" ?<></> : creationState == "recurringEvent" ? addRecurringEventScreen() : addEventScreen() : <> <Calendar canPaste={false} canCopy={false} copyEvent={()=>{}}  pasteEvent={()=>{}} viewEvent={(event) => {}} canViewConflicts={false} events={calendarEvents} canOpenContextMenu={false} dateClick={() => {}} deleteEvent={() => {}} viewConflicts={() => {}} editEvent={() => {}} eventIdClick={(eventId) => {
                 const event = events.find((event) => event.id === eventId)
                 if(event){
                     localStorage.setItem('event', JSON.stringify(event.toMap()))
@@ -975,6 +1300,18 @@ function App() {
 
         }}/>}
         
+        <AddLocationDialog existingLocations={activity?.locations ?? []} dialogRef={addLocationDialogRef} addLocation={async (location) => {
+           const newActivity = Activity.fromMap(activity!.toMap())
+              newActivity.locations.push(location)
+                setActivity(newActivity)
+                setSelectedLocation(location)
+                await addLocationToActivity(activityId!, location)
+                addLocationDialogRef.current!.close()
+
+
+        }
+        } close={() => {
+            addLocationDialogRef.current!.close()}} savedLocations={[]}/>
         </>
     )
 }

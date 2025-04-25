@@ -331,7 +331,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                 <div className='songs'>
                     {
                         selectedShow?.songs.map((song, index) => {
-                            return <SongDisplayTile key={index} song={song} onClick={() => {
+                            return <SongDisplayTile key={index} showCharacters={false} song={song} onClick={() => {
 
 
                                 setName(song.name)
@@ -447,7 +447,7 @@ function AddFromPlayDialog({ dialogRef, close, addMembers, activityId, setName}:
                 <div className='dances'>
                     {
                         selectedShow?.dances.map((dance, index) => {
-                            return <DanceDisplayTile key={index} dance={dance} onClick={() => {
+                            return <DanceDisplayTile showCharacters={false} key={index} dance={dance} onClick={() => {
 
 
                                 setName(dance.name)

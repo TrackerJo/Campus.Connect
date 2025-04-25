@@ -248,3 +248,16 @@ input, select, textarea {
   .datePicker.hidden {
     display: none;
   }
+
+  .repeating-days {
+    display: flex;
+    flex-direction: row;
+
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .spacer {
+    width:  10px;
+  }

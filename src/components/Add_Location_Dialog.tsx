@@ -6,7 +6,7 @@ import { getLatLongFromAddress } from "../api/distance";
 import { GeoPoint } from "firebase/firestore";
 import LocationSearchTile from "./Location_Search_Tile";
 
-function AddLocationDialog({addLocation, close, dialogRef, savedLocations}: AddLocationDialogProps){
+function AddLocationDialog({addLocation, close, dialogRef, savedLocations, existingLocations}: AddLocationDialogProps){
     const [name, setName] = useState<string>("")
     const [address, setAddress] = useState<string>("")
     const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(undefined)
@@ -34,7 +34,7 @@ function AddLocationDialog({addLocation, close, dialogRef, savedLocations}: AddL
                 } }/>
                 <br />
                 <label htmlFor="">Address: </label>
-                <LocationSearchTile onSelect={(location) => {
+                <LocationSearchTile address={address} setAddress={setAddress} onSelect={(location) => {
                     const newLocation = Location.fromBlank(name, location.description, new GeoPoint(location.lat as number, location.lng as number), false)
                     setAddress(location.description)
                     console.log(location.description)
@@ -49,14 +49,34 @@ function AddLocationDialog({addLocation, close, dialogRef, savedLocations}: AddL
                         setAddingNewLocation(false)
                         return
                     }
+                    if(existingLocations.some((location) => location.name == name)){
+                        alert("A location with that name already exists")
+                        setAddingNewLocation(false)
+                        return
+                    }
+                    if(existingLocations.some((location) => location.address == address)){
+                        alert("A location with that address already exists")
+                        setAddingNewLocation(false)
+                        return
+                    }
                     if(selectedLocation){
                         addLocation(selectedLocation)
+                        setAddingNewLocation(false)
+                        setName("")
+                        setAddress("")
+                        setSelectedLocation(undefined)
+                        close()
                         return
                     }
                     const latLong = await getLatLongFromAddress(address)
                     console.log(latLong)
-                    addLocation(Location.fromBlank(name, address, new GeoPoint(latLong.lat, latLong.lon), false))
+                    await addLocation(Location.fromBlank(name, address, new GeoPoint(latLong.lat, latLong.lon), false))
                     setAddingNewLocation(false)
+                    setName("")
+                    setAddress("")
+                    setSelectedLocation(undefined)
+                    close()
+
 
                 }}>
                     Add Location
@@ -64,6 +84,9 @@ function AddLocationDialog({addLocation, close, dialogRef, savedLocations}: AddL
                 
 
                 <button className="ActionBtn" onClick={() => {
+                    setAddress("")
+                    setName("")
+                    setSelectedLocation(undefined)
                     close()
                 }
                 }>

@@ -223,6 +223,65 @@ function App() {
 
     }, [])
 
+    function fixShow(show: Show): Show {
+       for(let i = 0; i < show.showGroups.length; i++) {
+              const showGroup = show.showGroups[i]
+              for(let j = 0; j < showGroup.characters.length; j++) {
+                const character = showGroup.characters[j]
+                if(character instanceof Character) {
+                     showGroup.characters[j] = show.characters.find((c) => c.characterId == character.characterId)!
+                }
+              }
+       }
+
+       for(let i = 0; i < show.layout.length; i++) {
+                const act = show.layout[i]
+                for(let j = 0; j < act.scenes.length; j++) {
+                    const scene = act.scenes[j]
+                    for(let k = 0; k < scene.characters.length; k++) {
+                        const character = scene.characters[k]
+                        if(character instanceof Character) {
+                            scene.characters[k] = show.characters.find((c) => c.characterId == character.characterId)!
+                        }
+                        if(character instanceof ShowGroup) {
+                            scene.characters[k] = show.showGroups.find((sg) => sg.showGroupId == character.showGroupId)!
+                        }
+                    }
+                }
+         }
+
+         for(let i = 0; i < show.songs.length; i++) {
+            const song = show.songs[i]
+            for(let j = 0; j < song.characters.length; j++) {
+                const character = song.characters[j]
+                if(character instanceof Character) {
+                    song.characters[j] = show.characters.find((c) => c.characterId == character.characterId)!
+                }
+                if(character instanceof ShowGroup) {
+                    song.characters[j] = show.showGroups.find((sg) => sg.showGroupId == character.showGroupId)!
+                }
+            }
+
+        }
+
+        for(let i = 0; i < show.dances.length; i++) {
+            const dance = show.dances[i]
+            for(let j = 0; j < dance.characters.length; j++) {
+                const character = dance.characters[j]
+                if(character instanceof Character) {
+                    dance.characters[j] = show.characters.find((c) => c.characterId == character.characterId)!
+                }
+                if(character instanceof ShowGroup) {
+                    dance.characters[j] = show.showGroups.find((sg) => sg.showGroupId == character.showGroupId)!
+                }
+            }
+
+        }
+
+        return show
+
+    }
+
 
 
     return (
@@ -637,7 +696,7 @@ function App() {
                     setIsLoading(false)
                     return
                 }
-                const show = Show.fromBlank(showName, showId,activityId,templateId,layout, characters ,hasEnsemble ? Ensemble.fromBlank(ensemble?.actors ?? [], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", hasCreatedSchedule,Date.now() )
+                const show = fixShow(Show.fromBlank(showName, showId,activityId,templateId,layout, characters ,hasEnsemble ? Ensemble.fromBlank(ensemble?.actors ?? [], Date.now()) : null, showGroups, songs,dances,false,hasEnsemble,null,[],"open", hasCreatedSchedule,Date.now() ))
                 show.templateId = templateId
                 console.log(templateId)
                 console.log(show.toMap())

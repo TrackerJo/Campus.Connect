@@ -1,8 +1,12 @@
+import { useRef } from "react";
 import { ResourceTileProps } from "../constants";
+import EditResourceDialog from "./Edit_Resource_Dialog";
 import "./Resource_Tile.css";
 
-function ResourceTile({resource, canRemove, removeResource}: ResourceTileProps) {
+function ResourceTile({resource, canRemove, removeResource, canEdit, editResource}: ResourceTileProps) {
+    const editResourceDialogRef = useRef<HTMLDialogElement>(null)
     return (
+        <>
         <div className="resource-tile">
         <h3>{resource.name}</h3>
         <p>{resource.description}</p>
@@ -30,6 +34,12 @@ function ResourceTile({resource, canRemove, removeResource}: ResourceTileProps) 
                     Download File
                 </button>
             }
+            {canEdit && (
+                <button onClick={() => {
+                    editResourceDialogRef.current?.showModal()
+                }
+                } className="ActionBtn">Edit</button>
+            )}
             
             {canRemove && (
                 <button onClick={() => removeResource()} className="ActionBtn">Remove</button>
@@ -37,6 +47,14 @@ function ResourceTile({resource, canRemove, removeResource}: ResourceTileProps) 
         </div>
         
         </div>
+        <EditResourceDialog editResource={async (newResource) => {
+            await editResource(newResource)
+            editResourceDialogRef.current?.close()
+        }} dialogRef={editResourceDialogRef} close={() => {
+            editResourceDialogRef.current?.close()
+        }
+        } resource={resource}/>
+        </>
     );
     }
 

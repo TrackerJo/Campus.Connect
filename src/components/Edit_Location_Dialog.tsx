@@ -2,7 +2,7 @@ import {  useEffect, useState } from "react";
 import {  EditLocationDialogProps, Location } from "../constants";
 
 import "./Edit_Location_Dialog.css"
-import { getLatLongFromAddress } from "../api/distance";
+
 import { GeoPoint } from "firebase/firestore";
 import LocationSearchTile from "./Location_Search_Tile";
 
@@ -14,9 +14,12 @@ function EditLocationDialog({editLocation, close, dialogRef, location}: EditLoca
 
 
     useEffect(() => {
+        console.log(location)
         if(location){
             setName(location.name)
+            console.log(location.address)
             setAddress(location.address)
+            setSelectedLocation(location)
         }
     }, [location])
     return (
@@ -30,7 +33,7 @@ function EditLocationDialog({editLocation, close, dialogRef, location}: EditLoca
                 } }/>
                 <br />
                 <label htmlFor="">Address: </label>
-                <LocationSearchTile onSelect={(location) => {
+                <LocationSearchTile address={address} setAddress={setAddress} onSelect={(location) => {
                     const newLocation = Location.fromBlank(name, location.description, new GeoPoint(location.lat as number, location.lng as number), false)
                     setAddress(location.description)
                     console.log(location.description)

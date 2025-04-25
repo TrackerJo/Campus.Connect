@@ -23,6 +23,7 @@ import { createActivityJoinCode, createCompany, createUser, getCompanies, getIfU
 import { DocumentData, GeoPoint } from 'firebase/firestore'
 import { Company, CompanyType, EmployerData, Location, StudentData, TeacherData } from '../constants'
 import AddLocationDialog from '../components/Add_Location_Dialog'
+import { create } from 'domain'
 
 
 
@@ -409,20 +410,24 @@ function App() {
         <button  onClick={() => {
             if(fullName == ""){
                 alert("Please enter your full name")
+                setIsLoggingIn(false)
                 return
             }
             if(email == ""){
                 alert("Please enter your email")
+                setIsLoggingIn(false)
                 return
             }
             //Use regex to validate email
             const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/
             if(!emailRegex.test(email)){
                 alert("Invalid email")
+                setIsLoggingIn(false)
                 return
             }
             if(phoneNumber == ""){
                 alert("Please enter your phone number, if you don't have one, type none")
+                setIsLoggingIn(false)
                 return
             }
             setPhoneNumber(phoneNumber.replace(/-/g, ""))
@@ -503,6 +508,9 @@ function App() {
                 setIsLoggingIn(false)
                 return
             }
+            createStudentAccount(school)
+
+
             
         }}>
             Create Account
@@ -516,7 +524,7 @@ function App() {
         </div>
     </div>
 
-        <AddLocationDialog addLocation={(location) => {
+        <AddLocationDialog existingLocations={[]} addLocation={(location) => {
             setCompanyLocation(location)
             addLocationDialogRef.current!.close()
         }} close={() => {

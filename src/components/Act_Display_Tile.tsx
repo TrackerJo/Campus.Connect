@@ -28,7 +28,7 @@ function ActDisplayTile({act, onClick} :ActDisplayTileProps){
                 <div id={"scenes-" + id} className="scenes">
 
                     {act.scenes.map((scene, index) => {
-                        return <SceneDisplayTile key={index}  scene={scene} onClick={onClick} />
+                        return <SceneDisplayTile key={index}  scene={scene} showCharacters={false} onClick={onClick} />
 
 
                     } )}

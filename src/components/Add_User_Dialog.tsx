@@ -35,7 +35,7 @@ function AddUserDialog({students, teachers, parents, dialogRef, addUser, close, 
         if(viewState == "students"){
             setMembers(students)
         } else if(viewState == "parents"){
-            setMembers(parents)
+            setMembers(parents.map((parent) => parent.toActivityMember()))
         } else {
             setMembers(teachers.map((teacher) => teacher.toActivityMember()))
         }

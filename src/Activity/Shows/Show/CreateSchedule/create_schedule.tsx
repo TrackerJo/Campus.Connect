@@ -24,9 +24,12 @@ import {
 
     FullCast,
     ActivityMember,
-    EventType
+    EventType,
+    Scene,
+    Dance,
+    Song
 } from '../../../../constants';
-import { addActivityTheaterEvent, deleteActivityTheaterEvent, editActivityTheaterEvent, getActivity, getActivityShow, getActivityTheaterEvents, getActvityShowConflictFormResponses } from '../../../../api/db';
+import { addActivityTheaterEvent, deleteActivityTheaterEvent, editActivityTheaterEvent, fixTheaterEvents, getActivity, getActivityShow, getActivityTheaterEvents, getActvityShowConflictFormResponses } from '../../../../api/db';
 import ActDisplayTile from '../../../../components/Act_Display_Tile';
 import SongDisplayTile from '../../../../components/Song_Display_Tile';
 import DanceDisplayTile from '../../../../components/Dance_Display_Tile';
@@ -43,6 +46,7 @@ import ConflictDisplayTile from '../../../../components/Conflict_Display_Tile';
 import FullCastTile from '../../../../components/Full_Cast_Tile';
 import { isLoggedIn } from '../../../../api/auth';
 import BackIcon from '../../../../assets/arrow_backward.png'
+import SceneDisplayTile from '../../../../components/Scene_Display_Tile';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -81,9 +85,15 @@ function App() {
     const [isMobile, setIsMobile] = useState<boolean>(false)
     const [filterEnsmeble, setFilterEnsemble] = useState<boolean>(false)
     const [ensembleActors, setEnsembleActors] = useState<ActivityMember[]>([])
-            const [copiedEvent, setCopiedEvent] = useState<TheaterEvent | undefined>(undefined)
+    const [copiedEvent, setCopiedEvent] = useState<TheaterEvent | undefined>(undefined)
     const [isFromPaste, setIsFromPaste] = useState<boolean>(false)
+    const [currentSection, setCurrentSection] = useState< "Layout" | "Songs" | "Dances">("Layout")
+    const [selectedScene, setSelectedScene] = useState<Scene | undefined>(undefined)
+    const [selectedSong, setSelectedSong] = useState<Song | undefined>(undefined)
+    const [selectedDance, setSelectedDance] = useState<Dance | undefined>(undefined)
+    const [isAddingCharacters, setIsAddingCharacters] = useState<boolean>(false)
     
+
 
 
     useEffect(() => {
@@ -110,6 +120,9 @@ function App() {
                 const conflicts: DateConflict[] = []
                 for(const response of responses){
                     for(const conflict of response.dates){
+                        if(conflicts.find((c) => c.conflictResponseDate.date.getTime() == conflict.date.getTime() && c.actor.userId == response.actor.userId)){
+                            continue
+                        }
                         conflicts.push({
                             conflictResponseDate: conflict,
                             actor: response.actor,
@@ -167,7 +180,7 @@ function App() {
             setCalendarEvents(calendarEvents)
         })
         const handleResize = () => {
-            if (window.innerWidth < 800) {
+            if (window.innerWidth < 1366) {
                 setIsMobile(true)
             } else {
                 setIsMobile(false)
@@ -201,8 +214,131 @@ function App() {
     Date.prototype.addHours = function(h) {
         this.setTime(this.getTime() + (h*60*60*1000));
         return this;
-      }
+    }
 
+
+    function charactersList() {
+        if(addFullCast){
+            return (<>   </>);
+        }
+        return (<> <h2>Characters</h2>
+            <div className='characters'>
+                { 
+                    characters.map((character, index) => {
+                        if(character instanceof Character){
+                            if(type == "custom"){
+                                return <CharacterTile key={index} character={character} isCreate={false} actors={[]} characters={show!.characters} isAssign={false} setCharacter={(newCharacter) => {
+                                    setCharacters(characters.map((c, i) => {
+                                        if (i === index) {
+                                            return newCharacter
+                                        }
+                                        return c
+                                    }))
+                                }} removeCharacter={() => {
+                                    setCharacters(characters.filter((_c, i) => i !== index))
+                                }}/>
+                            }
+                            return <CharacterDisplayTile key={index} character={character} canDelete={true} onDelete={() => {
+                                setCharacters(characters.filter((_c, i) => i !== index))
+                            }} isMini={false}/>
+                            }
+                            if(character instanceof EnsembleSection){
+                                if(type == "custom"){
+                                    return <EnsembleSectionTile isGroupChatCreate={false} onAddEnsemble={() => {}} key={index} ensembleSection={character} isCustom={true} setEnsembleSection={(newEnsembleSection) => {
+                                        setCharacters(characters.map((c, i) => {
+                                            if (i === index) {
+                                                return newEnsembleSection
+                                            }
+                                            return c
+                                        }))
+                                    }} removeEnsembleSection={() => {
+                                        setCharacters(characters.filter((_c, i) => i !== index))
+                                        setAddedEnsemble(false);
+                                    }} isCreate={false} isAssign={false} actors={activity!.students } />
+                                }
+                                return <EnsembleSectionDisplayTile key={index} ensembleSection={character} canDelete={true} onDelete={() => {
+                                    setCharacters(characters.filter((_c, i) => i !== index))
+
+                                }} isMini={false}/>
+                            }
+                            if(character instanceof ShowGroup){
+                                if (type == "custom"){
+                                    return <ShowGroupTile key={index} showGroup={character} characters={show!.characters} setShowGroup={(newShowGroup) => {
+                                        setCharacters(characters.map((c, i) => {
+                                            if (i === index) {
+                                                return newShowGroup
+                                            }
+                                            return c
+                                        }))
+                                    }} removeShowGroup={() => {
+                                        setCharacters(characters.filter((_c, i) => i !== index))
+                                    }} isCreate={false} isAssign={false} actors={activity!.students} hasEnsemble={show!.hasEnsemble} showGroups={show!.showGroups}/>
+                                    
+                                }
+                                return <ShowGroupDisplayTile key={index} showGroup={character} showCharacters={true} canClick={false} onClick={() => {}} canDelete={true} onDelete={() => {
+                                    setCharacters(characters.filter((_c, i) => i !== index))
+                                }}/>
+                            }
+                            if(character instanceof FullCast) {
+                                return <FullCastTile key={index} canDelete={true} onDelete={() => {
+                                    setCharacters(characters.filter((_c, i) => i !== index))
+                                }}/>
+                            }
+
+                }) 
+                }
+            </div>
+            {type == "custom" ? <><button className="ActionBtn" onClick={() => {
+                const characterId = Math.floor(Math.random() * 100000)
+                setCharacters([...characters, Character.fromBlank("Character 1", null, characterId)])
+                    
+
+            }}>Add Character</button>
+            
+
+            <button className="ActionBtn" onClick={() => {
+                //Scroll to bottom of characters div
+                const showGroupId = Math.floor(Math.random() * 100000)
+                setCharacters([...characters, ShowGroup.fromBlank("Show Group 1", [], showGroupId)])
+            }}>Add Show Group</button>
+
+
+            { show?.hasEnsemble &&
+                <button className={"ActionBtn " + (addedEnsemble ? "disabled" : "")} disabled={addedEnsemble} onClick={() => {
+                    if(addedEnsemble)
+                        return
+                    setAddedEnsemble(true)
+                    //Scroll to bottom
+                    setCharacters([...characters, EnsembleSection.fromBlank(true, false, false, false, [])])
+                }}>
+                Add Ensemble
+                </button>} 
+                <button className='ActionBtn' onClick={() => {
+                    setIsAddingCharacters(true)
+                setCreationState("type")
+                }}>
+                Add Characters from Show Template
+                </button></> : <></>} </> )
+    }
+    
+    function specialList() {
+        return (<>
+        <h2>{type.charAt(0).toUpperCase() + type.slice(1, type.length)} </h2>
+        {type == "scene" && <SceneDisplayTile scene={selectedScene!} onClick={() => {}} showCharacters={true}/>}
+        {type == "song" && <SongDisplayTile showCharacters={true} song={selectedSong!} onClick={() => {}}/>}
+        {type == "dance" && <DanceDisplayTile showCharacters={true} dance={selectedDance!} onClick={() => {}}/>}
+        <button className='ActionBtn' onClick={() => {
+            setIsAddingCharacters(true)
+                setCreationState("type")
+                }}>
+                Change {type.charAt(0).toUpperCase() + type.slice(1, type.length)}
+                </button>
+        <button className='ActionBtn' onClick={() => {
+            setType("custom")
+        }}>Switch to custom event</button>
+        </>)
+
+    }
 
     function getTheaterEvents(): TheaterEvent[]{
         return theaterEvents
@@ -313,6 +449,13 @@ function App() {
                         setEventType(copiedEvent!.activityEventType)
 
                         setType(copiedEvent!.theaterEventType as "song" | "dance" | "scene" | "custom")
+                        if(copiedEvent!.theaterEventType == "song"){
+                            setSelectedSong(copiedEvent!.song)
+                        } else if(copiedEvent!.theaterEventType == "dance"){
+                            setSelectedDance(copiedEvent!.dance)
+                        } else if(copiedEvent!.theaterEventType == "scene"){
+                            setSelectedScene(copiedEvent!.scene)
+                        }
                         
                         setCreationState("info")
                         setIsFromPaste(true)
@@ -344,6 +487,15 @@ function App() {
                                       setEventType(theaterEvent.activityEventType)
                                       setIsEditing(true)
                                       setType(theaterEvent.theaterEventType as "song" | "dance" | "scene" | "custom")
+                                      if(theaterEvent.theaterEventType == "song"){
+                                          setSelectedSong(theaterEvent.song)
+                                      }
+                                        if(theaterEvent.theaterEventType == "dance"){
+                                            setSelectedDance(theaterEvent.dance)
+                                        }
+                                        if(theaterEvent.theaterEventType == "scene"){
+                                            setSelectedScene(theaterEvent.scene)
+                                        }
                                       setEditEvent(theaterEvent)
                                   }
                               }
@@ -415,7 +567,16 @@ function App() {
                                   }))
                                   setCreationState("type")
                               }} eventClick={(args) => {
+                                // if(isMobile){
+                                //     const theaterEvent = getTheaterEvents().find((e) => e.id == args.event.id)
 
+                                //     if (theaterEvent) {
+                                //         localStorage.setItem('event', JSON.stringify(theaterEvent.toMap()))
+                                //         localStorage.setItem('back', '/Activity/Shows/Show/CreateSchedule/?activityId=' + activityId + '&showId=' + showId)
+                                //         window.location.href = "/Calendar/Event/"
+                                //     }
+                                //     return;
+                                // }
 
                                 setSelectedDate(args.event.start)
                                 const checkDate = new Date(args.event.start!)
@@ -450,24 +611,53 @@ function App() {
                             }}/>
                             </div>
                             {creationState == "date" ? <>
-                    <div className='box right'>
-                        <h2>How To Schedule Events</h2>
-                        <ul>
-                            <li>Click a time slot to start creating an event</li>
-                            <li>Right click a time slot to view conflicts for that day</li>
-                            <li>Right click a current event to view/edit the event or delete the event</li>
-                        </ul>
-                    </div>
+                  
                     </> : <></>}
                 </div>
                 {creationState == "date" ? <>
+                {isMobile && <button className='ActionBtn' onClick={() =>{
+                    const date = new Date()
+                    console.log(date)
+                    setSelectedDate(date)
+                    const checkDate = new Date(date)
+                    checkDate.setHours(0, 0, 0, 0)
+                    setViewingDateForConflicts(checkDate)
+
+                    const newConflicts: DateConflict[] = []
+                    for (const conflict of conflicts) {
+
+                        if (conflict.conflictResponseDate.date.getTime() == checkDate.getTime()) {
+                            newConflicts.push(conflict)
+                        }
+                    }
+                    setCurrentConflicts(newConflicts)
+                    setStartTime(new Date(date))
+                    setStartTimeString(date.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }))
+                    //copy the date and add an hour
+                    const newEndTime = new Date(date)
+
+                    setEndTime(newEndTime.addHours(1))
+                    console.log(newEndTime)
+                    setEndTimeString(date.addHours(1).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }))
+                    setCreationState("type")
+                }}>Create Event</button>}
                 <button className={"ActionBtn"} onClick={() => {
-                    localStorage.setItem('events', JSON.stringify(theaterEvents))
+                    localStorage.setItem('events', JSON.stringify(theaterEvents.map((event) => event.toMap())))
 
                     window.open('/Activity/Shows/Show/Schedule/Print/', "_blank")
                 }}>
                     Print
                 </button>
+                
+               
                 <button className='ActionBtn' onClick={() => {
                     window.location.href = "/Activity/Shows/Show/?activityId=" + activityId + "&showId=" + showId
                 }}>
@@ -482,7 +672,7 @@ function App() {
                 setCurrentConflicts([...conflicts])
 
             }} />
-                <h2 className='mode'>Select a Rehersal Type</h2>
+                <h2 className='mode'>{isAddingCharacters ? "Add Characters from Show" : "Select a Rehersal Type"}</h2>
                 </div>
                 {!isMobile && <div className='conflicts-div'>
                     <h2>Conflicts{viewingDateForConflicts != null ? " on " + viewingDateForConflicts.toDateString() : ""}</h2>
@@ -521,25 +711,51 @@ function App() {
                 </div>}
 
 
-                <button onClick={() =>{
+               {!isAddingCharacters && <button onClick={() =>{
                     setCreationState("info")
                     setType("custom")
                     setCharacters([])
 
-                }} className='ActionBtn'>Custom</button>
+                }} className='ActionBtn'>Custom</button>}
+                 <div className='sections'>
+               
+                <h2 className={'section ' + (currentSection == "Layout" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Layout")
+                    
+                }}>Layout</h2>
+                { show != null && show.dances.length > 0 && <h2 className={'section ' + (currentSection == "Songs" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Songs")
+                    
+                }}>Songs</h2>}
+                {show != null && show?.songs.length > 0 && <h2 className={'section ' + (currentSection == "Dances" ? "selected" : "")} onClick={() => {
+                    setCurrentSection("Dances")
+                    
+                }}>Dances</h2>}
 
-                <h2 className='mode'>Show Layout</h2>
+            </div>
+
+                {currentSection == "Layout" && <><h2 className='mode'>Show Layout</h2>
                 <div className='layout'>
                     {
                         show?.layout.map((row, index) => {
                             return <ActDisplayTile key={index} act={row} onClick={(scene) => {
 
-                                setType("scene")
-                                setName(scene.name + " - " + row.name)
+                               
                                 setCreationState("info")
-                                setCharacters(scene.characters)
+                                if(isAddingCharacters){
+                                    setCharacters((prev) => {
+                                        return [...prev, ...scene.characters]
+                                    })
+                                    setIsAddingCharacters(false)
+
+                                } else {
+                                    setCharacters(scene.characters)
+                                    setType("scene")
+                                    setSelectedScene(scene)
+                                    setName(scene.name + " - " + row.name)
+                                }
                                 const actorsUIDs: string[] = []
-                                for(const character of scene.characters){
+                                for(const character of [...scene.characters, characters]){
                                     if(character instanceof Character){
                                         if(actorsUIDs.includes(character.actor!.userId)){
                                             actorsUIDs.push(character.actor!.userId)
@@ -637,19 +853,29 @@ function App() {
                             }}/>
                         })
                     }
-                </div>
-                <h2 className='mode'>Songs</h2>
+                </div> </>}
+                {currentSection == "Songs" && <><h2 className='mode'>Songs</h2>
                 <div className='songs'>
                     {
                         show?.songs.map((song, index) => {
-                            return <SongDisplayTile key={index} song={song} onClick={() => {
+                            return <SongDisplayTile key={index} showCharacters={false} song={song} onClick={() => {
 
-                                setType("song")
-                                setName(song.name)
-                                setCharacters(song.characters)
+                               
+                                if(isAddingCharacters){
+                                    setCharacters((prev) => {
+                                        return [...prev, ...song.characters]
+                                    })
+                                    setIsAddingCharacters(false)
+
+                                } else {
+                                    setCharacters(song.characters)
+                                    setType("song")
+                                    setSelectedSong(song)
+                                    setName(song.name)
+                                }
                                 setCreationState("info")
                                 const actorsUIDs: string[] = []
-                                for(const character of song.characters){
+                                for(const character of [...song.characters, characters]){
                                     if(character instanceof Character){
                                         if(actorsUIDs.includes(character.actor!.userId)){
                                             actorsUIDs.push(character.actor!.userId)
@@ -747,19 +973,30 @@ function App() {
                             }}/>
                         })
                     }
-                </div>
-                <h2 className='mode'>Dances</h2>
+                </div> </>}
+               { currentSection == "Dances" && <> <h2 className='mode'>Dances</h2>
                 <div className='dances'>
                     {
                         show?.dances.map((dance, index) => {
-                            return <DanceDisplayTile key={index} dance={dance} onClick={() => {
+                            return <DanceDisplayTile key={index} showCharacters={false} dance={dance} onClick={() => {
 
-                                setType("dance")
-                                setName(dance.name)
+                               
                                 setCreationState("info")
-                                setCharacters(dance.characters)
+                                if(isAddingCharacters){
+                                    setCharacters((prev) => {
+                                        return [...prev, ...dance.characters]
+
+                                    })
+                                    setIsAddingCharacters(false)
+
+                                } else {
+                                    setCharacters(dance.characters)
+                                    setType("dance")
+                                    setSelectedDance(dance)
+                                    setName(dance.name)
+                                }
                                 const actorsUIDs: string[] = []
-                                for(const character of dance.characters){
+                                for(const character of [...dance.characters, characters]){
                                     if(character instanceof Character){
                                         if(actorsUIDs.includes(character.actor!.userId)){
                                             actorsUIDs.push(character.actor!.userId)
@@ -855,8 +1092,14 @@ function App() {
                             }} />
                         })
                     }
-                </div>
+                </div> </>}
                 <button onClick={() => {
+                    if(isAddingCharacters){
+                        setCreationState("info")
+                        setIsAddingCharacters(false)
+                        return;
+                    }
+
                     setCreationState("date")
                     setViewingDateForConflicts(null)
                     setCurrentConflicts([...conflicts])
@@ -1042,6 +1285,10 @@ function App() {
                 <label htmlFor="">Date: </label>
                 <input type="date" value={selectedDate?.toISOString().split('T')[0]} onChange={(val) => {
                     const date = new Date(val.target.value)
+                    if(date == "Invalid Date"){
+                        setSelectedDate(null)
+                        return;
+                    }
                     date.setHours(0, 0, 0, 0)
                     date.setDate(date.getDate() + 1)
                     setSelectedDate(date)
@@ -1117,96 +1364,8 @@ function App() {
                     </> : <></>
                 }
                 {type == "custom" && <br />}
-                {!addFullCast ? <> <h2>Characters</h2>
-                <div className='characters'>
-                    { 
-                       characters.map((character, index) => {
-                            if(character instanceof Character){
-                                if(type == "custom"){
-                                    return <CharacterTile key={index} character={character} isCreate={false} actors={[]} characters={show!.characters} isAssign={false} setCharacter={(newCharacter) => {
-                                        setCharacters(characters.map((c, i) => {
-                                            if (i === index) {
-                                                return newCharacter
-                                            }
-                                            return c
-                                        }))
-                                    }} removeCharacter={() => {
-                                        setCharacters(characters.filter((_c, i) => i !== index))
-                                    }}/>
-                                }
-                                return <CharacterDisplayTile key={index} character={character} canDelete={true} onDelete={() => {
-                                    setCharacters(characters.filter((_c, i) => i !== index))
-                                }} isMini={false}/>
-                                }
-                                if(character instanceof EnsembleSection){
-                                    if(type == "custom"){
-                                        return <EnsembleSectionTile isGroupChatCreate={false} onAddEnsemble={() => {}} key={index} ensembleSection={character} isCustom={true} setEnsembleSection={(newEnsembleSection) => {
-                                            setCharacters(characters.map((c, i) => {
-                                                if (i === index) {
-                                                    return newEnsembleSection
-                                                }
-                                                return c
-                                            }))
-                                        }} removeEnsembleSection={() => {
-                                            setCharacters(characters.filter((_c, i) => i !== index))
-                                            setAddedEnsemble(false);
-                                        }} isCreate={false} isAssign={false} actors={activity!.students } />
-                                    }
-                                    return <EnsembleSectionDisplayTile key={index} ensembleSection={character} canDelete={true} onDelete={() => {
-                                        setCharacters(characters.filter((_c, i) => i !== index))
 
-                                    }} isMini={false}/>
-                                }
-                                if(character instanceof ShowGroup){
-                                    if (type == "custom"){
-                                        return <ShowGroupTile key={index} showGroup={character} characters={show!.characters} setShowGroup={(newShowGroup) => {
-                                            setCharacters(characters.map((c, i) => {
-                                                if (i === index) {
-                                                    return newShowGroup
-                                                }
-                                                return c
-                                            }))
-                                        }} removeShowGroup={() => {
-                                            setCharacters(characters.filter((_c, i) => i !== index))
-                                        }} isCreate={false} isAssign={false} actors={activity!.students} hasEnsemble={show!.hasEnsemble} showGroups={show!.showGroups}/>
-                                        
-                                    }
-                                    return <ShowGroupDisplayTile key={index} showGroup={character} showCharacters={true} canClick={false} onClick={() => {}} canDelete={true} onDelete={() => {
-                                        setCharacters(characters.filter((_c, i) => i !== index))
-                                    }}/>
-                                }
-                                if(character instanceof FullCast) {
-                                    return <FullCastTile key={index} canDelete={true} onDelete={() => {
-                                        setCharacters(characters.filter((_c, i) => i !== index))
-                                    }}/>
-                                }
-
-                    }) 
-                    }
-                </div>
-                {type == "custom" ? <><button className="ActionBtn" onClick={() => {
-                    const characterId = Math.floor(Math.random() * 100000)
-                    setCharacters([...characters, Character.fromBlank("Character 1", null, characterId)])
-                     
-
-                }}>Add Character</button>
-
-                <button className="ActionBtn" onClick={() => {
-                  //Scroll to bottom of characters div
-                  const showGroupId = Math.floor(Math.random() * 100000)
-                    setCharacters([...characters, ShowGroup.fromBlank("Show Group 1", [], showGroupId)])
-                }}>Add Show Group</button>
-
-                { show?.hasEnsemble &&
-                 <button className={"ActionBtn " + (addedEnsemble ? "disabled" : "")} disabled={addedEnsemble} onClick={() => {
-                        if(addedEnsemble)
-                            return
-                        setAddedEnsemble(true)
-                        //Scroll to bottom
-                        setCharacters([...characters, EnsembleSection.fromBlank(true, false, false, false, [])])
-                 }}>
-                    Add Ensemble
-                 </button>} </> : <></>} </> : <></>}
+                { type == "custom" ? charactersList() : specialList()}
 
                  <br />
                 {isLoading ? <div className="loader"></div>  : <button onClick={async () => {
@@ -1228,8 +1387,10 @@ function App() {
                     const targets: ActivityMember[] = []
                     if(addFullCast){
                         characters.push(new FullCast())
-                        for(const actor of show!.ensemble!.actors){
-                            targets.push(actor)
+                        if(show?.hasEnsemble && show?.ensemble != undefined){
+                            for(const actor of show!.ensemble!.actors){
+                                targets.push(actor)
+                            }
                         }
                         for(const character of show!.characters){
                             if(targets.find((e) => e.userId == character.actor!.userId) != undefined){
@@ -1342,7 +1503,7 @@ function App() {
                             }
                         }
                     }
-                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, activity!.name, showId, show!.name , characters, targets, type, eventType!, rehearsalLocation!)
+                    const newEvent: TheaterEvent = TheaterEvent.fromBlank(name, description, location, eventDate, "activity-theater-event", Date.now(), activityId, activity!.name, showId, show!.name , characters, targets, type, eventType!, rehearsalLocation!, type == "scene" ? selectedScene : undefined, type == "song" ? selectedSong : undefined, type == "dance" ? selectedDance : undefined)
 
                     console.log(newEvent)
                     if(isEditing){
@@ -1369,7 +1530,8 @@ function App() {
                             location: newEvent.rehearsalLocation.name,
                             id: newEvent.id,
                         }
-                        const newCalendarEvents = calendarEvents.filter((e) => e.id != newEvent.id)
+
+                        const newCalendarEvents = calendarEvents.filter((e) => e.id != editEvent!.id)
                         newCalendarEvents.push(calendarEvent)
                         setCalendarEvents(newCalendarEvents)
                         //Edit theater event
@@ -1430,7 +1592,7 @@ function App() {
 
                 }} className='ActionBtn'>{isEditing ? "Save" : "Submit"}</button>}
 
-                <button onClick={() => {
+               { !isLoading && <button onClick={() => {
                     if(isEditing){
                         setCreationState("date")
                         setSelectedDate(null)
@@ -1469,7 +1631,7 @@ function App() {
                         }
                     }
                     setCurrentConflicts(newConflicts)
-                }} className='ActionBtn'>Back</button>
+                }} className='ActionBtn'>Back</button>}
                 </>
 
             }

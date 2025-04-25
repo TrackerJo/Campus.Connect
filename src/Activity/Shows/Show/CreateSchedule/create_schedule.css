@@ -189,6 +189,27 @@
   /* background-color: #2196F3; */
 }
 
+.sections {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2em;
+
+}
+
+.section {
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.section.selected {
+  font-weight: bold;
+  /* create a border on the bottom that is the orange */
+  border-bottom: 4px solid #ff6b35;
+
+}
+
+
 .left, .right {
   width: 30vw;
   min-width: 100px;

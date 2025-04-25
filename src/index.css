@@ -198,7 +198,7 @@ input, select, textarea {
   display: inline-block;
   position: relative;
   transition: background-color 0.3s;
-  border: 1px solid #f5f5f5;
+  border: 1px solid #FF6B35;
 }
 
 /* Checkmark color when checked */

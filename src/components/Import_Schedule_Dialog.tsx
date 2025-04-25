@@ -3,6 +3,7 @@ import {  ActivityEvent, ActivityMember, EventDate, ImportScheduleDialogProps } 
 
 import "./Import_Schedule_Dialog.css"
 import MinusIcon from "../assets/minus.png"
+import ImportEventTile from "./Import_Event_Tile";
 
 function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportScheduleDialogProps){
 
@@ -46,10 +47,16 @@ function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportSch
         const activityEvents: ActivityEvent[] = []
         for(let i = 0; i < events.length; i++){
             const event = events[i]
-            if(event["Added to Campus Connect"].toLowerCase() == "yes"){
+            if(event["Added to Campus Connect"]?.toLowerCase() == "yes"){
                 continue
             }
+            if(event["Date"] == ""){
+                continue;
+            }
             const date = new Date(event.Date)
+            if(date.getFullYear() == 2001){
+                date.setFullYear(new Date().getFullYear())
+            }
             const from = new Date(date.toDateString() + " " + event.Start)
             const to = new Date(date.toDateString() + " " + event.End)
             const eventDate = EventDate.fromBlank(date, from, to)
@@ -69,9 +76,9 @@ function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportSch
             const groupNames = [];
             const targets: ActivityMember[] = [];
             if(generalTarget == "groups"){
-                const groups = event["Custom/Group Targets"].split(", ")
+                const groups = event["Custom/Group Targets"].split(",")
                 for(let i = 0; i < groups.length; i++){
-                    const group = activity.groups.find((g) => g.groupName == groups[i])
+                    const group = activity.groups.find((g) => g.groupName == groups[i].trim())
                     if(group){
                         groupTargets.push(group)
                         groupNames.push(group.groupName)
@@ -92,7 +99,7 @@ function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportSch
                     } else {
                         const parent = activity.parents.find((m) => m.userId == members[i])
                         if(parent){
-                            targets.push(parent)
+                            targets.push(parent.toActivityMember())
                         }
                     }
                 }
@@ -102,6 +109,31 @@ function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportSch
             activityEvents.push(ActivityEvent.fromBlank(name, info, location, eventDate, "activity-event", Date.now(), activity.id, groupNames, targets, generalTarget, eventType, groupTargets, false, "", [], activity.name))
         }
         return activityEvents
+    }
+
+    function downloadCSVTemplate() {
+        const blob = new Blob([`Date,Start,End,Name,Location,Event Type,Extra Info,Invite Type,Custom/Group Targets,Added to Campus Connect,,,Formatting Rules
+,,,,,,,,,,,,Values for Invite Type,,
+,,,,,,,,,,,,students,,
+,,,,,,,,,,,,parents,,
+,,,,,,,,,,,,groups,"Requires that you type group names into Custom/Group Targets column, each name should be separated by a comma",
+,,,,,,,,,,,,custom,"Requires that you type members name into Custom/Group Targets column, each name should be separated by a comma",
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,Values for Location,,
+,,,,,,,,,,,,default,Connects to the default location of the activity,
+,,,,,,,,,,,,(location name as specified in activity),,
+,,,,,,,,,,,,If left blank or the website can't find the location you will be asked to specify when importing,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,Extra Info is optional,,
+,,,,,,,,,,,,Date must either be month/day/year or month/day and the current year will be assumed,,
+,,,,,,,,,,,,Start and End must be in 12 hour format (i.e. 3:00 PM),,
+,,,,,,,,,,,,You can leave Added to Campus Connect blank or put yes if you don't want to import the event,,`], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ScheduleTemplate.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
     }
 
     return (
@@ -141,6 +173,9 @@ function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportSch
                 }}>
                     Import Schedule
                 </button>}
+                <button className="ActionBtn" onClick={downloadCSVTemplate}>
+                    Download CSV Template
+                </button>
 
                 <button className="ActionBtn" onClick={() => {
                     setFile(null)
@@ -153,34 +188,41 @@ function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportSch
                 </button>
             </div> : <div className="events-view">
                 <h3>Events</h3>
-                <div className="events">
+                {!editting && <div className="events">
                     {events.map((event, index) => {
-                        return <div key={index} className="event">
-                          <div className="event-info">
-
-                            <p>{event.name}</p>
-                            <p>{event.info}</p>
-                            <p>{event.location.name}</p>
-                          </div>
-                          <div className="event-date-add">
-                            <p>{event.date.date.toDateString()}</p>
-                            <p>{event.date.from.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {event.date.to.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
-                          </div>
-                          <div>
-                            <img src={MinusIcon} alt="" className="removeIcon" onClick={() => {
-                                const newEvents = [...events]
-                                newEvents.splice(index, 1)
-                                setEvents(newEvents)
-                            }}/>
-                          </div>
-
-
-                        </div>
+                        return <ImportEventTile key={event.id} event={event} activity={activity} edit={(e) => {
+                            const newEvents = [...events]
+                            newEvents[index] = e
+                            setEvents(newEvents)
+                        }
+                        } remove={() => {
+                            const newEvents = [...events]
+                            newEvents.splice(index, 1)
+                            setEvents(newEvents)
+                        }
+                        }/>
                     }
                     )}
-                </div>
+                </div>}
                 {editting ? <div className="center-loader"><div className="loader"></div></div> :<button className="ActionBtn" onClick={async () => {
+                    //check if any event types are null
+                    for(let i = 0; i < events.length; i++){
+                        if(events[i].eventType == null){
+                            alert("Please select an event type for all events")
+
+                            return
+                        }
+                    }
+                    //check if any locations are null
+                    for(let i = 0; i < events.length; i++){
+                        if(events[i].location == null){
+                            alert("Please select a location for all events")
+
+                            return
+                        }
+                    }
                     setEditting(true)
+
                     await addEvents(events)
                     setEvents([])
                     setFile(null)

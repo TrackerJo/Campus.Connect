@@ -20,7 +20,7 @@ import { useRef, useState } from 'react'
 import './settings.css'
 import { addActivityGroup, addEventTypeToActivity, addLocationToActivity, addLocationToSavedLocations, editActivityEventType, editActivityGroup, editActivityLocation, editActivityName, editActivityRehearsalLocation, getActivity, getSavedLocations, updateTheaterActivityRehearsalLocation } from '../../api/db'
 
-import { Activity, ActivityGroup, ActivityMember, EventType, intToHexColor, Location, TheaterActivity, TheaterLocation } from '../../constants'
+import { Activity, ActivityGroup, ActivityMember, ActivityParent, EventType, intToHexColor, Location, TheaterActivity, TheaterLocation } from '../../constants'
 import AddRehearsalLocationDialog from '../../components/Add_Rehearsal_Location_Dialog'
 import { isLoggedIn } from '../../api/auth'
 
@@ -60,7 +60,7 @@ function App() {
     const editGroupDialogRef = useRef<HTMLDialogElement>(null)
     const createGroupDialoRef = useRef<HTMLDialogElement>(null)
     const [activityStudents, setActivityStudents] = useState<ActivityMember[]>([])
-    const [activityParents, setActivityParents] = useState<ActivityMember[]>([])
+    const [activityParents, setActivityParents] = useState<ActivityParent[]>([])
 
 
 
@@ -238,7 +238,7 @@ function App() {
                 addRehearsalLocationDialogRef.current?.close()
             }}/>
 
-            <AddLocationDialog dialogRef={addLocationDialogRef} close={() => {
+            <AddLocationDialog existingLocations={activity?.locations ?? []} dialogRef={addLocationDialogRef} close={() => {
                 addLocationDialogRef.current?.close()
             } } addLocation={async function (location: Location) {
                 if(savedLocations.find((savedLocation) => savedLocation.name == location.name)){

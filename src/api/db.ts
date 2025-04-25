@@ -29,7 +29,7 @@ import {
     EnsembleSection,
     FullCast,
     NotificationUser,
-    Company,
+
     Opportunity,
     opportunityTypeFromString,
     OpportunityType,
@@ -38,11 +38,17 @@ import {
     RecurringVolunteer,
     ActivityGroup,
     Company,
-    EmployerData
+    EmployerData,
+    Scene,
+    Song,
+    Dance,
+    OpportunityPreference,
+    OpportunityNotificationType
 } from "../constants";
 import { getCurrentUserId } from "./auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { sendGroupChatMessage } from "./functions";
+import { sendGroupChatMessage, sendNotification } from "./functions";
+import { getDistanceFromLatLong } from "./distance";
 
 
 const functions = getFunctions(app);
@@ -51,6 +57,7 @@ const db = getFirestore(app);
 const schoolsCollection = collection(db, "schools");
 const companiesCollection = collection(db, "companies");
 const employersCollection = collection(db, "employers");
+const opportunitiesPreferencesCollection = collection(db, "opportunityNotifications");
 const opportunitiesCollection = collection(db, "opportunities");
 
 export const getSchool = async (schoolId: string) => {
@@ -288,6 +295,7 @@ export async function setActivityShow(activityId: string, showId: string, show: 
 }
 
 export async function addActivityTheaterEvent(theaterEvent: TheaterEvent) {
+    console.log("ADDING EVENT");
     const schoolId = localStorage.getItem("schoolId");
     if (!schoolId) return;
     const schoolDoc = doc(db, "schools", schoolId);
@@ -344,6 +352,7 @@ export async function getActivityTheaterEvents(activityId: string, showId: strin
 }
 
 export async function deleteActivityTheaterEvent(theaterEvent: TheaterEvent) {
+    console.log("DELETING EVENT");
     const schoolId = localStorage.getItem("schoolId");
     if (!schoolId) return;
     const schoolDoc = doc(db, "schools", schoolId);
@@ -595,7 +604,8 @@ export async function editActivityTheaterEvent(theaterEvent: TheaterEvent) {
     const activityDoc = doc(collection(schoolDoc, "activities"), theaterEvent.activityId);
     const eventDoc = doc(collection(activityDoc, "events"), theaterEvent.id);
     theaterEvent.lastUpdated = Date.now();
-    await updateDoc(eventDoc, theaterEvent.toMap());
+    await deleteActivityTheaterEvent(theaterEvent);
+    await addActivityTheaterEvent(theaterEvent);
 }
 
 export async function editActivityEvent(activityEvent: ActivityEvent) {
@@ -1368,6 +1378,7 @@ export async function editShowEventsCharacters(show: Show) {
     const eventsSnap = await getDocs(eventsQuery);
     for (const doc of eventsSnap.docs) {
         const event = TheaterEvent.fromMap(doc.data());
+        if(doc.data().deleted == true) continue;
         for (let i = 0; i < event.characters.length; i++) {
             const character = event.characters[i];
             if(character instanceof Character){
@@ -1377,6 +1388,54 @@ export async function editShowEventsCharacters(show: Show) {
             }
             
         }
+
+        if(event.theaterEventType == "scene"){
+            const oldScene = event.scene!;
+            let newScene: Scene | undefined;
+            show.layout.forEach((act) => {
+                if(act.scenes.find((scene) => scene.sceneId == oldScene.sceneId)){
+                    newScene = act.scenes.find((scene) => scene.sceneId == oldScene.sceneId);
+                    return;
+                }
+            });
+            if(newScene){
+                event.scene = newScene;
+            }else {
+                continue;
+            }
+        }
+        if(event.theaterEventType == "song"){
+            const oldSong = event.song!;
+            let newSong: Song | undefined;
+            show.songs.forEach((song) => {
+                if(song.songId == oldSong.songId){
+                    newSong = song;
+                    return;
+                }
+            });
+            if(newSong){
+                event.song = newSong;
+            }else {
+                continue;
+            }
+        }
+
+        if(event.theaterEventType == "dance") {
+            const oldDance = event.dance!;
+            let newDance: Dance | undefined;
+            show.dances.forEach((dance) => {
+                if(dance.danceId == oldDance.danceId){
+                    newDance = dance;
+                    return;
+                }
+            });
+            if(newDance){
+                event.dance = newDance;
+            }else {
+                continue;
+            }
+        }
+
         const targets: ActivityMember[] = [];
   
         for(const character of event.characters){
@@ -1498,23 +1557,78 @@ export async function editShowEventsCharactersTemplate(show: Show) {
     const eventsQuery = query(collection(activityDoc, "events"), where("showId", "==", show.id));
     const eventsSnap = await getDocs(eventsQuery);
     for (const doc of eventsSnap.docs) {
+        if(doc.data().deleted == true) continue;
         const event = TheaterEvent.fromMap(doc.data());
-        const newCharacters: (Character | ShowGroup)[] = [];
-        for (let i = 0; i < event.characters.length; i++) {
-            const character = event.characters[i];
-            if(character instanceof Character){
-                const char = show.characters.find((c) => c.characterId == character.characterId);
-                if(char){
-                    newCharacters.push(char);
+        let newCharacters: (Character | ShowGroup | EnsembleSection | FullCast)[] = [];
+        if(event.theaterEventType == "custom") {
+            for (let i = 0; i < event.characters.length; i++) {
+                const character = event.characters[i];
+                if(character instanceof Character){
+                    const char = show.characters.find((c) => c.characterId == character.characterId);
+                    if(char){
+                        newCharacters.push(char);
+                    }
+                } else if(character instanceof ShowGroup){
+                    const sg = show.showGroups.find((g) => g.showGroupId == character.showGroupId);
+                    if(sg){
+                        newCharacters.push(sg);
+                    }
+                } else {
+                    newCharacters.push(character);
                 }
-            } else if(character instanceof ShowGroup){
-                const sg = show.showGroups.find((g) => g.showGroupId == character.showGroupId);
-                if(sg){
-                    newCharacters.push(sg);
-                }
+                event.characters = newCharacters;
+                
             }
-            event.characters = newCharacters;
-            
+        } else if(event.theaterEventType == "scene"){
+            console.log("Editing scene");
+            const oldScene = event.scene!;
+            let newScene: Scene | undefined;
+            show.layout.forEach((act) => {
+                if(act.scenes.find((scene) => scene.sceneId == oldScene.sceneId)){
+                    newScene = act.scenes.find((scene) => scene.sceneId == oldScene.sceneId);
+                    return;
+                }
+            });
+            if(newScene){
+                event.scene = newScene;
+                newCharacters = [...newScene.characters];
+                event.characters = newCharacters;
+
+            }else {
+                continue;
+            }
+        } else if(event.theaterEventType == "song"){
+            const oldSong = event.song!;
+            let newSong: Song | undefined;
+            show.songs.forEach((song) => {
+                if(song.songId == oldSong.songId){
+                    newSong = song;
+                    return;
+                }
+            });
+            if(newSong){
+                event.song = newSong;
+                newCharacters = [...newSong.characters];
+                event.characters = newCharacters;
+            }else {
+                continue;
+            }
+        } else if(event.theaterEventType == "dance"){
+            const oldDance = event.dance!;
+            let newDance: Dance | undefined;
+            show.dances.forEach((dance) => {
+                if(dance.danceId == oldDance.danceId){
+                    newDance = dance;
+                    return;
+                }
+            });
+            if(newDance){
+                event.dance = newDance;
+                newCharacters = [...newDance.characters];
+                event.characters = newCharacters;
+            } else {
+                continue;
+            }
         }
         const targets: ActivityMember[] = [];
   
@@ -1624,7 +1738,7 @@ export async function editShowEventsCharactersTemplate(show: Show) {
         }
         event.targets = targets;
         event.lastUpdated = Date.now();
-        await updateDoc(doc.ref, event.toMap());
+        await editActivityTheaterEvent(event);
     }
 }
 
@@ -1640,7 +1754,15 @@ export async function getAllResources(): Promise<Resource[]> {
 
               for(const show of shows){
                 console.log("Getting resources for " + show.name);
-                resources.push(...show.resources);
+                const changedR: Resource[] = [];
+                for (let i = 0; i < show.resources.length; i++) {
+                    const resource = show.resources[i];
+                    resource.activityId = activity.id;
+                    resource.showId = show.id;
+                    changedR.push(resource);
+                    
+                }
+                resources.push(...changedR);
               }
         }
     }
@@ -2047,7 +2169,9 @@ export async function getCompany(): Promise<Company | null> {
     const companyDoc = doc(companiesCollection, companyId);
     const companySnap = await getDoc(companyDoc);
     if (!companySnap.exists()) return null;
-    return Company.fromMap(companySnap.data());
+    const company = Company.fromMap(companySnap.data());
+    company.id = companySnap.id;
+    return company;
 }
 
 export async function deleteCloudTask(taskId: string) {
@@ -2072,6 +2196,51 @@ export async function addOpportunity(opportunity: Opportunity): Promise<Opportun
     
     const ref = await addDoc(opportunitiesCollection, opportunity.toMap());
     opportunity.id = ref.id;
+   const users: NotificationUser[] = [];
+   const usersNotificationPreferences = await getOpportunityNotificationPreferences();
+   for(const preference of usersNotificationPreferences){
+        if(preference.notifications == OpportunityNotificationType.none){
+            continue;
+
+        }
+        if(preference.notifications == OpportunityNotificationType.job && opportunity !instanceof Job){
+            continue;
+
+        }
+        if(preference.notifications == OpportunityNotificationType.volunteer && opportunity instanceof Job){
+            continue;
+
+        }
+        if (preference.homeLocation.location.latitude == 0 &&
+            preference.homeLocation.location.longitude == 0) {
+          users.push(NotificationUser.fromBlank(preference.userId, ""));
+          continue;
+        }
+        const distanceToHome = getDistanceFromLatLong(
+            opportunity.location.location.latitude,
+            opportunity.location.location.longitude,
+            preference.homeLocation.location.latitude,
+            preference.homeLocation.location.longitude);
+            if (distanceToHome > 10) {
+                continue;
+              }
+        users.push(NotificationUser.fromBlank(preference.userId, ""));
+
+
+    }
+    if(users.length > 0){
+        sendNotification({
+            title: `New Opportunity Available`,
+            body: `A new opportunity has been posted near you!`,
+            targetIds: users,
+            thread: "newOpportunity",
+            data: {
+                "opportunityId": opportunity.id,
+                "type": "opportunity",
+            }
+
+        })
+    }
     return opportunity;
 }
 
@@ -2110,6 +2279,9 @@ export async function joinCompany(companyId: string, employer: EmployerData) {
 }
 
 export async function updateCompany(company: Company) {
+    console.log(company.toMap());
+    company.id = localStorage.getItem("companyId")!;
+    console.log(localStorage.getItem("companyId"));
     const companyDoc = doc(companiesCollection, company.id);
     await updateDoc(companyDoc, company.toMap());
 }
@@ -2121,9 +2293,89 @@ export async function updateCompanyName(companyId: string, newName: string) {
         const opportunity = doc.data();
         if(opportunity.deleted) return;
         opportunity.companyName = newName;
+        opportunity.lastUpdated = Date.now();
         await updateDoc(doc.ref, opportunity);
     });
 }
+
+export async function getOpportunityNotificationPreferences(): Promise<OpportunityPreference[]> {
+    const preferencesDoc = doc(opportunitiesPreferencesCollection,"preferences");
+    const preferencesSnap = await getDoc(preferencesDoc);
+    const preferencesData = preferencesSnap.data();
+    if(!preferencesData) return [];
+    const preferencesMap = preferencesData.preferences as { [key: string]: DocumentData };
+    console.log(typeof preferencesMap);
+    const preferences: OpportunityPreference[] = [];
+    for(const preference of Object.keys(preferencesMap)){
+        const pref = OpportunityPreference.fromMap(preferencesMap[preference]);
+
+        preferences.push(pref);
+    }
+    return preferences;
+}
+
+// export async function addAllStudentsNotificationPreference() {
+//     const preferencesDoc = doc(opportunitiesPreferencesCollection,"preferences");
+//     const preferencesSnap = await getDoc(preferencesDoc);
+//     const preferencesData = preferencesSnap.data();
+//     if(!preferencesData) return;
+//     const preferencesMap = preferencesData.preferences as object;
+//     console.log(typeof preferencesMap);
+//     const preferences: Map<string, OpportunityPreference> = new Map();
+//     for(const preference of Object.keys(preferencesMap)){
+//         preferences.set(preference, OpportunityPreference.fromMap(preferencesMap[preference] ));
+//     }
+//     console.log(preferences);
+
+
+
+//     const schoolId = localStorage.getItem("schoolId");
+//     if (!schoolId) return;
+//     const schoolDoc = doc(db, "schools", schoolId);
+//     const studentsQuery = query(collection(schoolDoc, "students"));
+//     const studentsSnap = await getDocs(studentsQuery);
+//     studentsSnap.forEach(async (doc) => {
+//         const student = doc.data();
+//         if(student.deleted) return;
+//         const studentData = StudentData.fromMap(student);
+//         if(!preferences.has(studentData.uid)){
+//             console.log("Adding preference");
+//             console.log(studentData.fullname);
+//             preferences.set(studentData.uid, OpportunityPreference.fromBlank(studentData.homeLocation, OpportunityNotificationType.all, studentData.uid));
+//         }
+//     });
+//     console.log(preferences);   
+//     const preferencesDataMap: {[key: string]: object} = {};
+//     preferences.forEach((value, key) => {
+//         preferencesDataMap[key] = value.toMap();
+//     });
+//     console.log(preferencesDataMap);
+    
+//     await updateDoc(preferencesDoc, {
+//         preferences: preferencesDataMap,
+//         lastUpdated: Date.now()
+//     });
+//     console.log(OpportunityNotificationType.all.toString());
+// }
+
+// export async function fixTheaterEvents(show: Show, events: TheaterEvent[]) {
+//     const theaterEvents: TheaterEvent[] = [];
+//     for (const event of events) {
+//        if(event.theaterEventType == "custom"){
+//         continue;
+//        }
+//         const newEvent = TheaterEvent.fromMap(event.toMap());
+//         newEvent.theaterEventType = "custom";
+//             newEvent.lastUpdated = Date.now();
+//             theaterEvents.push(newEvent);
+            
+
+//     }
+
+//     for(const event of theaterEvents){
+//         await editActivityTheaterEvent(event);
+//     }
+// }
 
 
 // export async function fixEventDates(){

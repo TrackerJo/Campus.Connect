@@ -1,0 +1,46 @@
+
+.event {
+    display: flex
+    ;
+        flex-direction: row;
+        align-items: center;
+
+        width: 400px;
+
+        gap: 10px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3sease;
+        cursor: pointer;
+        color: white;
+        padding: 10px;
+        border: 1px solid #FF6B35;
+        margin: 10px;
+        justify-content: space-evenly;
+}
+
+.event-info{
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    align-items: center;
+    flex-direction: column;
+}
+
+.event-date-add {
+    display: flex;
+        flex-direction: column;
+        align-items: center;
+
+
+
+       
+
+        color: white;
+       
+
+}
+
+.removeIcon {
+    width: 30px;
+}

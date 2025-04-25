@@ -1,4 +1,4 @@
-import {  useEffect, useRef, useState } from "react";
+import {  useRef, useState } from "react";
 import {  ActivityGroup, ActivityMember, CreateGroupDialogProps, hexToColor } from "../constants";
 
 import "./Create_Group_Dialog.css"

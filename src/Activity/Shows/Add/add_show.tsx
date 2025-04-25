@@ -82,7 +82,7 @@ function App() {
                     selectedShow!.activityId = activityId
                     const id = await createShow(selectedShow!)
                     selectedShow!.id = id
-                    localStorage.setItem('show', JSON.stringify(selectedShow))
+                    localStorage.setItem('show', JSON.stringify(selectedShow?.toMap()))
                     window.location.href = `/Activity/Shows/CreateTemplate/?activityId=${activityId}&isEditing=true`
                     setIsLoading(false)
 

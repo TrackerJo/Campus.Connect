@@ -52,8 +52,17 @@ function App() {
         //Get Show from local storage
         const show = localStorage.getItem('show-' + showId)
         if (show) {
-            setShow(Show.fromMap(JSON.parse(show)))
-            console.log(Show.fromMap(JSON.parse(show)))
+            const showType = Show.fromMap(JSON.parse(show))
+            //set show resource activityId and showId
+            showType.resources = showType.resources.map((resource) => {
+                console.log(resource.toMap())
+                resource.activityId = activityId!
+                resource.showId = showId!
+                return resource
+            })
+
+            setShow(showType)
+            console.log(showType)
            
         }
         const accountType = localStorage.getItem('accountType')
@@ -71,11 +80,34 @@ function App() {
             await deleteFile(schoolId, activityId, resource.file!.name)
         }
         show?.resources.splice(show.resources.indexOf(resource), 1)
-        localStorage.setItem('show-' + showId, JSON.stringify(show))
+        localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
         setShow(Show.fromMap(JSON.parse(localStorage.getItem('show-' + showId)!)))
         await deleteActivityShowResource(activityId, showId, resource)
     }
 
+
+    const editResource =  (resource: Resource) => async (newResource: Resource) => {
+        show!.resources = show!.resources.map((r) => {
+            if(r.name == resource.name){
+                newResource.activityId = activityId
+                newResource.showId = showId
+                return newResource
+            }
+            return r
+        }
+        )
+        localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
+        setShow(Show.fromMap(JSON.parse(localStorage.getItem('show-' + showId)!)))
+        console.log("deleting RESOURCE")
+        console.log(resource)
+        resource.activityId = activityId
+        resource.showId = showId
+        await deleteActivityShowResource(resource.activityId, resource.showId, resource)
+        console.log("adding RESOURCE")
+        newResource.activityId = activityId
+        newResource.showId = showId
+        await addActivityShowResource(resource.activityId, resource.showId, newResource)
+    }
 
 
     return (
@@ -90,7 +122,7 @@ function App() {
             <div className='resources'>
                 {
                     show?.resources.map((resource, index) => {
-                        return <ResourceTile key={index} resource={resource} canRemove={accountType === 'teacher'} removeResource={removeResource(resource)}/>
+                        return <ResourceTile key={index} resource={resource} canRemove={accountType === 'teacher'} removeResource={removeResource(resource)} canEdit={accountType=="teacher"} editResource={editResource(resource)}/>
                     })
                 }
             </div>
@@ -112,9 +144,11 @@ function App() {
         <AddResourceDialog dialogRef={addResourceDialogRef} activityId={activityId} close={() => {
             addResourceDialogRef.current?.close()
         }} addResource={async (resource) => {
+            console.log('Adding resource')
+            console.log(resource)
             await addActivityShowResource(activityId, showId, resource)
             show?.resources.push(resource)
-            localStorage.setItem('show-' + showId, JSON.stringify(show))
+            localStorage.setItem('show-' + showId, JSON.stringify(show?.toMap()))
             setShow(Show.fromMap(JSON.parse(localStorage.getItem('show-' + showId)!)))
             addResourceDialogRef.current?.close()
 
