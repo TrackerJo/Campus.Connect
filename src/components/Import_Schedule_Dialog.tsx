@@ -1,104 +1,149 @@
-import {  useRef, useState } from "react";
-import {  ActivityEvent, ActivityMember, EventDate, ImportScheduleDialogProps } from "../constants";
+import { useRef, useState } from "react";
+import { ActivityEvent, ActivityMember, EventDate, ImportScheduleDialogProps } from "../constants";
 
 import "./Import_Schedule_Dialog.css"
 import MinusIcon from "../assets/minus.png"
 import ImportEventTile from "./Import_Event_Tile";
 
-function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportScheduleDialogProps){
+function ImportScheduleDialog({ close, dialogRef, activity, addEvents }: ImportScheduleDialogProps) {
 
 
     const [editting, setEditting] = useState<boolean>(false)
     const [file, setFile] = useState<File | null>(null)
     const [events, setEvents] = useState<ActivityEvent[]>([])
     const inputRef = useRef<HTMLInputElement>(null)
-    
-    function csvToJSON(csv){
+
+    function csvToJSON(csv) {
 
         const lines = csv.split("\n");
-      
+
         const result = [];
-      
+
         // NOTE: If your columns contain commas in their values, you'll need
         // to deal with those before doing the next step 
         // (you might convert them to &&& or something, then covert them back later)
         // jsfiddle showing the issue https://jsfiddle.net/
-        const headers=lines[0].split(",");
-      
-        for(let i=1;i<lines.length;i++){
-      
+        const headers = lines[0].split(",");
+
+        for (let i = 1; i < lines.length; i++) {
+
             const obj = {};
-            const currentline=lines[i].split(",");
-      
-            for(let j=0;j<headers.length;j++){
+            const currentline = lines[i].split(",");
+
+            for (let j = 0; j < headers.length; j++) {
                 obj[headers[j]] = currentline[j];
             }
-      
+
             result.push(obj);
-      
+
         }
-      
+
         //return result; //JavaScript object
         return JSON.stringify(result); //JSON
-      }
+    }
 
-      function jsonToEvents(json){
+    function jsonToEvents(json) {
         const events = JSON.parse(json)
         const activityEvents: ActivityEvent[] = []
-        for(let i = 0; i < events.length; i++){
+        for (let i = 0; i < events.length; i++) {
             const event = events[i]
-            if(event["Added to Campus Connect"]?.toLowerCase() == "yes"){
+
+            if (event["Added to Campus Connect"]?.toLowerCase() == "yes") {
                 continue
             }
-            if(event["Date"] == ""){
+            if (event["Date"] == "") {
+                continue;
+            }
+            if (event["Start"] == "" || event["End"] == "") {
                 continue;
             }
             const date = new Date(event.Date)
-            if(date.getFullYear() == 2001){
+            if (date == null || isNaN(date.getTime())) {
+                //try parsing with year 2001
+                const dateParts = event.Date.split("/")
+                if (dateParts.length == 2) {
+                    const month = parseInt(dateParts[0])
+                    const day = parseInt(dateParts[1])
+                    date.setFullYear(new Date().getFullYear(), month - 1, day)
+
+                } else {
+                    const month = parseInt(dateParts[0])
+                    const day = parseInt(dateParts[1])
+                    const year = parseInt(dateParts[2])
+                    date.setFullYear(year, month - 1, day)
+                }
+            }
+            if (date.getFullYear() == 2001) {
                 date.setFullYear(new Date().getFullYear())
             }
+
             const from = new Date(date.toDateString() + " " + event.Start)
             const to = new Date(date.toDateString() + " " + event.End)
             const eventDate = EventDate.fromBlank(date, from, to)
+            console.log("DATE")
+            console.log(event.Date)
+            console.log(date)
+            console.log("Start")
+            console.log(event.Start)
+            console.log(from)
+
+            console.log("End")
+            console.log(event.End)
+            console.log(to)
+
+
+            console.log("EVENT DATE")
+            console.log(eventDate)
+
 
             const name = event.Name
+            if (name == "") {
+                alert("Event name cannot be blank")
+                return null;
+
+            }
+
             let location = event.Location
-            if(location == "default"){
+            if (location == "default") {
                 location = activity.defaultLocation
             } else {
                 location = activity.locations.find((l) => l.name == location)
-            }            
+            }
             const eventType = activity.eventTypes.find((e) => e.name == event["Event Type"])!
 
             const info = event["Extra Info"]
-            const generalTarget = event["Invite Type"]
+            const generalTarget = (event["Invite Type"]).toLowerCase()
+            if (generalTarget == "") {
+                alert("Invite Type cannot be blank")
+                return null;
+            }
             const groupTargets = [];
             const groupNames = [];
             const targets: ActivityMember[] = [];
-            if(generalTarget == "groups"){
+            if (generalTarget == "groups") {
                 const groups = event["Custom/Group Targets"].split(",")
-                for(let i = 0; i < groups.length; i++){
+                for (let i = 0; i < groups.length; i++) {
                     const group = activity.groups.find((g) => g.groupName == groups[i].trim())
-                    if(group){
+                    if (group) {
                         groupTargets.push(group)
                         groupNames.push(group.groupName)
                         group.groupMembers.forEach((m) => {
-                            if(!targets.find((t) => t.userId == m.userId)){
+                            if (!targets.find((t) => t.userId == m.userId)) {
                                 targets.push(m)
                             }
                         })
                     }
                 }
 
-            } else if (generalTarget == "custom"){
+            } else if (generalTarget == "custom") {
                 const members = event["Custom/Group Targets"].split(", ")
-                for(let i = 0; i < members.length; i++){
+                for (let i = 0; i < members.length; i++) {
                     const student = activity.students.find((m) => m.userId == members[i])
-                    if(student){
+                    if (student) {
                         targets.push(student)
                     } else {
                         const parent = activity.parents.find((m) => m.userId == members[i])
-                        if(parent){
+                        if (parent) {
                             targets.push(parent.toActivityMember())
                         }
                     }
@@ -128,129 +173,134 @@ function ImportScheduleDialog({close, dialogRef, activity, addEvents}: ImportSch
 ,,,,,,,,,,,,Date must either be month/day/year or month/day and the current year will be assumed,,
 ,,,,,,,,,,,,Start and End must be in 12 hour format (i.e. 3:00 PM),,
 ,,,,,,,,,,,,You can leave Added to Campus Connect blank or put yes if you don't want to import the event,,`], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'ScheduleTemplate.csv';
-            a.click();
-            window.URL.revokeObjectURL(url);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ScheduleTemplate.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 
     return (
         <dialog ref={dialogRef}>
-            <div  className="import-schedule-dialog">
-            <h2>Import Schedule</h2>
-           {events.length == 0 ? <div className="event-type-info">
-                <label htmlFor="">CSV File: </label>
-                <input type="file" accept=".csv" ref={inputRef}  onChange={(e) => {
-                    if(e.target.files){
-                        setFile(e.target.files[0])
-                    }
-                } }/>
-               
-                {editting ? <div className="center-loader"><div className="loader"></div></div> :<button className="ActionBtn" onClick={async() => {
-                   
-                    if(file == null){
-                        alert("Please select a file")
-                        return
-                    }
-                    setEditting(true)
-                    const reader = new FileReader();
-                    reader.onload = function(e){
-                        const text = e.target!.result
-                        const json = csvToJSON(text)
-                        const events = jsonToEvents(json)
-                        setEvents(events)
-
-                        console.log(json)
-                        console.log(events)
-                    }
-                    reader.readAsText(file)
-
-                    
-                    setEditting(false)
-
-                }}>
-                    Import Schedule
-                </button>}
-                <button className="ActionBtn" onClick={downloadCSVTemplate}>
-                    Download CSV Template
-                </button>
-
-                <button className="ActionBtn" onClick={() => {
-                    setFile(null)
-                    setEvents([])
-                    close()
-                    inputRef.current!.value = ""
-                }
-                }>
-                    Close
-                </button>
-            </div> : <div className="events-view">
-                <h3>Events</h3>
-                {!editting && <div className="events">
-                    {events.map((event, index) => {
-                        return <ImportEventTile key={event.id} event={event} activity={activity} edit={(e) => {
-                            const newEvents = [...events]
-                            newEvents[index] = e
-                            setEvents(newEvents)
+            <div className="import-schedule-dialog">
+                <h2>Import Schedule</h2>
+                {events.length == 0 ? <div className="event-type-info">
+                    <label htmlFor="">CSV File: </label>
+                    <input type="file" accept=".csv" ref={inputRef} onChange={(e) => {
+                        if (e.target.files) {
+                            setFile(e.target.files[0])
                         }
-                        } remove={() => {
-                            const newEvents = [...events]
-                            newEvents.splice(index, 1)
-                            setEvents(newEvents)
+                    }} />
+
+                    {editting ? <div className="center-loader"><div className="loader"></div></div> : <button className="ActionBtn" onClick={async () => {
+
+                        if (file == null) {
+                            alert("Please select a file")
+                            return
                         }
-                        }/>
+                        setEditting(true)
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const text = e.target!.result
+                            const json = csvToJSON(text)
+                            const events = jsonToEvents(json)
+                            if (events == null) {
+                                setEditting(false)
+                                setFile(null)
+                                return
+                            }
+                            setEvents(events)
+
+                            console.log(json)
+                            console.log(events)
+                        }
+                        reader.readAsText(file)
+
+
+                        setEditting(false)
+
+                    }}>
+                        Import Schedule
+                    </button>}
+                    <button className="ActionBtn" onClick={downloadCSVTemplate}>
+                        Download CSV Template
+                    </button>
+
+                    <button className="ActionBtn" onClick={() => {
+                        setFile(null)
+                        setEvents([])
+                        close()
+                        inputRef.current!.value = ""
                     }
-                    )}
+                    }>
+                        Close
+                    </button>
+                </div> : <div className="events-view">
+                    <h3>Events</h3>
+                    {!editting && <div className="events">
+                        {events.map((event, index) => {
+                            return <ImportEventTile key={event.id} event={event} activity={activity} edit={(e) => {
+                                const newEvents = [...events]
+                                newEvents[index] = e
+                                setEvents(newEvents)
+                            }
+                            } remove={() => {
+                                const newEvents = [...events]
+                                newEvents.splice(index, 1)
+                                setEvents(newEvents)
+                            }
+                            } />
+                        }
+                        )}
+                    </div>}
+                    {editting ? <div className="center-loader"><div className="loader"></div></div> : <button className="ActionBtn" onClick={async () => {
+                        //check if any event types are null
+                        for (let i = 0; i < events.length; i++) {
+                            if (events[i].eventType == null) {
+                                alert("Please select an event type for all events")
+
+                                return
+                            }
+                        }
+                        //check if any locations are null
+                        for (let i = 0; i < events.length; i++) {
+                            if (events[i].location == null) {
+                                alert("Please select a location for all events")
+
+                                return
+                            }
+                        }
+                        setEditting(true)
+
+                        await addEvents(events)
+                        setEvents([])
+                        setFile(null)
+
+                        setEditting(false)
+                        close()
+
+                    }}>
+                        Import Schedule
+                    </button>}
+                    <button className="ActionBtn" onClick={() => {
+                        setFile(null)
+                        setEvents([])
+                        close()
+
+                        inputRef.current!.value = ""
+                    }
+                    }>
+                        Close
+                    </button>
+                    <label htmlFor="" className="hiddenText"> s </label>
                 </div>}
-                {editting ? <div className="center-loader"><div className="loader"></div></div> :<button className="ActionBtn" onClick={async () => {
-                    //check if any event types are null
-                    for(let i = 0; i < events.length; i++){
-                        if(events[i].eventType == null){
-                            alert("Please select an event type for all events")
 
-                            return
-                        }
-                    }
-                    //check if any locations are null
-                    for(let i = 0; i < events.length; i++){
-                        if(events[i].location == null){
-                            alert("Please select a location for all events")
-
-                            return
-                        }
-                    }
-                    setEditting(true)
-
-                    await addEvents(events)
-                    setEvents([])
-                    setFile(null)
-
-                    setEditting(false)
-                    close(  )
-
-                }}>
-                    Import Schedule
-                </button>}
-                <button className="ActionBtn" onClick={() => {
-                    setFile(null)
-                    setEvents([])
-                    close()
-
-                    inputRef.current!.value = ""
-                }
-                }>
-                    Close
-                </button>
-<label htmlFor="" className="hiddenText"> s </label>
-            </div>}
-          
             </div>
-            
-            
 
-            
+
+
+
         </dialog>
     );
 }

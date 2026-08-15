@@ -2182,23 +2182,32 @@ export async function deleteCloudTask(taskId: string) {
 
 
 export async function addOpportunity(opportunity: Opportunity): Promise<Opportunity> {
+    const ref = await addDoc(opportunitiesCollection, opportunity.toMap());
+    opportunity.id = ref.id;
     if(opportunity instanceof OneTimeVolunteer){
 
          
-          
+        console.log("Creating task");
+        console.log(opportunity.eventDate.getDateStart());
+        console.log(new Date().getTime());
+        console.log(new Date().getTime() - opportunity.eventDate.getDateStart().getTime());
           const result = await httpsCallable(functions, "startRemoveVolunteerOpportunity")({
             "opportunityId": opportunity.id,
             "date": opportunity.eventDate.getDateStart().getTime(),
           });
           opportunity.taskId = result.data as string;
+          updateDoc(ref, {
+            taskId: opportunity.taskId,
+            lastUpdated: Date.now()
+          });
 
     }
     
-    const ref = await addDoc(opportunitiesCollection, opportunity.toMap());
-    opportunity.id = ref.id;
+   
    const users: NotificationUser[] = [];
    const usersNotificationPreferences = await getOpportunityNotificationPreferences();
    for(const preference of usersNotificationPreferences){
+        console.log("Preference: ", preference);
         if(preference.notifications == OpportunityNotificationType.none){
             continue;
 
@@ -2229,6 +2238,8 @@ export async function addOpportunity(opportunity: Opportunity): Promise<Opportun
 
     }
     if(users.length > 0){
+        console.log("Sending notification");
+        console.log(users);
         sendNotification({
             title: `New Opportunity Available`,
             body: `A new opportunity has been posted near you!`,

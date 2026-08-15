@@ -1,5 +1,5 @@
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { ActivityGC, GroupChatMember, Message, NotificationUser } from "../constants";
+import { ActivityGC, Message, NotificationUser } from "../constants";
 import { app } from "./init";
 import { getUserFCMToken } from "./storage";
 const functions = getFunctions(app);
@@ -65,6 +65,7 @@ export async function sendNotification({
     const emails: string[] = [];
     const fcmTokens: string[] = [];
     await Promise.all(targetIds.map(async (target) => {
+        console.log("Target: ", target);
         const fcmToken: string | null = await getUserFCMToken(target.userId);
         console.log("FCM Token: ", fcmToken);
         console.log("Email: ", target.email);
@@ -74,6 +75,9 @@ export async function sendNotification({
             emails.push(target.email);
         }
     }));
+    console.log("Emails: ", emails);
+    console.log("FCM Tokens: ", fcmTokens);
+    // fcmTokens = ["fzEuZDbqNEEeg2gQ23EuVO:APA91bHalJ6R66I6TN7CHbSlsvLpYPmpWmRyosWrlYjq2iLJvE3TMqwGFk78Tu_1DbG8xYfkNmVa6x3cPmLEhMlJpenEOlImjXn4QG32-vlk5i5PuXDBYbQ"];
 
     httpsCallable(functions, "sendNotifications")({
         targetIds: fcmTokens, title: title, body: body, thread: thread, data: data
